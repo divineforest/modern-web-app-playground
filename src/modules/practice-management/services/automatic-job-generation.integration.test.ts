@@ -5,8 +5,7 @@ import { createTestCompany } from '../../../../tests/factories/companies.js';
 import { createTestJob } from '../../../../tests/factories/jobs.js';
 import { getFirstServiceType } from '../../../../tests/factories/service-types.js';
 import { db } from '../../../db/index.js';
-import { billingPeriods, companies } from '../../../db/schema-core.js';
-import { jobs } from '../../../db/schema-local.js';
+import { billingPeriods, companies, jobs } from '../../../db/schema.js';
 import { AutomaticJobGenerationService } from './automatic-job-generation.service.js';
 
 /**

@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 import { eq } from 'drizzle-orm';
 import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/connection.js';
-import { serviceTypes } from '../../../db/schema-local.js';
+import { serviceTypes } from '../../../db/schema.js';
 import { env } from '../../../lib/env.js';
 import { logger } from '../../../lib/logger.js';
 import type { CreateJobInput } from '../domain/job.types.js';

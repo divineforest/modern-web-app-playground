@@ -1,7 +1,7 @@
 import type {
   Invoice as InvoiceSchema,
   NewInvoice as NewInvoiceSchema,
-} from '../../../db/schema-local.js';
+} from '../../../db/schema.js';
 import type { InvoiceStatus, InvoiceType } from './invoice.types.js';
 
 /**

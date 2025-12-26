@@ -423,7 +423,7 @@ describe('Jobs Repository', () => {
 
       // ACT
       // Delete the company
-      const { companies } = await import('../../../db/schema-core.js');
+      const { companies } = await import('../../../db/schema.js');
       const { eq } = await import('drizzle-orm');
       await db.delete(companies).where(eq(companies.id, company.id));
 

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/connection.js';
-import { jobTemplates } from '../../../db/schema-local.js';
+import { jobTemplates } from '../../../db/schema.js';
 import type {
   JobTemplate,
   NewJobTemplate,

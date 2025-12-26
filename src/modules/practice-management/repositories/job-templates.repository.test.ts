@@ -6,7 +6,7 @@ import {
   createTestJobTemplates,
 } from '../../../../tests/factories/job-templates.js';
 import { db } from '../../../db/index.js';
-import { jobTemplates } from '../../../db/schema-local.js';
+import { jobTemplates } from '../../../db/schema.js';
 import {
   createJobTemplate,
   deleteJobTemplate,
@@ -207,11 +207,15 @@ describe('Job Templates Repository', () => {
 
       // ASSERT
       expect(updated).toBeDefined();
-      expect(updated?.id).toBe(created.id);
-      expect(updated?.name).toBe('Updated Name');
-      expect(updated?.description).toBe('Updated Description');
-      expect(updated?.code).toBe(created.code); // Unchanged
-      expect(updated?.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
+      expect(updated).not.toBeNull();
+      if (!updated) throw new Error('Updated job template should not be null');
+      expect(updated.id).toBe(created.id);
+      expect(updated.name).toBe('Updated Name');
+      expect(updated.description).toBe('Updated Description');
+      expect(updated.code).toBe(created.code); // Unchanged
+      expect((updated.updatedAt as Date).getTime()).toBeGreaterThanOrEqual(
+        (created.updatedAt as Date).getTime()
+      );
     });
 
     it('should perform partial updates', async () => {

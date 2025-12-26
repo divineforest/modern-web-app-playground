@@ -39,18 +39,10 @@ export async function createTestJob(
   database: Database = db
 ): Promise<Job> {
   // If no companyId provided, create a test company
-  let companyId = overrides.companyId;
-  if (!companyId) {
-    const company = await createTestCompany();
-    companyId = company.id;
-  }
+  const companyId = overrides.companyId ?? (await createTestCompany()).id;
 
   // If no serviceTypeId provided, get the first available service type
-  let serviceTypeId = overrides.serviceTypeId;
-  if (!serviceTypeId) {
-    const serviceType = await getFirstServiceType(database);
-    serviceTypeId = serviceType.id;
-  }
+  const serviceTypeId = overrides.serviceTypeId ?? (await getFirstServiceType(database)).id;
 
   // If assigneeId is provided, ensure the user exists
   if (overrides.assigneeId) {
@@ -96,18 +88,10 @@ export async function createTestJobs(
   database: Database = db
 ): Promise<Job[]> {
   // If no companyId provided, create a test company to use for all jobs
-  let companyId = overrides.companyId;
-  if (!companyId) {
-    const company = await createTestCompany();
-    companyId = company.id;
-  }
+  const companyId = overrides.companyId ?? (await createTestCompany()).id;
 
   // If no serviceTypeId provided, get the first available service type
-  let serviceTypeId = overrides.serviceTypeId;
-  if (!serviceTypeId) {
-    const serviceType = await getFirstServiceType(database);
-    serviceTypeId = serviceType.id;
-  }
+  const serviceTypeId = overrides.serviceTypeId ?? (await getFirstServiceType(database)).id;
 
   // If assigneeId is provided, ensure the user exists
   if (overrides.assigneeId) {

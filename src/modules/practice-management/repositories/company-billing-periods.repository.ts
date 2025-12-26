@@ -1,7 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/connection.js';
-import { billingPeriods, companies } from '../../../db/schema-core.js';
+import { billingPeriods, companies } from '../../../db/schema.js';
 
 /**
  * Company and billing period pairing for job generation

@@ -1,7 +1,7 @@
 import type {
   JobTemplate as JobTemplateSchema,
   NewJobTemplate as NewJobTemplateSchema,
-} from '../../../db/schema-local.js';
+} from '../../../db/schema.js';
 
 /**
  * Job Template entity

@@ -1,6 +1,6 @@
 import type { Database } from '../../src/db/index.js';
 import { db, users } from '../../src/db/index.js';
-import type { NewUser, User } from '../../src/db/schema-core.js';
+import type { NewUser, User } from '../../src/db/schema.js';
 
 /**
  * Build test user data with default values that can be overridden

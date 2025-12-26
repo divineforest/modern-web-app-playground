@@ -1,8 +1,7 @@
 import { and, desc, eq, gte, lte, type SQL } from 'drizzle-orm';
 import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/connection.js';
-import { companies, users } from '../../../db/schema-core.js';
-import { jobs } from '../../../db/schema-local.js';
+import { companies, jobs, users } from '../../../db/schema.js';
 import type { Job, JobWithDetails, NewJob, UpdateJob } from '../domain/job.entity.js';
 
 /**

@@ -1,4 +1,4 @@
-import type { Job as JobSchema, NewJob as NewJobSchema } from '../../../db/schema-local.js';
+import type { Job as JobSchema, NewJob as NewJobSchema } from '../../../db/schema.js';
 import type { JobStatus } from './job.types.js';
 
 /**

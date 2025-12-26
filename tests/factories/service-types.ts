@@ -1,6 +1,6 @@
 import type { Database } from '../../src/db/index.js';
 import { db, serviceTypes } from '../../src/db/index.js';
-import type { ServiceType } from '../../src/db/schema-local.js';
+import type { ServiceType } from '../../src/db/schema.js';
 
 /**
  * Get the first available service type from the database

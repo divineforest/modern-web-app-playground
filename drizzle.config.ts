@@ -8,8 +8,8 @@ export default defineConfig({
   // Database dialect
   dialect: 'postgresql',
 
-  // Schema files - ONLY local tables that should be managed by migrations
-  schema: './src/db/schema-local.ts',
+  // Schema files - all tables are managed by migrations
+  schema: './src/db/schema.ts',
 
   // Output directory for migration files
   out: './src/db/migrations',

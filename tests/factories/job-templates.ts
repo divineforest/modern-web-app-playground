@@ -1,6 +1,6 @@
 import type { Database } from '../../src/db/index.js';
 import { db, jobTemplates } from '../../src/db/index.js';
-import type { JobTemplate, NewJobTemplate } from '../../src/db/schema-local.js';
+import type { JobTemplate, NewJobTemplate } from '../../src/db/schema.js';
 
 /**
  * Build test job template data with default values that can be overridden

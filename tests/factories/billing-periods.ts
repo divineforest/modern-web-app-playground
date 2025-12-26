@@ -1,6 +1,6 @@
 import type { Database } from '../../src/db/connection.js';
 import { billingPeriods, db } from '../../src/db/index.js';
-import type { BillingPeriod, NewBillingPeriod } from '../../src/db/schema-core.js';
+import type { BillingPeriod, NewBillingPeriod } from '../../src/db/schema.js';
 
 /**
  * Build test billing period data with default values that can be overridden
@@ -14,9 +14,9 @@ function buildTestBillingPeriodData(
   const endDate = new Date(now.getFullYear(), now.getMonth(), 31);
 
   return {
-    startDate: overrides.startDate || startDate,
-    endDate: overrides.endDate || endDate,
-    isApproved: overrides.isApproved || 'TRUE',
+    startDate: overrides['startDate'] || startDate,
+    endDate: overrides['endDate'] || endDate,
+    isApproved: overrides['isApproved'] || 'TRUE',
     ...overrides,
   };
 }

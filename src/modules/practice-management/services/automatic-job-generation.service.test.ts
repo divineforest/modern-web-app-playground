@@ -5,7 +5,7 @@ import { createTestCompany } from '../../../../tests/factories/companies.js';
 import { getFirstServiceType } from '../../../../tests/factories/service-types.js';
 import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/index.js';
-import { serviceTypes } from '../../../db/schema-local.js';
+import { serviceTypes } from '../../../db/schema.js';
 import { env } from '../../../lib/env.js';
 import type { Job } from '../domain/job.entity.js';
 import type { CompanyBillingPeriodPair } from '../repositories/company-billing-periods.repository.js';
