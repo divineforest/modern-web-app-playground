@@ -1,0 +1,38 @@
+---
+description: Drizzle ORM migration conventions
+globs:
+  - src/db/migrations/**
+  - src/db/schema*.ts
+---
+
+# Drizzle Migration Rules
+
+## NEVER manually edit migration files
+
+The following files must ONLY be modified via `drizzle-kit` commands:
+
+- `src/db/migrations/*.sql` - Migration SQL files
+- `src/db/migrations/meta/_journal.json` - Migration journal
+- `src/db/migrations/meta/*_snapshot.json` - Schema snapshots
+
+## Correct workflow for schema changes
+
+1. **Modify the schema** in `src/db/schema-local.ts` (for tables managed by this service)
+2. **Generate migration** using `pnpm db:generate`
+3. **Review** the generated SQL in `src/db/migrations/`
+4. **Apply migration** using `pnpm db:migrate` (dev) or `pnpm db:migrate:test` (test)
+
+## Available commands
+
+```bash
+pnpm db:generate      # Generate migration from schema changes
+pnpm db:migrate       # Apply migrations to dev database
+pnpm db:migrate:test  # Apply migrations to test database
+pnpm db:studio        # Open Drizzle Studio for database inspection
+```
+
+## Technical note
+
+The `db:generate`, `db:push`, `db:introspect`, and `db:check` commands automatically run `tsc` first because drizzle-kit requires compiled JS files to resolve ES module imports.
+
+Do NOT work around failures by manually creating migration files or editing the journal.
