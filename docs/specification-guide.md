@@ -53,7 +53,7 @@ Every specification must include the following core sections:
 - Testing and Validation
 - Review and Version Control
 
-Optional sections may include Business Impact, Security, Monitoring, API details, Performance, Configuration, or Future Enhancements.
+Optional sections may include Security, Monitoring, API details, Performance, Configuration, or Future Enhancements.
 
 ---
 
@@ -118,14 +118,7 @@ Keep it concise and contextual.
 
 ---
 
-### 4. Business Impact
-
-Summarize the value delivered: revenue impact, compliance benefits, customer outcomes, or efficiency gains.
-Link to OKRs or metrics when relevant.
-
----
-
-### 5. Functional Requirements (FR-X)
+### 4. Functional Requirements (FR-X)
 
 Describe what the system does from the user or business perspective.
 Use numbered sections and RFC 2119 language.
@@ -142,7 +135,7 @@ Example:
 
 ---
 
-### 6. Technical Requirements (TR-X)
+### 5. Technical Requirements (TR-X)
 
 Describe how the system will be built — architecture, design, and constraints.
 Include diagrams, schema changes, dependencies, configuration, and error handling.
@@ -181,7 +174,7 @@ Example:
 
 ---
 
-### 7. Data Flow
+### 6. Data Flow
 
 Explain the step-by-step process and lifecycle of the feature.
 List all components and actors.
@@ -209,7 +202,7 @@ Best practices:
 
 ---
 
-### 8. Security Considerations
+### 7. Security Considerations
 
 When applicable, describe:
 
@@ -222,7 +215,7 @@ When applicable, describe:
 
 ---
 
-### 9. Monitoring and Observability
+### 8. Monitoring and Observability
 
 Define how the feature will be monitored in production.
 
@@ -245,7 +238,7 @@ Example:
 
 ---
 
-### 10. Error Scenarios
+### 9. Error Scenarios
 
 Document expected error cases and handling behavior.
 
@@ -262,7 +255,7 @@ Example:
 
 ---
 
-### 11. Testing and Validation
+### 10. Testing and Validation
 
 Every specification must describe how correctness will be verified.
 
@@ -276,7 +269,7 @@ Include:
 
 ---
 
-### 12. Risks and Mitigations
+### 11. Risks and Mitigations
 
 List known risks, their potential impact, and mitigation or rollback plans.
 Keep this section short and focused.
@@ -293,7 +286,7 @@ Example:
 
 ---
 
-### 13. Optional and Extended Sections
+### 12. Optional and Extended Sections
 
 Add these when relevant:
 
@@ -306,7 +299,7 @@ Add these when relevant:
 
 ---
 
-### 14. Requirement Language
+### 13. Requirement Language
 
 Use **RFC 2119** keywords for precision:
 
@@ -326,7 +319,7 @@ Bad example:
 
 ---
 
-### 15. Status Indicators
+### 14. Status Indicators
 
 Use emoji to mark implementation state:
 
@@ -344,7 +337,7 @@ Example:
 
 ---
 
-### 16. Review and Approval Process
+### 15. Review and Approval Process
 
 1. Draft — author writes the initial version.
 2. Technical Review — peers and architect validate feasibility.
@@ -355,7 +348,7 @@ Example:
 
 ---
 
-### 17. Version Control
+### 16. Version Control
 
 - Store specifications in `docs/specs/` or a dedicated folder.
 - Use descriptive filenames such as `billing-chargebee-migration.md`.
