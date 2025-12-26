@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestCompany } from '../../../../tests/factories/companies.js';
 import { createTestJob } from '../../../../tests/factories/jobs.js';
 import { getFirstServiceType } from '../../../../tests/factories/service-types.js';
+import { createTestUser } from '../../../../tests/factories/users.js';
 import { db } from '../../../db/index.js';
 import {
   createJobService,
@@ -19,13 +20,14 @@ describe('Jobs Service', () => {
       // ARRANGE
       const company = await createTestCompany();
       const serviceType = await getFirstServiceType(db);
+      const assignee = await createTestUser();
       const input = {
         companyId: company.id,
         serviceTypeId: serviceType.id,
         title: 'Service Test Job',
         status: 'planned' as const,
         dueAt: new Date('2024-12-31'),
-        assigneeId: '00000000-0000-0000-0000-000000000002',
+        assigneeId: assignee.id,
         periodStart: '2024-01-01',
         periodEnd: '2024-01-31',
       };
