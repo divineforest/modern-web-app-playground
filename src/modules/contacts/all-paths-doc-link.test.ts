@@ -88,9 +88,9 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
 
   describe('Path 2: Existing contact found by VAT ID', () => {
     it('MUST create document link in database for existing contact', async () => {
-      const timestamp = Date.now();
-      const companyVatId = `DE${timestamp}`;
-      const supplierVatId = `LU${timestamp}`;
+      const uniqueId = `${Date.now()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const companyVatId = `DE${uniqueId}`;
+      const supplierVatId = `LU${uniqueId}`;
       const documentId = randomUUID();
 
       const company = await createTestCompany({
@@ -137,9 +137,9 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
 
   describe('Path 3: VIES validation success - creates new contact', () => {
     it('MUST create document link in database', async () => {
-      const timestamp = Date.now();
-      const companyVatId = `DE${timestamp}`;
-      const supplierVatId = `LU${timestamp}`;
+      const uniqueId = `${Date.now()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const companyVatId = `DE${uniqueId}`;
+      const supplierVatId = `LU${uniqueId}`;
       const documentId = randomUUID();
 
       const company = await createTestCompany({
@@ -201,9 +201,9 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
 
   describe('Path 4: VIES validation failed - fallback to OCR', () => {
     it('MUST create document link in database', async () => {
-      const timestamp = Date.now();
-      const companyVatId = `DE${timestamp}`;
-      const supplierVatId = `LU${timestamp}`;
+      const uniqueId = `${Date.now()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const companyVatId = `DE${uniqueId}`;
+      const supplierVatId = `LU${uniqueId}`;
       const documentId = randomUUID();
 
       const company = await createTestCompany({
@@ -211,14 +211,10 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
         companyDetails: { vatId: companyVatId },
       });
 
-      // Mock VIES failure
+      // Mock VIES failure - return error for all VIES requests
       server.use(
-        http.get('https://api.vatcheckapi.com/v2/check', ({ request }) => {
-          const url = new URL(request.url);
-          if (url.searchParams.get('vat_number') === supplierVatId) {
-            return HttpResponse.json({ error: 'Server error' }, { status: 500 });
-          }
-          return undefined;
+        http.get('https://api.vatcheckapi.com/v2/check', () => {
+          return HttpResponse.json({ error: 'Server error' }, { status: 500 });
         })
       );
 
@@ -254,9 +250,9 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
 
   describe('Idempotency: Same contact, different documents', () => {
     it('MUST create separate document links for each documentId', async () => {
-      const timestamp = Date.now();
-      const companyVatId = `DE${timestamp}`;
-      const supplierVatId = `LU${timestamp}`;
+      const uniqueId = `${Date.now()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const companyVatId = `DE${uniqueId}`;
+      const supplierVatId = `LU${uniqueId}`;
       const documentId1 = randomUUID();
       const documentId2 = randomUUID();
 
@@ -320,9 +316,9 @@ describe('/from-ocr document link creation - ALL PATHS', () => {
 
   describe('Idempotency: Same contact, same document', () => {
     it('MUST return existing document link (not create duplicate)', async () => {
-      const timestamp = Date.now();
-      const companyVatId = `DE${timestamp}`;
-      const supplierVatId = `LU${timestamp}`;
+      const uniqueId = `${Date.now()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      const companyVatId = `DE${uniqueId}`;
+      const supplierVatId = `LU${uniqueId}`;
       const documentId = randomUUID();
 
       const company = await createTestCompany({

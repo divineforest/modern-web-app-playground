@@ -141,19 +141,28 @@ export class AutomaticJobGenerationService {
    * - Jobs (jobs table) use `timestamp with time zone` for due_at
    *
    * When PostgreSQL returns billing period dates, they come without timezone info.
-   * This function explicitly uses UTC methods (setUTCHours, etc.) to ensure:
-   * 1. Due dates are calculated consistently regardless of system timezone
-   * 2. The resulting Date object can be safely stored in the jobs.due_at column
-   * 3. DST transitions don't cause unexpected date shifts
+   * The driver returns these as Date objects where LOCAL time components (getFullYear,
+   * getMonth, getDate) match the stored values. To calculate the due date correctly:
+   * 1. Extract date components using LOCAL methods (matching stored values)
+   * 2. Create a UTC Date from those components
+   * 3. Add offset days in UTC
+   * 4. Set the time in UTC
+   * This ensures consistent due dates regardless of system timezone or DST.
    *
    * @param periodEnd Billing period end date (from billing_periods.end_date)
    * @returns Due date as Date object with explicit UTC time (for jobs.due_at)
    */
   calculateDueDate(periodEnd: Date): Date {
-    const dueDate = new Date(periodEnd);
+    // Extract date components using LOCAL methods (as PostgreSQL returns timestamp without tz as local)
+    const year = periodEnd.getFullYear();
+    const month = periodEnd.getMonth();
+    const day = periodEnd.getDate();
 
-    // Add offset days using UTC date to avoid DST issues
-    dueDate.setDate(dueDate.getDate() + env.JOB_GENERATION_DUE_OFFSET_DAYS);
+    // Create a new Date in UTC with the extracted components (at midnight UTC)
+    const dueDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+
+    // Add offset days using UTC methods to avoid DST issues
+    dueDate.setUTCDate(dueDate.getUTCDate() + env.JOB_GENERATION_DUE_OFFSET_DAYS);
 
     // Set the time to the configured hour in UTC (default 17:00 UTC)
     // This ensures the timestamp is properly stored in timestamptz column
