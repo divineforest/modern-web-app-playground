@@ -16,4 +16,8 @@ Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-
 
 ## After Changes
 
-Run `pnpm lint` and `pnpm test` before considering work complete.
+Before considering work complete, ensure all checks pass locally:
+
+- `pnpm lint`
+- `pnpm test`
+- `pnpm type-coverage`
