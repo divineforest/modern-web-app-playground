@@ -1,5 +1,7 @@
 # AGENTS.md
 
+Backend accounting system for practice management. Integrates with Odoo ERP and Core microservice.
+
 ## Project Stack
 
 Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest.
