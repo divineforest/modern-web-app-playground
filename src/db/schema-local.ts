@@ -264,3 +264,52 @@ export type NewGlobalContact = typeof globalContacts.$inferInsert;
 
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+
+/**
+ * Invoices table schema
+ * Stores billing documents linked to companies and contacts
+ * MANAGED BY THIS SERVICE - INCLUDE IN MIGRATIONS
+ */
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    companyId: uuid('company_id')
+      .notNull()
+      .references(() => companies.id, {
+        onDelete: 'cascade',
+        onUpdate: 'cascade',
+      }),
+    contactId: uuid('contact_id').references(() => globalContacts.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
+    type: varchar('type', { length: 32 }).notNull(),
+    status: varchar('status', { length: 32 }).notNull().default('draft'),
+    invoiceNumber: text('invoice_number').notNull(),
+    issueDate: date('issue_date').notNull(),
+    dueDate: date('due_date'),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    totalAmount: text('total_amount').notNull(), // NUMERIC(15,2) stored as text for precision
+    description: text('description'),
+  },
+  (table) => [
+    check('invoices_type_check', sql`${table.type} IN ('sales', 'purchase')`),
+    check(
+      'invoices_status_check',
+      sql`${table.status} IN ('draft', 'sent', 'paid', 'overdue', 'cancelled')`
+    ),
+    uniqueIndex('idx_invoices_company_invoice_number').on(table.companyId, table.invoiceNumber),
+    index('idx_invoices_company_id').on(table.companyId),
+    index('idx_invoices_contact_id').on(table.contactId),
+    index('idx_invoices_status').on(table.status),
+    index('idx_invoices_type').on(table.type),
+    index('idx_invoices_issue_date').on(table.issueDate),
+  ]
+);
+
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;

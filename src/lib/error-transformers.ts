@@ -72,6 +72,26 @@ const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }>
     message: 'Invalid job template code format',
     details: 'Code must contain only uppercase letters, numbers, and underscores',
   },
+  [CONSTRAINTS.INVOICES_COMPANY_FK]: {
+    message: 'Invalid company reference',
+    details: 'The specified company does not exist',
+  },
+  [CONSTRAINTS.INVOICES_CONTACT_FK]: {
+    message: 'Invalid contact reference',
+    details: 'The specified contact does not exist',
+  },
+  [CONSTRAINTS.INVOICES_COMPANY_INVOICE_NUMBER_UNIQUE]: {
+    message: 'Duplicate invoice number',
+    details: 'An invoice with this number already exists for this company',
+  },
+  [CONSTRAINTS.INVOICES_TYPE_CHECK]: {
+    message: 'Invalid invoice type',
+    details: 'Type must be one of: sales, purchase',
+  },
+  [CONSTRAINTS.INVOICES_STATUS_CHECK]: {
+    message: 'Invalid invoice status',
+    details: 'Status must be one of: draft, sent, paid, overdue, cancelled',
+  },
 };
 
 /**

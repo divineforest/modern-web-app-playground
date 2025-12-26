@@ -4,6 +4,7 @@ export * from './companies.js';
 export * from './global-contacts.js';
 export * from './global-contacts-companies.js';
 export * from './global-contacts-documents.js';
+export * from './invoices.js';
 export * from './job-templates.js';
 export * from './jobs.js';
 export * from './service-types.js';
