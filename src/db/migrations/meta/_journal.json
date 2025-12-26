@@ -1,0 +1,104 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1760286783547,
+      "tag": "0000_luxuriant_the_captain",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762154523516,
+      "tag": "0001_tearful_whirlwind",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1730851200000,
+      "tag": "0002_fix_timestamps",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1730925000000,
+      "tag": "0003_create_service_types",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1730926000000,
+      "tag": "0004_create_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762963142788,
+      "tag": "0005_seed_legacy_service_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762963191825,
+      "tag": "0006_create_billing_periods",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1762963277777,
+      "tag": "0007_add_jobs_billing_period_id_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1762963334168,
+      "tag": "0008_add_companies_billing_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1763413263221,
+      "tag": "0009_create_users_add_assignee_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1764794829489,
+      "tag": "0010_acoustic_wildside",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1765459200000,
+      "tag": "0011_add_companies_company_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1765548000000,
+      "tag": "0012_add_bob_id_to_global_contacts_companies",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1765620000000,
+      "tag": "0013_create_global_contacts_documents",
+      "breakpoints": true
+    }
+  ]
+}

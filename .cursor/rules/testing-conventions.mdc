@@ -1,0 +1,31 @@
+---
+description: Testing conventions
+globs:
+  - ".test.ts"
+alwaysApply: false
+---
+
+# Testing Rules
+
+## AAA Pattern (Arrange-Act-Assert)
+
+All tests MUST follow the **Arrange-Act-Assert (AAA)** pattern with clear comments:
+
+```typescript
+it('should do something', async () => {
+  // ARRANGE: Set up test data and conditions
+  const input = { /* test data */ };
+
+  // ACT: Execute the code being tested
+  const result = await functionUnderTest(input);
+
+  // ASSERT: Verify the results
+  expect(result).toEqual(expectedValue);
+});
+```
+
+## File Organization
+
+- For each source file `X.ts`, keep **one** and only one test file `X.test.ts`
+- Test files live next to the files they test (co-located)
+- Use descriptive test names that explain the business requirement

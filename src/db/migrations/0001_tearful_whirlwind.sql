@@ -1,0 +1,1 @@
+ALTER TABLE "job_templates" DROP COLUMN "deleted_at";

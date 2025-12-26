@@ -1,0 +1,123 @@
+---
+description: Database migration conventions
+globs:
+  - "*.sql"
+  - "src/db/migrations/*.sql"
+alwaysApply: false
+---
+
+# Migration Rules
+
+## Constrained Values: CHECK Constraints vs ENUM
+
+**Quick Reference:** Prefer CHECK constraints by default — they are much easier to manage. Consider converting to ENUM only after values have stabilized over time.
+
+### Why CHECK First?
+
+- **Easier to modify**: Adding/removing values is a simple `ALTER TABLE` within a transaction
+- **No type dependencies**: No separate type object to manage across tables
+- **Transactional safety**: Changes can be rolled back, unlike `ALTER TYPE ADD VALUE`
+- **Simpler migrations**: No need to worry about enum ordering or removal complexity
+
+### Decision Rules (Apply First Match)
+
+| Condition | Action | Example |
+|-----------|--------|---------|
+| New column with constrained values | CHECK | Start with CHECK, convert later |
+| Values likely to change | CHECK | Business statuses in flux |
+| External API values | CHECK | Third-party status codes |
+| > 20 values | CHECK | Country codes (249+) |
+| **Proven stable** (6+ months unchanged, used in 2+ tables) | **Consider ENUM** | Well-established domain values |
+
+### Implementation
+
+**CHECK pattern** (default for new columns):
+```sql
+-- Simple and easy to modify
+CREATE TABLE jobs (
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled'))
+);
+
+-- Adding a value is transactional and simple
+ALTER TABLE jobs DROP CONSTRAINT jobs_status_check;
+ALTER TABLE jobs ADD CONSTRAINT jobs_status_check
+  CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled', 'on_hold'));
+```
+
+**ENUM pattern** (only for stabilized domains):
+```sql
+-- Only convert after values have proven stable over time
+-- Type: singular, snake_case, NO _enum/_type suffix
+CREATE TYPE payment_method AS ENUM ('cash', 'card', 'bank_transfer');
+
+-- Values: lowercase, snake_case
+CREATE TABLE invoices (
+  payment_method payment_method NOT NULL DEFAULT 'cash'
+);
+
+-- ⚠️ Adding values CANNOT be in transaction
+ALTER TYPE payment_method ADD VALUE 'crypto';
+
+-- ❌ NEVER
+CREATE TYPE payment_method_enum AS ENUM (...)  -- Wrong suffix
+CREATE TYPE status AS ENUM ('Active', 'DONE')  -- Wrong case
+```
+
+### When to Convert CHECK → ENUM
+
+Consider converting a CHECK constraint to ENUM when:
+1. Values have been **stable for 6+ months** (no additions/removals)
+2. The same values are **used across multiple tables**
+3. You want **stronger type safety** at the database level
+4. The domain is **well-understood** and unlikely to change
+
+## UUID Generation
+
+**MUST use `gen_random_uuid()` — NEVER use `uuid_generate_v4()`**  
+(`gen_random_uuid()` is built-in PostgreSQL 13+; `uuid_generate_v4()` requires uuid-ossp extension)
+
+### Standard Patterns
+
+```sql
+-- Primary key
+CREATE TABLE users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  email varchar NOT NULL
+);
+
+-- Foreign key (required)
+CREATE TABLE posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Foreign key (optional)
+CREATE TABLE posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  reviewer_id uuid REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+### Naming Convention
+
+- **Primary key:** `id` (never `user_id`, `user_uuid`)
+- **Foreign key:** `{table}_id` (e.g., `user_id`, `company_id`)
+- **Semantic FK:** `{context}_{table}_id` (e.g., `created_by_user_id`, `assigned_to_user_id`)
+
+### Common Mistakes
+
+```sql
+-- ❌ Wrong function
+id uuid DEFAULT uuid_generate_v4()
+
+-- ❌ Missing DEFAULT
+id uuid PRIMARY KEY NOT NULL
+
+-- ❌ Wrong type
+id varchar(36) DEFAULT gen_random_uuid()::text
+
+-- ✅ Correct
+id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL
+```
+

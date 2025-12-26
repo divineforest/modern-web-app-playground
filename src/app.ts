@@ -1,0 +1,229 @@
+import * as Sentry from '@sentry/node';
+import Fastify from 'fastify';
+import { serverConfig } from './config/server.js';
+import { authPlugin } from './infra/auth/index.js';
+import { registerInfrastructureRoutes } from './infra/index.js';
+import { env } from './lib/env.js';
+import { ValidationError } from './lib/error-transformers.js';
+
+/**
+ * Build and configure the Fastify application
+ * This function creates the app instance, registers plugins and routes,
+ * but does not start the server
+ */
+export async function buildApp() {
+  // Create Fastify instance with configuration
+  const fastify = Fastify(serverConfig);
+
+  // Register CORS
+  await fastify.register(import('@fastify/cors'), {
+    origin: env.NODE_ENV === 'development', // Allow all origins in dev
+    credentials: true,
+  });
+
+  // Register Helmet for security headers
+  await fastify.register(import('@fastify/helmet'), {
+    global: true,
+  });
+
+  // Register rate limiting
+  await fastify.register(import('@fastify/rate-limit'), {
+    max: 100,
+    timeWindow: '1 minute',
+  });
+
+  // Register Swagger for API documentation
+  await fastify.register(import('@fastify/swagger'), {
+    openapi: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Backend Accounting API',
+        description: 'EasyBiz Backend Accounting System API',
+        version: '1.0.0',
+      },
+      servers: [
+        {
+          url: `http://localhost:${env.PORT || 3000}`,
+          description: 'Development server',
+        },
+      ],
+      tags: [{ name: 'Health', description: 'Health check endpoints' }],
+    },
+  });
+
+  await fastify.register(import('@fastify/swagger-ui'), {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'full',
+      deepLinking: false,
+    },
+    staticCSP: true,
+    transformSpecification: (swaggerObject) => {
+      return swaggerObject;
+    },
+    transformSpecificationClone: true,
+  });
+
+  // Register infrastructure routes (health, metrics, etc.) - UNPROTECTED
+  await fastify.register(registerInfrastructureRoutes);
+
+  // Register webhook routes (external, unprotected)
+  await fastify.register(async (webhookInstance) => {
+    const { postmarkWebhookRoutes } = await import('./modules/inbound-email/index.js');
+    await webhookInstance.register(postmarkWebhookRoutes);
+  });
+
+  // Register protected business API routes with authentication
+  // All routes registered through this plugin will require API Bearer token authentication
+  await fastify.register(async (protectedInstance) => {
+    // Apply authentication to all routes in this scope
+    await protectedInstance.register(authPlugin);
+
+    // Register business API routes (all protected)
+    const { jobTemplatesRoutes, registerJobsRoutes } = await import(
+      './modules/practice-management/index.js'
+    );
+    const { registerContactsRoutes } = await import('./modules/contacts/index.js');
+
+    await protectedInstance.register(jobTemplatesRoutes);
+    await protectedInstance.register(registerJobsRoutes);
+    await protectedInstance.register(registerContactsRoutes);
+  });
+
+  // Add global error handler with Sentry integration
+  fastify.setErrorHandler((error: Error, request, reply) => {
+    // Capture error with Sentry (automatically disabled in development via enabled option)
+    Sentry.captureException(error, {
+      tags: {
+        method: request.method,
+        url: request.url,
+      },
+      user: {
+        ip_address: request.ip,
+      },
+      extra: {
+        headers: request.headers,
+        params: request.params,
+        query: request.query,
+      },
+    });
+
+    fastify.log.error(error);
+
+    // Handle domain validation errors
+    // Note: All database constraint violations are transformed to ValidationError by services
+    // using transformDatabaseError() before being thrown. This provides consistent error
+    // handling with user-friendly messages mapped from constraint names.
+    if (error instanceof ValidationError) {
+      return reply.status(400).send({
+        error: error.name,
+        message: error.message,
+        details: error.details,
+      });
+    }
+
+    // Handle Fastify validation errors
+    if ('validation' in error && error.validation) {
+      return reply.status(400).send({
+        error: 'Validation Error',
+        message: error.message,
+        details: error.validation,
+      });
+    }
+
+    // Handle HTTP errors
+    if ('statusCode' in error && error.statusCode) {
+      return reply.status(error.statusCode as number).send({
+        error: error.name || 'HTTP Error',
+        message: error.message,
+      });
+    }
+
+    // Default error response
+    return reply.status(500).send({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  });
+
+  return fastify;
+}
+
+/**
+ * Create a test-ready Fastify application
+ * This is useful for testing where you don't want to start the actual server
+ */
+export async function buildTestApp() {
+  const fastify = Fastify({
+    ...serverConfig,
+    logger: false, // Disable logging in tests
+  });
+
+  // Register only essential plugins for testing
+  await fastify.register(import('@fastify/cors'), {
+    origin: true,
+    credentials: true,
+  });
+
+  // Register infrastructure routes - UNPROTECTED
+  await fastify.register(registerInfrastructureRoutes);
+
+  // Register webhook routes (external, unprotected)
+  await fastify.register(async (webhookInstance) => {
+    const { postmarkWebhookRoutes } = await import('./modules/inbound-email/index.js');
+    await webhookInstance.register(postmarkWebhookRoutes);
+  });
+
+  // Register protected business API routes with authentication
+  await fastify.register(async (protectedInstance) => {
+    // Apply authentication to all routes in this scope
+    await protectedInstance.register(authPlugin);
+
+    // Register business API routes (all protected)
+    const { jobTemplatesRoutes, registerJobsRoutes } = await import(
+      './modules/practice-management/index.js'
+    );
+    const { registerContactsRoutes } = await import('./modules/contacts/index.js');
+
+    await protectedInstance.register(jobTemplatesRoutes);
+    await protectedInstance.register(registerJobsRoutes);
+    await protectedInstance.register(registerContactsRoutes);
+  });
+
+  // Add global error handler (same as production)
+  fastify.setErrorHandler((error: Error, _request, reply) => {
+    // Handle domain validation errors
+    if (error instanceof ValidationError) {
+      return reply.status(400).send({
+        error: error.name,
+        message: error.message,
+        details: error.details,
+      });
+    }
+
+    // Handle Fastify validation errors
+    if ('validation' in error && error.validation) {
+      return reply.status(400).send({
+        error: 'Validation Error',
+        message: error.message,
+        details: error.validation,
+      });
+    }
+
+    // Handle HTTP errors
+    if ('statusCode' in error && error.statusCode) {
+      return reply.status(error.statusCode as number).send({
+        error: error.name || 'HTTP Error',
+        message: error.message,
+      });
+    }
+
+    // Default error response
+    return reply.status(500).send({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+  });
+
+  return fastify;
+}

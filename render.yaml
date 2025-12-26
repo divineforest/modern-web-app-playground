@@ -1,0 +1,134 @@
+services:
+  - type: web
+    name: accounting-api-staging
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    preDeployCommand: pnpm run db:migrate
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: "commit"
+
+  - type: worker
+    name: accounting-worker-staging
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run temporal:worker
+    autoDeployTrigger: "commit"
+
+  - type: cron
+    name: accounting-job-generation-daily-staging
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run run:job-generation
+    autoDeployTrigger: "commit"
+    schedule: "0 2 * * *" # Runs daily at 2:00 AM UTC
+
+  - type: web
+    name: accounting-api-prod
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    preDeployCommand: pnpm run db:migrate
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"
+
+  - type: worker
+    name: accounting-worker-prod
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run temporal:worker
+    autoDeployTrigger: "off"
+
+  - type: cron
+    name: accounting-job-generation-daily-prod
+    runtime: node
+    repo: https://github.com/EasyBizIO/backend-accounting
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run run:job-generation
+    autoDeployTrigger: "off"
+    schedule: "0 2 * * *" # Runs daily at 2:00 AM UTC
+
+envVarGroups:
+  - name: "staging"
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: API_BEARER_TOKENS
+        sync: false
+      - key: ODOO_API_KEY
+        sync: false
+      - key: ODOO_USERNAME
+        sync: false
+      - key: ODOO_DATABASE
+        sync: false
+      - key: ODOO_URL
+        sync: false
+      - key: CORE_API_KEY
+        sync: false
+      - key: CORE_API_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TEMPORAL_ADDRESS
+        sync: false
+      - key: TEMPORAL_API_KEY
+        sync: false
+      - key: TEMPORAL_NAMESPACE
+        sync: false
+
+  - name: "prod"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_BEARER_TOKENS
+        sync: false
+      - key: ODOO_API_KEY
+        sync: false
+      - key: ODOO_USERNAME
+        sync: false
+      - key: ODOO_DATABASE
+        sync: false
+      - key: ODOO_URL
+        sync: false
+      - key: CORE_API_KEY
+        sync: false
+      - key: CORE_API_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TEMPORAL_ADDRESS
+        sync: false
+      - key: TEMPORAL_API_KEY
+        sync: false
+      - key: TEMPORAL_NAMESPACE
+        sync: false
+version: "1"

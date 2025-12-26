@@ -1,0 +1,122 @@
+{
+  "name": "backend-accounting",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/src/server.js",
+  "scripts": {
+    "prepare": "husky",
+    "start": "node dist/src/server.js",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "type-coverage": "type-coverage",
+    "type-coverage:detail": "type-coverage --detail",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint:biome": "biome lint .",
+    "lint:biome:fix": "biome lint --write .",
+    "lint:eslint": "eslint .",
+    "lint:eslint:fix": "eslint . --fix",
+    "lint": "pnpm run lint:biome && pnpm run lint:eslint",
+    "lint:fix": "pnpm run lint:biome:fix && pnpm run lint:eslint:fix",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "spell": "cspell .",
+    "spell:fix": "cspell . --fix",
+    "secrets": "gitleaks detect --verbose",
+    "secrets:baseline": "gitleaks detect --baseline-path .gitleaks-baseline.json",
+    "secrets:history": "gitleaks detect --verbose --log-opts='--all'",
+    "sync:contacts": "tsx src/scripts/contacts-sync.ts",
+    "temporal:worker": "tsx src/shared/workflows/worker.ts",
+    "run:job-generation": "tsx src/scripts/automatic-job-generation.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:test": "NODE_ENV=test DATABASE_URL=postgresql://user:password@localhost:5432/accounting_test drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:introspect": "drizzle-kit introspect",
+    "db:check": "drizzle-kit check",
+    "knip": "knip",
+    "openapi:generate": "tsx src/scripts/generate-openapi.ts",
+    "openapi:generate:lint": "tsx src/scripts/generate-openapi.ts && sh -c \"redocly lint \\${npm_config_file:-generated/openapi/openapi.json}\"",
+    "openapi:preview": "sh -c \"redocly preview-docs \\${npm_config_file:-generated/openapi/openapi.json}\"",
+    "lint:redocly": "redocly lint"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "typeCoverage": {
+    "atLeast": 97,
+    "strict": true,
+    "ignoreFiles": [
+      "dist/**",
+      "node_modules/**"
+    ]
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild@<=0.24.2": ">=0.25.0",
+      "tar-fs@>=2.0.0 <2.1.4": ">=2.1.4",
+      "tar-fs@>=3.0.0 <3.1.1": ">=3.1.1"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@ts-rest/fastify>fastify": "5"
+      }
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.7",
+    "@eslint/js": "^9.39.1",
+    "@redocly/cli": "^2.12.1",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@vitest/coverage-v8": "^4.0.10",
+    "cspell": "^9.3.2",
+    "drizzle-kit": "^0.31.7",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "gitleaks": "^1.0.0",
+    "husky": "^9.1.7",
+    "knip": "^5.70.2",
+    "msw": "^2.12.3",
+    "pino-pretty": "^13.1.2",
+    "tsx": "^4.20.6",
+    "type-coverage": "^2.29.7",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "^4.0.8"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/rate-limit": "^10.1.1",
+    "@fastify/swagger": "^9.3.0",
+    "@fastify/swagger-ui": "^5.2.3",
+    "@sentry/node": "^10.30.0",
+    "@t3-oss/env-core": "^0.10.1",
+    "@temporalio/activity": "^1.13.2",
+    "@temporalio/client": "^1.13.2",
+    "@temporalio/worker": "^1.13.2",
+    "@temporalio/workflow": "^1.13.2",
+    "@ts-rest/core": "^3.52.1",
+    "@ts-rest/fastify": "^3.52.1",
+    "@ts-rest/open-api": "^3.52.1",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.7",
+    "fastify": "^5.6.2",
+    "fastify-plugin": "^5.1.0",
+    "openapi3-ts": "^4.5.0",
+    "pino": "^10.1.0",
+    "postgres": "^3.4.7",
+    "yaml": "^2.8.2",
+    "zod": "^3.25.76"
+  }
+}
