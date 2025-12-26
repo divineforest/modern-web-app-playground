@@ -13,3 +13,7 @@ Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-
 - **Both tools**: Run `pnpm lint` for unified linting (Biome + ESLint)
 - **Enforced**: `import type` for TypeScript type imports
 - Style: 2-space indent, 100 char width, single quotes, semicolons required
+
+## After Changes
+
+Run `pnpm lint` and `pnpm test` before considering work complete.
