@@ -20,4 +20,5 @@ Before considering work complete, ensure all checks pass locally:
 
 - `pnpm lint`
 - `pnpm test`
+- `pnpm typecheck`
 - `pnpm type-coverage`
