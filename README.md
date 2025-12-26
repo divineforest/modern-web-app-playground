@@ -40,9 +40,8 @@ This project uses centralized version management:
 # Start PostgreSQL with dev and test databases
 docker-compose up -d
 
-# Databases available at:
-# - Development: postgresql://postgres:postgres@localhost:5432/accounting_dev
-# - Test: postgresql://postgres:postgres@localhost:5432/accounting_test
+# Databases: accounting_dev (development), accounting_test (testing)
+# Credentials: see POSTGRES_USER/POSTGRES_PASSWORD in docker-compose.yml
 ```
 
 **2. Setup Temporal Server**:
@@ -69,8 +68,8 @@ nvm use
 corepack enable
 pnpm install
 
-# Set environment variables
-export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/accounting_dev"
+# Set DATABASE_URL (use credentials from docker-compose.yml: POSTGRES_USER/POSTGRES_PASSWORD)
+export DATABASE_URL="postgresql://<user>:<password>@localhost:5432/accounting_dev"
 
 # Run Fastify server locally
 pnpm dev
