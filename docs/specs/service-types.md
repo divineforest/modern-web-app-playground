@@ -68,7 +68,7 @@ Service types enable consistent categorization across the platform and support f
 
 ### TR-2: Data Model Location
 
-- The system SHALL define the schema in `src/db/schema-local.ts`
+- The system SHALL define the schema in `src/db/schema.ts`
 - The system SHALL follow Drizzle ORM conventions for table definitions
 - The system SHALL export the table definition for use in queries and relations
 - The system SHALL include schema in database migration files
@@ -307,7 +307,7 @@ Since this is a data-only feature, structure is minimal:
 
 ```
 src/db/
-├── schema-local.ts           # Service types table definition
+├── schema.ts           # Service types table definition
 ├── migrations/
 │   └── XXXX_create_service_types.sql  # Migration file
 └── seeds/                    # 🚧 Optional seed data
@@ -328,7 +328,7 @@ src/modules/practice-management/
 ### Internal
 
 - Database connection (`src/db/connection.ts`)
-- Database schema definitions (`src/db/schema-local.ts`)
+- Database schema definitions (`src/db/schema.ts`)
 - Migration system (Drizzle Kit)
 
 ### External

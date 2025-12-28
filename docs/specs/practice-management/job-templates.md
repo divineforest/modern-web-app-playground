@@ -269,7 +269,7 @@ GET /api/internal/job-templates
 
 ## Database Schema
 
-The `job_templates` table already exists in `src/db/schema-local.ts` with the following structure:
+The `job_templates` table already exists in `src/db/schema.ts` with the following structure:
 
 ```sql
 CREATE TABLE job_templates (

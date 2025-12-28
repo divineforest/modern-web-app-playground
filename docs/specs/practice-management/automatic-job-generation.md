@@ -145,7 +145,7 @@ This feature fits into the larger Practice Management System (PMS) by bridging b
   ADD COLUMN billing_period_id UUID NULL 
   REFERENCES public.billing_periods(id);
   ```
-- The system SHALL update Drizzle schema definition in `src/db/schema-local.ts`:
+- The system SHALL update Drizzle schema definition in `src/db/schema.ts`:
   - Add `billing_period_id: uuid('billing_period_id').references(() => billing_periods.id)` to jobs table schema
   - Note: `billing_periods` table reference points to core microservice's public schema
 - The system SHALL create unique partial index on billing_period_id:

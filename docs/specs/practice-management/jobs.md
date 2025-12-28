@@ -249,7 +249,7 @@ GET /api/internal/jobs
 
 ## Database Schema
 
-The `jobs` table should be created in `src/db/schema-local.ts` with the following structure:
+The `jobs` table should be created in `src/db/schema.ts` with the following structure:
 
 ```sql
 CREATE TABLE jobs (

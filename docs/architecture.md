@@ -196,8 +196,6 @@ For comprehensive testing strategy, tools, and practices, see [Testing Architect
 │   ├── instrument.ts                      # Sentry SDK initialization (must be imported first)
 │   ├── db/                                # Database layer
 │   │   ├── schema.ts                      # Drizzle schema definitions
-│   │   ├── schema-core.ts                 # Core microservice tables (no migrations)
-│   │   ├── schema-local.ts                # Local microservice tables (with migrations)
 │   │   ├── migrations/                    # Database migration files
 │   │   ├── connection.ts                  # Database connection setup
 │   │   └── index.ts                       # Database exports
@@ -662,43 +660,11 @@ JWT_SECRET="your-secure-jwt-secret-here"
 
 ### Database Schema Architecture
 
-The project implements a clear separation between core microservice tables and locally managed tables:
+All database tables are defined in a unified schema file (`src/db/schema.ts`) and managed through Drizzle ORM migrations. The schema includes all tables needed by the service, with complete TypeScript type safety and migration support.
 
-#### Schema File Structure
-
-- **`src/db/schema.ts`**: Main schema file that exports all tables for querying
-- **`src/db/schema-core.ts`**: Core microservice tables (companies, etc.) - **NO MIGRATIONS**
-- **`src/db/schema-local.ts`**: Local microservice tables (job_templates, etc.) - **WITH MIGRATIONS**
-- **`drizzle.config.ts`**: Points only to `schema-local.ts` for migration management
-
-#### Schema Separation Benefits
-
-- **Microservice Boundaries**: Clear separation between tables owned by different services
-- **Migration Safety**: Prevents accidental modification of core microservice tables
-- **Query Flexibility**: Full Drizzle ORM access to all tables regardless of ownership
-- **Type Safety**: Complete TypeScript types for all tables across microservices
-- **Testing Isolation**: Core tables can be mocked while local tables use real database
-- **Development Workflow**: Local team can iterate on local schema without affecting core service
-
-#### Usage Patterns
-
-```typescript
-// Import all tables for querying (both core and local)
-import { companies, jobTemplates } from "./db/schema.js";
-
-// Full query capabilities across microservice boundaries
-const result = await db
-  .select()
-  .from(companies) // Core microservice table
-  .leftJoin(
-    jobTemplates, // Local microservice table
-    eq(companies.id, jobTemplates.companyId)
-  );
-
-// Migrations only affect local tables
-// pnpm db:generate -> only creates migrations for jobTemplates
-// pnpm db:push -> only modifies local tables
-```
+- **`src/db/schema.ts`**: Unified schema file containing all table definitions
+- **`drizzle.config.ts`**: Points to `schema.ts` for migration management
+- **Migrations**: All schema changes are tracked through versioned SQL migration files in `src/db/migrations/`
 
 ### Database Conventions
 
