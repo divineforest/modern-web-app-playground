@@ -171,6 +171,7 @@ describe('Core SDK', () => {
       const originalFetch = global.fetch;
 
       // Mock network failure on first call, success on retry
+      // eslint-disable-next-line @typescript-eslint/require-await
       global.fetch = async () => {
         callCount++;
         if (callCount < 2) {
@@ -327,7 +328,7 @@ describe('Core SDK', () => {
 
       // Mock error response
       server.use(
-        http.post('http://localhost:4000/api/internal/documents', async () => {
+        http.post('http://localhost:4000/api/internal/documents', () => {
           return HttpResponse.json(
             {
               success: false,
@@ -355,7 +356,7 @@ describe('Core SDK', () => {
 
       // Mock network error
       server.use(
-        http.post('http://localhost:4000/api/internal/documents', async () => {
+        http.post('http://localhost:4000/api/internal/documents', () => {
           return HttpResponse.error();
         })
       );

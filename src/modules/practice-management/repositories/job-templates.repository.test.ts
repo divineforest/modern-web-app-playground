@@ -96,7 +96,7 @@ describe('Job Templates Repository', () => {
       const mockDb = {
         insert: () => ({
           values: () => ({
-            returning: async () => [],
+            returning: () => [],
           }),
         }),
         // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths

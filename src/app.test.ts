@@ -6,7 +6,7 @@ import { ValidationError, type ValidationErrorDetails } from './lib/error-transf
 describe('Global Error Handler', () => {
   let fastify: FastifyInstance;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Create minimal Fastify instance with just the error handler
     fastify = Fastify({
       logger: false,
@@ -57,7 +57,7 @@ describe('Global Error Handler', () => {
   describe('ValidationError handling', () => {
     it('should handle ValidationError with string details', async () => {
       // ARRANGE
-      fastify.get('/test-validation-error-string', async () => {
+      fastify.get('/test-validation-error-string', () => {
         throw new ValidationError('Invalid input provided', 'Field "email" is required');
       });
 
@@ -79,7 +79,7 @@ describe('Global Error Handler', () => {
 
     it('should handle ValidationError with structured details', async () => {
       // ARRANGE
-      fastify.get('/test-validation-error-object', async () => {
+      fastify.get('/test-validation-error-object', () => {
         throw new ValidationError('Validation failed', {
           field: 'email',
           reason: 'Invalid format',
@@ -107,7 +107,7 @@ describe('Global Error Handler', () => {
 
     it('should handle ValidationError without details', async () => {
       // ARRANGE
-      fastify.get('/test-validation-error-no-details', async () => {
+      fastify.get('/test-validation-error-no-details', () => {
         throw new ValidationError('Something went wrong');
       });
 
@@ -135,7 +135,7 @@ describe('Global Error Handler', () => {
         }
       }
 
-      fastify.get('/test-validation-error-subclass', async () => {
+      fastify.get('/test-validation-error-subclass', () => {
         throw new CustomValidationError('Custom validation failed', 'Invalid data');
       });
 
@@ -172,7 +172,7 @@ describe('Global Error Handler', () => {
             },
           },
         },
-        async () => {
+        () => {
           return { success: true };
         }
       );
@@ -196,7 +196,7 @@ describe('Global Error Handler', () => {
   describe('HTTP error handling', () => {
     it('should handle errors with statusCode property', async () => {
       // ARRANGE
-      fastify.get('/test-http-error', async () => {
+      fastify.get('/test-http-error', () => {
         const error = new Error('Forbidden') as Error & { statusCode: number };
         error.statusCode = 403;
         throw error;
@@ -219,7 +219,7 @@ describe('Global Error Handler', () => {
   describe('Default error handling', () => {
     it('should handle unexpected errors with 500 status', async () => {
       // ARRANGE
-      fastify.get('/test-generic-error', async () => {
+      fastify.get('/test-generic-error', () => {
         throw new Error('Something unexpected happened');
       });
 
@@ -240,7 +240,7 @@ describe('Global Error Handler', () => {
 
     it('should handle non-Error objects', async () => {
       // ARRANGE
-      fastify.get('/test-non-error', async () => {
+      fastify.get('/test-non-error', () => {
         // biome-ignore lint/suspicious/noExplicitAny: Testing error handling with non-standard errors
         throw { custom: 'error object' } as any;
       });
@@ -270,7 +270,7 @@ describe('Global Error Handler', () => {
         }
       }
 
-      fastify.get('/test-error-precedence', async () => {
+      fastify.get('/test-error-precedence', () => {
         throw new ValidationErrorWithStatus('Validation takes precedence');
       });
 

@@ -132,7 +132,7 @@ describe('Job Templates Service', () => {
       const mockDb = {
         insert: () => ({
           values: () => ({
-            returning: async () => {
+            returning: () => {
               throw new Error('Unexpected system error');
             },
           }),
@@ -293,7 +293,7 @@ describe('Job Templates Service', () => {
         update: () => ({
           set: () => ({
             where: () => ({
-              returning: async () => {
+              returning: () => {
                 throw new Error('Unexpected database connection error');
               },
             }),

@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { extractBearerToken, extractUserContext, validateToken } from './token-validator.js';
 
@@ -94,7 +94,7 @@ async function authenticationHook(request: FastifyRequest, reply: FastifyReply):
  * await fastify.register(protectedRoutes);
  * ```
  */
-const authPluginImplementation: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+const authPluginImplementation: FastifyPluginCallback = (fastify: FastifyInstance) => {
   // Register authentication hook for all routes in this plugin scope
   fastify.addHook('onRequest', authenticationHook);
 

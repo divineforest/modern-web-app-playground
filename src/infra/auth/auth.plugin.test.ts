@@ -24,12 +24,12 @@ describe('Authentication Plugin - Integration Tests', () => {
     await fastify.register(authPlugin);
 
     // Register test route (protected by auth)
-    fastify.get('/test', async () => {
+    fastify.get('/test', () => {
       return { message: 'success' };
     });
 
     // Register route that accesses user context
-    fastify.get('/test/user', async (request) => {
+    fastify.get('/test/user', (request) => {
       return {
         message: 'success',
         user: request.user,

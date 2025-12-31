@@ -7,7 +7,7 @@ import { postmarkInboundEmailWorkflow } from '../workflows/postmark-inbound-emai
 
 const logger = createModuleLogger('postmark-webhook');
 
-export async function postmarkWebhookRoutes(fastify: FastifyInstance) {
+export function postmarkWebhookRoutes(fastify: FastifyInstance) {
   // Postmark inbound email webhook endpoint
   fastify.post('/api/v2/webhooks/postmark/inbound', async (request, reply) => {
     const startTime = Date.now();

@@ -314,7 +314,7 @@ export const handlers = [
   }),
 
   // Core API error endpoints
-  http.post('http://localhost:4000/api/v1/contacts/upsert/error', async () => {
+  http.post('http://localhost:4000/api/v1/contacts/upsert/error', () => {
     return HttpResponse.json(
       {
         success: false,
@@ -325,7 +325,7 @@ export const handlers = [
     );
   }),
 
-  http.post('http://localhost:4000/api/internal/documents/error', async () => {
+  http.post('http://localhost:4000/api/internal/documents/error', () => {
     return HttpResponse.json(
       {
         success: false,
@@ -337,7 +337,7 @@ export const handlers = [
   }),
 
   // Core API file upload error simulation
-  http.post('*/api/v1/files/upload/error', async () => {
+  http.post('*/api/v1/files/upload/error', () => {
     return HttpResponse.json(
       {
         success: false,

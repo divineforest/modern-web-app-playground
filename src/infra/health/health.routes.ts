@@ -68,7 +68,7 @@ async function getVersion(): Promise<string> {
  * - `/ready`: readiness probe. Answers "can we serve traffic?" and may check dependencies.
  *   We verify database connectivity and return 503 when the app should not get traffic.
  */
-export async function healthRoutes(fastify: FastifyInstance) {
+export function healthRoutes(fastify: FastifyInstance) {
   /**
    * Liveness probe - checks if process is alive
    * Used by Render health checks - must be fast and reliable

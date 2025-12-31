@@ -192,7 +192,7 @@ describe('Postmark Email Processing Service (via Activity)', () => {
 
     // Mock Core API to return error
     server.use(
-      http.post('*/api/internal/documents', async () => {
+      http.post('*/api/internal/documents', () => {
         return HttpResponse.json({ error: 'Upload failed' }, { status: 500 });
       })
     );
