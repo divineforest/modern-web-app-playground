@@ -127,3 +127,75 @@ jobs:
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [static-checks, tests]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: accounting_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install jq for JSON validation
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Setup database extensions
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=password psql -h localhost -U user -d accounting_test << 'EOF'
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+          EOF
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Run smoke test (built server)
+        run: pnpm run test:smoke:build
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+          PORT: 3000
+          HOST: localhost
+          LOG_LEVEL: error
+          API_BEARER_TOKENS: ci_test_token_12345
+          VIES_API_KEY: ci_test_vies_key
+          CORE_API_URL: http://localhost:4000
+          CORE_API_KEY: ci_test_api_key
+          ODOO_URL: https://test.odoo.com
+          ODOO_DATABASE: test_db
+          ODOO_USERNAME: test_user
+          ODOO_API_KEY: test_api_key

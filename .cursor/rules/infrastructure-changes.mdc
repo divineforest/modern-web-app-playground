@@ -1,0 +1,70 @@
+---
+description: Infrastructure changes require smoke test verification
+globs:
+  - src/lib/env.ts
+  - src/config/**
+  - src/db/connection.ts
+  - src/db/schema.ts
+  - src/server.ts
+  - src/app.ts
+  - src/infra/**
+  - package.json
+  - docker-compose.yml
+  - drizzle.config.ts
+  - render.yaml
+  - tsconfig.json
+  - .github/workflows/**
+alwaysApply: false
+---
+
+# Infrastructure Changes - Smoke Test Required
+
+When modifying infrastructure files, the HTTP server's ability to start and serve requests may be affected.
+
+## After Changes to Infrastructure Files
+
+**ALWAYS run the smoke test** to verify the server still works:
+
+```bash
+pnpm test:smoke
+```
+
+This validates:
+- Server starts successfully with current configuration
+- `/healthz` endpoint responds (liveness probe)
+- `/ready` endpoint responds with database connectivity (readiness probe)
+- `/docs` endpoint serves API documentation
+
+## What Counts as Infrastructure
+
+Files that affect server startup, configuration, or connectivity:
+
+| Category | Files |
+|----------|-------|
+| **Environment** | `src/lib/env.ts` |
+| **Server Config** | `src/config/**`, `src/server.ts`, `src/app.ts` |
+| **Database** | `src/db/connection.ts`, `src/db/schema.ts`, `drizzle.config.ts` |
+| **Infrastructure** | `src/infra/**` |
+| **Dependencies** | `package.json` |
+| **Deployment** | `docker-compose.yml`, `render.yaml`, `.github/workflows/**` |
+| **TypeScript** | `tsconfig.json` |
+
+## CI Integration
+
+The smoke test runs automatically in CI after the `tests` job passes. It uses the built server (`pnpm test:smoke:build`) to verify production-like behavior.
+
+## Failure Scenarios
+
+The smoke test will fail if:
+- Required environment variables are missing
+- Database connection fails
+- Server fails to start within timeout
+- Health endpoints return unexpected status codes
+
+## Local Development
+
+Ensure your `.env` file has all required variables before running:
+- `DATABASE_URL`
+- `CORE_API_KEY`
+- `API_BEARER_TOKENS`
+- `VIES_API_KEY`

@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:smoke": "./scripts/smoke-test.sh",
+    "test:smoke:build": "./scripts/smoke-test.sh build",
     "typecheck": "tsc --noEmit",
     "type-coverage": "type-coverage",
     "type-coverage:detail": "type-coverage --detail",
