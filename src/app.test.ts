@@ -242,6 +242,7 @@ describe('Global Error Handler', () => {
       // ARRANGE
       fastify.get('/test-non-error', () => {
         // biome-ignore lint/suspicious/noExplicitAny: Testing error handling with non-standard errors
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw { custom: 'error object' } as any;
       });
 

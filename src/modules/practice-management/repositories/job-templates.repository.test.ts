@@ -100,6 +100,7 @@ describe('Job Templates Repository', () => {
           }),
         }),
         // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // ACT & ASSERT

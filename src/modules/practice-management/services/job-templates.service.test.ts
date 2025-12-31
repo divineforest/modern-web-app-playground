@@ -138,6 +138,7 @@ describe('Job Templates Service', () => {
           }),
         }),
         // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // ACT & ASSERT
@@ -300,6 +301,7 @@ describe('Job Templates Service', () => {
           }),
         }),
         // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // ACT & ASSERT

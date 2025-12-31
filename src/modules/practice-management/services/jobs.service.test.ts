@@ -123,6 +123,7 @@ describe('Jobs Service', () => {
 
       // ACT
       // biome-ignore lint/suspicious/noExplicitAny: Testing default status behavior
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const job = await createJobService(input as any, db);
 
       // ASSERT
@@ -368,6 +369,7 @@ describe('Jobs Service', () => {
       // ACT & ASSERT
       await expect(
         // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         updateJobService(created.id, { status: 'invalid_status' as any }, db)
       ).rejects.toThrow();
     });
@@ -384,6 +386,7 @@ describe('Jobs Service', () => {
       const updated = await updateJobService(
         created.id,
         // biome-ignore lint/suspicious/noExplicitAny: Testing immutable fields
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { companyId: company2.id, serviceTypeId: serviceType1.id } as any,
         db
       );

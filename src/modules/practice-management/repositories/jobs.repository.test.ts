@@ -116,6 +116,7 @@ describe('Jobs Repository', () => {
       const company = await createTestCompany();
       const serviceType = await getFirstServiceType(db);
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value that bypasses TypeScript
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = buildTestJobData(
         { companyId: company.id, serviceTypeId: serviceType.id },
         {
@@ -384,6 +385,7 @@ describe('Jobs Repository', () => {
 
       // ACT & ASSERT
       // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(updateJob(job.id, { status: 'invalid_status' as any }, db)).rejects.toThrow();
     });
   });
