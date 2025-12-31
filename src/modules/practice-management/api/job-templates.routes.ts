@@ -90,7 +90,7 @@ const router = s.router(jobTemplatesContract, {
           jobTemplates: jobTemplates,
         },
       };
-    } catch (_error) {
+    } catch {
       return {
         status: 500 as const,
         body: {

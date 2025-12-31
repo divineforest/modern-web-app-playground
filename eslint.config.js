@@ -43,7 +43,6 @@ export default tseslint.config(
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/await-thenable': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
     },
   }
 );
