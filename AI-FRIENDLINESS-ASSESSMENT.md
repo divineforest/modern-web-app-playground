@@ -9,9 +9,7 @@
 
 ## Executive Summary
 
-**Overall AI-Friendliness Score: 9.3/10** ⭐⭐⭐⭐⭐
-
-*(Updated January 1, 2026 - ER diagram added to architecture docs, improving visual documentation from 9.5/10 to 9.6/10)*
+**Overall AI-Friendliness Score: 9.2/10** ⭐⭐⭐⭐⭐
 
 This project represents **exceptional AI-friendliness** with industry-leading practices for AI-assisted development. The combination of comprehensive documentation, strict type safety (97% coverage), consistent patterns, and enforced conventions creates an environment where AI agents can work with high accuracy and confidence.
 
@@ -31,7 +29,7 @@ This project represents **exceptional AI-friendliness** with industry-leading pr
 
 ## Detailed Scoring by Research Area
 
-### 1. Documentation Effectiveness for AI: **9.6/10** 🏆
+### 1. Documentation Effectiveness for AI: **9.5/10** 🏆
 
 **Strengths:**
 1. **AI-Specific Guidance** - `AGENTS.md` explicitly addresses AI agents as the audience
@@ -43,9 +41,9 @@ This project represents **exceptional AI-friendliness** with industry-leading pr
 7. **Worked Examples** - Multiple complete examples of common patterns
 
 **Weaknesses:**
-1. Some module-level README files missing (e.g., no README in `src/modules/contacts/`)
-2. Workflow testing patterns not fully documented
-3. No architecture diagrams for system overview
+1. No visual diagrams (ER diagrams, architecture diagrams) - would help AI understand relationships
+2. Some module-level README files missing (e.g., no README in `src/modules/contacts/`)
+3. Workflow testing patterns not fully documented
 
 **Evidence:**
 - `AGENTS.md`: "Backend accounting system for practice management. Integrates with Odoo ERP and Core microservice."
@@ -301,7 +299,7 @@ AI is warned about dangerous operations before making mistakes. Cursor rules pro
 
 | Category | Weight | Score | Weighted |
 |----------|--------|-------|----------|
-| Documentation Effectiveness | 15% | 9.6 | 1.44 |
+| Documentation Effectiveness | 15% | 9.5 | 1.43 |
 | Code Pattern Consistency | 10% | 8.8 | 0.88 |
 | Type Safety and Inference | 15% | 9.8 | 1.47 |
 | Module Boundaries | 8% | 9.0 | 0.72 |
@@ -311,7 +309,7 @@ AI is warned about dangerous operations before making mistakes. Cursor rules pro
 | Template Availability | 8% | 8.5 | 0.68 |
 | Shared Code Discovery | 7% | 9.0 | 0.63 |
 | Anti-Patterns Documentation | 7% | 8.8 | 0.62 |
-| **TOTAL** | **100%** | - | **9.22** |
+| **TOTAL** | **100%** | - | **9.21** |
 
 **Overall AI-Friendliness Score: 9.2/10**
 
@@ -349,7 +347,7 @@ AI is warned about dangerous operations before making mistakes. Cursor rules pro
 ### What Could Be Improved
 
 1. **Visual Documentation**
-   - ✅ ER diagrams for database schema **(COMPLETED - Added comprehensive ER diagram to architecture.md)**
+   - Add ER diagrams for database schema
    - Add architecture diagrams for system overview
    - Add sequence diagrams for complex flows
 
@@ -375,31 +373,19 @@ AI is warned about dangerous operations before making mistakes. Cursor rules pro
 
 ---
 
-## Completed Improvements ✅
-
-### High Impact, Low Effort (Completed) ⚡
-
-1. **Add ER Diagram to Architecture Docs** ✅ (COMPLETED - Added comprehensive ER diagram to architecture.md)
-   - Use Mermaid in `docs/architecture.md`
-   - Show relationships between main entities
-   - Impact: Helps AI understand data model at a glance
-   - **Result**: AI can now visualize database relationships instantly
-
----
-
 ## Prioritized Recommendations
 
 ### High Impact, Low Effort (Do First) ⚡
 
-1. **Create "How to Add a New Module" Guide** (1 hour)
+1. **Add ER Diagram to Architecture Docs** (30 minutes)
+   - Use Mermaid in `docs/architecture.md`
+   - Show relationships between main entities
+   - Impact: Helps AI understand data model at a glance
+
+2. **Create "How to Add a New Module" Guide** (1 hour)
    - Step-by-step instructions
    - Reference existing modules as examples
    - Impact: Reduces AI questions when adding features
-
-2. **Add Utility Index to Architecture Docs** (30 minutes)
-   - List all utilities in `src/lib/` and `src/shared/`
-   - Include usage examples
-   - Impact: Improves utility discoverability
 
 3. **Add Utility Index to Architecture Docs** (30 minutes)
    - List all utilities in `src/lib/` and `src/shared/`
@@ -473,7 +459,7 @@ AI is warned about dangerous operations before making mistakes. Cursor rules pro
 
 ## Conclusion
 
-This project represents **exceptional AI-friendliness** with a score of **9.3/10** (updated from 9.2/10 with ER diagram addition). It is in the **top 5% of codebases** for AI-assisted development.
+This project represents **exceptional AI-friendliness** with a score of **9.2/10**. It is in the **top 5% of codebases** for AI-assisted development.
 
 **Key Success Factors:**
 1. Documentation explicitly targets AI agents
@@ -490,7 +476,7 @@ This project represents **exceptional AI-friendliness** with a score of **9.3/10
 - Examples provide clear templates for new code
 
 **Recommendation:**
-Continue current practices. The ER diagram addition demonstrates the value of incremental improvements. Focus on adding how-to guides and architecture diagrams to reach 9.5+. The foundation is exceptional - small, targeted improvements yield significant AI-friendliness gains.
+Continue current practices. Focus on adding visual documentation and how-to guides to reach 9.5+. The foundation is exceptional - incremental improvements will make it even better.
 
 ---
 
