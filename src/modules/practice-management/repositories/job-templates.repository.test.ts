@@ -214,9 +214,7 @@ describe('Job Templates Repository', () => {
       expect(updated.name).toBe('Updated Name');
       expect(updated.description).toBe('Updated Description');
       expect(updated.code).toBe(created.code); // Unchanged
-      expect((updated.updatedAt as Date).getTime()).toBeGreaterThanOrEqual(
-        (created.updatedAt as Date).getTime()
-      );
+      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(created.updatedAt.getTime());
     });
 
     it('should perform partial updates', async () => {

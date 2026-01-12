@@ -171,7 +171,7 @@ export class CoreSdk {
         // Try to parse error response
         let errorMessage = `HTTP ${response.status}`;
         if (typeof response.body === 'object' && response.body && 'error' in response.body) {
-          const errorResult = response.body as FileUploadErrorResponse;
+          const errorResult = response.body;
           errorMessage = errorResult.error || errorMessage;
         }
         throw new CoreSdkError(

@@ -1930,9 +1930,7 @@ describe('GET /api/internal/global-contacts', () => {
 
       // ASSERT:
       expect(response.statusCode).toBe(200);
-      const body = response.json() as {
-        contacts: Array<{ id: string; name: string }>;
-      };
+      const body: { contacts: Array<{ id: string; name: string }> } = response.json();
       // Find the test contact in results
       const found = body.contacts.find((c) => c.name === `No Company Filter ${timestamp}`);
       // Without company filter, bob_id is not available, so id should be contact.id

@@ -168,7 +168,7 @@ const router = s.router(contactsContract, {
     }
 
     return {
-      status: statusCode as 200 | 201,
+      status: statusCode,
       body: responseBody,
     };
   },
