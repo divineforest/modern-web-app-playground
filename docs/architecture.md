@@ -29,7 +29,6 @@ For comprehensive testing strategy, tools, and practices, see [Testing Architect
 
 - **Tool**: type-coverage
 - **Purpose**: Measure and track TypeScript type safety across the codebase
-- **Minimum Threshold**: 97 (enforced in CI/CD)
 - **Metrics**: Percentage of code with explicit types vs `any` types
 - **Benefits**: 
   - Quantifies TypeScript adoption progress
