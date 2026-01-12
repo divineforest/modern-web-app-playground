@@ -207,8 +207,8 @@ const router = s.router(invoicesContract, {
  * Register invoices routes with Fastify
  * @param fastify Fastify instance
  */
-export async function registerInvoicesRoutes(fastify: FastifyInstance) {
-  await s.registerRouter(invoicesContract, router, fastify, {
+export function registerInvoicesRoutes(fastify: FastifyInstance) {
+  s.registerRouter(invoicesContract, router, fastify, {
     logInitialization: true,
   });
 }

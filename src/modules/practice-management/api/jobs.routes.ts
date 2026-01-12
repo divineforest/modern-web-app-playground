@@ -180,8 +180,8 @@ const router = s.router(jobsContract, {
  * Register jobs routes with Fastify
  * @param fastify Fastify instance
  */
-export async function registerJobsRoutes(fastify: FastifyInstance) {
-  await s.registerRouter(jobsContract, router, fastify, {
+export function registerJobsRoutes(fastify: FastifyInstance) {
+  s.registerRouter(jobsContract, router, fastify, {
     logInitialization: true,
   });
 }

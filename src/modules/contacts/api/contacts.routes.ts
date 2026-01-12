@@ -334,8 +334,8 @@ const router = s.router(contactsContract, {
 /**
  * Register contacts routes on the Fastify instance
  */
-export async function registerContactsRoutes(fastify: FastifyInstance) {
-  await s.registerRouter(contactsContract, router, fastify, {
+export function registerContactsRoutes(fastify: FastifyInstance) {
+  s.registerRouter(contactsContract, router, fastify, {
     logInitialization: true,
   });
 }
