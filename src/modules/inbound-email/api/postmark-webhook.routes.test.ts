@@ -88,7 +88,9 @@ describe('Postmark Webhook Routes - Enqueueing', () => {
 
       // Get the mocked client and verify workflow.start was called
       const client = await createTemporalClient();
-      expect(client.workflow.start).toHaveBeenCalledWith(expect.any(Function), {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- vi.fn() mocks don't use `this`
+      const mockStart = vi.mocked(client.workflow.start);
+      expect(mockStart).toHaveBeenCalledWith(expect.any(Function), {
         taskQueue: 'hello-world',
         args: [postmarkPayload],
         workflowId: 'postmark-email-test-message-12345',
@@ -168,7 +170,9 @@ describe('Postmark Webhook Routes - Enqueueing', () => {
       expect(body.requestId).toBeDefined();
 
       // Verify workflow start was attempted
-      expect(mockClient.workflow.start).toHaveBeenCalledOnce();
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- vi.fn() mocks don't use `this`
+      const mockStart = vi.mocked(mockClient.workflow.start);
+      expect(mockStart).toHaveBeenCalledOnce();
     });
 
     it('should use MessageID for workflow deduplication', async () => {
@@ -198,7 +202,9 @@ describe('Postmark Webhook Routes - Enqueueing', () => {
 
       // Verify workflow ID format for deduplication
       const client = await createTemporalClient();
-      expect(client.workflow.start).toHaveBeenCalledWith(expect.any(Function), {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- vi.fn() mocks don't use `this`
+      const mockStart = vi.mocked(client.workflow.start);
+      expect(mockStart).toHaveBeenCalledWith(expect.any(Function), {
         taskQueue: 'hello-world',
         args: [postmarkPayload],
         workflowId: `postmark-email-${messageId}`,
@@ -222,7 +228,9 @@ describe('Postmark Webhook Routes - Enqueueing', () => {
 
       // Verify same workflow ID is used for deduplication
       const client2 = await createTemporalClient();
-      expect(client2.workflow.start).toHaveBeenCalledWith(expect.any(Function), {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- vi.fn() mocks don't use `this`
+      const mockStart2 = vi.mocked(client2.workflow.start);
+      expect(mockStart2).toHaveBeenCalledWith(expect.any(Function), {
         taskQueue: 'hello-world',
         args: [postmarkPayload],
         workflowId: `postmark-email-${messageId}`,
