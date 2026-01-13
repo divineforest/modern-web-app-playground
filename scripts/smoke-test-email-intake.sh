@@ -225,41 +225,54 @@ EOF
 }
 
 # Wait for workflow to reach terminal state (completed or failed)
+# OR for activity to be retrying with expected Core API failure
 wait_for_workflow() {
-    log_step "Waiting for workflow to reach terminal state (timeout: ${TIMEOUT}s)..."
-    log_info "NOTE: Workflow is expected to FAIL due to Core API being unavailable"
+    log_step "Waiting for workflow to reach terminal state or activity retry (timeout: ${TIMEOUT}s)..."
+    log_info "NOTE: Workflow is expected to FAIL or RETRY due to Core API being unavailable"
     
     local elapsed=0
     local status=""
     
     while [ $elapsed -lt $TIMEOUT ]; do
-        # Query workflow status
-        status=$(temporal workflow describe \
+        # Query workflow status and details
+        local workflow_json=$(temporal workflow describe \
             --workflow-id "${WORKFLOW_ID}" \
-            --fields status \
-            2>/dev/null | grep -A1 "Status:" | tail -n1 | xargs || echo "")
+            --output json 2>/dev/null || echo "{}")
         
-        if [ "$status" = "Completed" ]; then
+        status=$(echo "$workflow_json" | jq -r '.workflowExecutionInfo.status // "unknown"')
+        
+        if [ "$status" = "WORKFLOW_EXECUTION_STATUS_COMPLETED" ]; then
             log_info "✓ Workflow completed successfully"
             return 0
-        elif [ "$status" = "Failed" ]; then
+        elif [ "$status" = "WORKFLOW_EXECUTION_STATUS_FAILED" ]; then
             log_warn "Workflow failed as expected (Core API unavailable)"
             return 0
-        elif [ "$status" = "Terminated" ] || [ "$status" = "Canceled" ]; then
+        elif [ "$status" = "WORKFLOW_EXECUTION_STATUS_TERMINATED" ] || [ "$status" = "WORKFLOW_EXECUTION_STATUS_CANCELED" ]; then
             log_error "Workflow was terminated or canceled unexpectedly: ${status}"
             temporal workflow describe --workflow-id "${WORKFLOW_ID}"
             exit 1
+        elif [ "$status" = "WORKFLOW_EXECUTION_STATUS_RUNNING" ]; then
+            # Check if activity is retrying with fetch/Core API failure
+            local pending_activities=$(echo "$workflow_json" | jq -r '.pendingActivities // []')
+            local has_fetch_failure=$(echo "$pending_activities" | jq -r '.[].lastFailure.message // ""' | grep -i "fetch failed" || true)
+            
+            if [ -n "$has_fetch_failure" ] && [ $elapsed -ge 20 ]; then
+                log_warn "Workflow is running with expected Core API fetch failures (activity retrying)"
+                log_info "✓ This is expected behavior for smoke test"
+                return 0
+            fi
         fi
         
         sleep 2
         elapsed=$((elapsed + 2))
         
         if [ $((elapsed % 10)) -eq 0 ]; then
-            log_info "Still waiting... (${elapsed}s elapsed, status: ${status:-unknown})"
+            local readable_status=$(echo "$status" | sed 's/WORKFLOW_EXECUTION_STATUS_//')
+            log_info "Still waiting... (${elapsed}s elapsed, status: ${readable_status:-unknown})"
         fi
     done
     
-    log_error "Workflow did not reach terminal state within ${TIMEOUT} seconds"
+    log_error "Workflow did not reach expected state within ${TIMEOUT} seconds"
     log_error "Current status: ${status:-unknown}"
     temporal workflow describe --workflow-id "${WORKFLOW_ID}"
     exit 1
@@ -296,18 +309,24 @@ verify_s3_archival() {
 verify_workflow_execution() {
     log_step "Verifying workflow execution..."
     
-    # Get workflow history
-    local history=$(temporal workflow show \
+    # Get workflow details including pending activities
+    local workflow_json=$(temporal workflow describe \
         --workflow-id "${WORKFLOW_ID}" \
         --output json 2>/dev/null || echo "{}")
     
-    # Check if activity started (workflow reached execution phase)
-    local activity_started=$(echo "$history" | jq -r '.events[] | select(.eventType == "ActivityTaskScheduled") | .eventType' 2>/dev/null | head -n1)
+    # Check if activity was scheduled (either completed, pending, or failed)
+    local pending_activities=$(echo "$workflow_json" | jq -r '.pendingActivities // [] | length')
+    local history=$(temporal workflow show \
+        --workflow-id "${WORKFLOW_ID}" \
+        --output json 2>/dev/null || echo '{"events":[]}')
+    local completed_activities=$(echo "$history" | jq '[.events[] | select(.activityTaskCompletedEventAttributes != null)] | length')
     
-    if [ "$activity_started" = "ActivityTaskScheduled" ]; then
-        log_info "✓ Activity was scheduled (workflow execution started)"
+    if [ "$pending_activities" -gt 0 ]; then
+        log_info "✓ Activity is pending/retrying (${pending_activities} activities)"
+    elif [ "$completed_activities" -gt 0 ]; then
+        log_info "✓ Activity completed (${completed_activities} activities)"
     else
-        log_error "Activity was never scheduled - workflow may have failed early"
+        log_error "No activities found - workflow may have failed before activity execution"
         exit 1
     fi
 }
