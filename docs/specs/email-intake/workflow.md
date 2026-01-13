@@ -27,10 +27,14 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 
 ### FR-2: Original Payload Archival
 
-- 🚧 The system SHALL store the original webhook payload to S3 before any processing begins
-- 🚧 The system SHALL use a consistent key structure for S3 storage: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
-- 🚧 The system SHALL store the raw, unmodified payload to preserve the exact data received
-- 🚧 This storage serves debugging and audit purposes and enables workflow replay if needed
+- The system SHALL store the original webhook payload to S3 before any processing begins
+  - Implementation: `src/modules/inbound-email/services/email-archiver.ts` (`archiveInboundEmailPayload`)
+- The system SHALL use a consistent key structure for S3 storage: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
+  - Implementation: `src/modules/inbound-email/services/email-archiver.ts` (`generateInboundEmailKey`)
+  - Uses UTC timezone for consistency across environments
+- The system SHALL store the raw, unmodified payload to preserve the exact data received
+  - Implementation: Generic S3 service `src/shared/data-access/s3/s3-storage.ts` (`uploadJson`)
+- This storage serves debugging and audit purposes and enables workflow replay if needed
 
 ### FR-3: Email Storage and Processing
 
@@ -89,7 +93,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
   - Workflow execution policies and activity configurations
   - 🚧 Rate limiting configuration for Core API requests
   - 🚧 Worker scaling and resource allocation settings
-  - 🚧 S3 bucket name and credentials for original payload storage
+  - S3 bucket name and credentials for original payload storage (configured via env vars)
 
 ### TR-5: Database Requirements
 
@@ -105,7 +109,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 
 The workflow executes a single activity **ProcessInboundEmailActivity** that performs all processing steps:
 
-1. 🚧 Store original webhook payload to S3 for debugging and audit purposes
+1. Store original webhook payload to S3 for debugging and audit purposes
 2. Extract and process email metadata (sender, subject, body, headers)
 3. Parse recipient email address to extract billing inbound token
 4. Convert billing inbound token to lowercase and query database for companies.billing_inbound_token using case-insensitive matching
@@ -122,9 +126,9 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 
 ### 1. Archival Phase
 
-- 🚧 Store original webhook payload to S3 before any processing
-- 🚧 Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
-- 🚧 Preserve raw, unmodified payload for debugging and audit purposes
+- Store original webhook payload to S3 before any processing
+- Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json` (UTC timezone)
+- Preserve raw, unmodified payload for debugging and audit purposes
 
 ### 2. Extraction Phase
 
@@ -208,7 +212,7 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 
 ### Workflow Processing Errors
 
-- **🚧 S3 Storage Failure**: Activity fails and workflow retries; archival is mandatory to ensure audit trail and replay capability
+- **S3 Storage Failure**: Activity fails and workflow retries; archival is mandatory to ensure audit trail and replay capability
 - **Invalid Billing Inbound Token**: Activity fails and workflow handles the failure appropriately
 - **Company Not Found**: Activity fails when companies.billing_inbound_token lookup fails, workflow handles accordingly
 - **Processing Failure**: Activities are handled with appropriate failure recovery mechanisms
