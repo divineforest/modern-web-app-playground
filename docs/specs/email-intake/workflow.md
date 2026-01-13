@@ -25,14 +25,21 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 - The system SHALL validate the extracted company exists in the system
 - The system SHALL handle malformed or incomplete email data gracefully
 
-### FR-2: Email Storage and Processing
+### FR-2: Original Payload Archival
+
+- 🚧 The system SHALL store the original webhook payload to S3 before any processing begins
+- 🚧 The system SHALL use a consistent key structure for S3 storage: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
+- 🚧 The system SHALL store the raw, unmodified payload to preserve the exact data received
+- 🚧 This storage serves debugging and audit purposes and enables workflow replay if needed
+
+### FR-3: Email Storage and Processing
 
 - 🚧 The system SHALL store processed email data in a structured format
 - 🚧 The system SHALL associate emails with relevant business entities (contacts, companies, etc.)
 - 🚧 The system SHALL trigger appropriate business logic based on email content and metadata
 - 🚧 The system SHALL maintain audit trail of processed emails
 
-### FR-3: Attachment Handling
+### FR-4: Attachment Handling
 
 - The system SHALL process and decode base64-encoded attachments from webhook payloads
 - The system SHALL validate attachment types and sizes before processing
@@ -40,7 +47,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 - 🚧 The system SHALL scan attachments for security threats (virus scanning)
 - The system SHALL associate uploaded files with the originating email record
 
-### FR-4: Core API Integration
+### FR-5: Core API Integration
 
 - The system SHALL upload email attachments to Core API files/upload endpoint
 - The system SHALL include the extracted company ID when uploading invoices to Core API
@@ -82,6 +89,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
   - Workflow execution policies and activity configurations
   - 🚧 Rate limiting configuration for Core API requests
   - 🚧 Worker scaling and resource allocation settings
+  - 🚧 S3 bucket name and credentials for original payload storage
 
 ### TR-5: Database Requirements
 
@@ -97,21 +105,28 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 
 The workflow executes a single activity **ProcessInboundEmailActivity** that performs all processing steps:
 
-1. Extract and process email metadata (sender, subject, body, headers)
-2. Parse recipient email address to extract billing inbound token
-3. Convert billing inbound token to lowercase and query database for companies.billing_inbound_token using case-insensitive matching
-4. Validate the extracted company exists in the system
-5. Decode base64 attachment content and validate file types/sizes
-6. Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
-7. Store email metadata in Core API with references to uploaded files and company association
-8. Apply business logic and routing rules based on email content and company context
-9. Trigger relevant workflows and notifications
+1. 🚧 Store original webhook payload to S3 for debugging and audit purposes
+2. Extract and process email metadata (sender, subject, body, headers)
+3. Parse recipient email address to extract billing inbound token
+4. Convert billing inbound token to lowercase and query database for companies.billing_inbound_token using case-insensitive matching
+5. Validate the extracted company exists in the system
+6. Decode base64 attachment content and validate file types/sizes
+7. Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
+8. Store email metadata in Core API with references to uploaded files and company association
+9. Apply business logic and routing rules based on email content and company context
+10. Trigger relevant workflows and notifications
 
 Failed activities are handled gracefully by Temporal's built-in resilience mechanisms, and workflow failures are tracked for investigation.
 
 ## Processing Phases
 
-### 1. Extraction Phase
+### 1. Archival Phase
+
+- 🚧 Store original webhook payload to S3 before any processing
+- 🚧 Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
+- 🚧 Preserve raw, unmodified payload for debugging and audit purposes
+
+### 2. Extraction Phase
 
 - Parse email metadata (from, to, subject, date)
 - Extract billing inbound token from recipient email address format `<billing-inbound-token>@something.com`
@@ -122,26 +137,26 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 - Extract and decode email content (text/HTML)
 - Process attachments and validate file types
 
-### 2. Validation Phase
+### 3. Validation Phase
 
 - 🚧 Check sender against allowlist/blocklist
 - Validate attachment types and sizes
 - Validate company exists in the system
 
-### 3. Business Logic Phase
+### 4. Business Logic Phase
 
 - 🚧 Identify recipient context and business rules
 - 🚧 Route email to appropriate handlers
 - 🚧 Trigger automated workflows if applicable
 
-### 4. Storage Phase
+### 5. Storage Phase
 
 - Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
 - 🚧 Store email metadata in Core API with file references and company association
 - 🚧 Associate email and files with the identified company entity
 - 🚧 Update contact records and business context for the specific company
 
-### 5. Completion Phase
+### 6. Completion Phase
 
 - Log processing results
 - 🚧 Send notifications if configured
@@ -193,6 +208,7 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 
 ### Workflow Processing Errors
 
+- **🚧 S3 Storage Failure**: Activity fails and workflow retries; archival is mandatory to ensure audit trail and replay capability
 - **Invalid Billing Inbound Token**: Activity fails and workflow handles the failure appropriately
 - **Company Not Found**: Activity fails when companies.billing_inbound_token lookup fails, workflow handles accordingly
 - **Processing Failure**: Activities are handled with appropriate failure recovery mechanisms
