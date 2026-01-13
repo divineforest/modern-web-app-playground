@@ -7,15 +7,10 @@ import type { PostmarkWebhookPayload } from '../services/postmark-webhook-proces
 import { processWebhook } from '../services/postmark-webhook-processor.js';
 import { processInboundEmailActivity } from './postmark-email-processor.activity.js';
 
-// Mock S3 storage service
-const mockArchiveInboundEmailPayload = vi
-  .fn()
-  .mockResolvedValue('inbound-emails/2024/01/15/test-123.json');
-vi.mock('../../../shared/data-access/s3/index.js', () => ({
-  createS3StorageService: vi.fn(() => ({
-    archiveInboundEmailPayload: mockArchiveInboundEmailPayload,
-  })),
-}));
+// Mock email archiver service
+vi.mock('../services/email-archiver.js');
+
+import { archiveInboundEmailPayload as mockArchiveInboundEmailPayload } from '../services/email-archiver.js';
 
 // Mock Temporal Activity Context
 vi.mock('@temporalio/activity', () => ({
@@ -249,7 +244,9 @@ describe('Postmark Email Processing Service (via Activity)', () => {
 describe('Postmark Email Processing Activity (S3 Archival)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockArchiveInboundEmailPayload.mockResolvedValue('inbound-emails/2024/01/15/test-123.json');
+    vi.mocked(mockArchiveInboundEmailPayload).mockResolvedValue(
+      'inbound-emails/2024/01/15/test-123.json'
+    );
     server.resetHandlers();
   });
 
@@ -307,12 +304,8 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     // ACT
     await processInboundEmailActivity(postmarkPayload);
 
-    // ASSERT - S3 archival should be called with correct parameters
-    expect(mockArchiveInboundEmailPayload).toHaveBeenCalledWith(
-      postmarkPayload,
-      'test-message-123',
-      new Date('2024-01-15T14:30:00.000Z')
-    );
+    // ASSERT - Email archiver should be called with payload
+    expect(vi.mocked(mockArchiveInboundEmailPayload)).toHaveBeenCalledWith(postmarkPayload);
   });
 
   it('should fail activity if S3 archival fails', async () => {
@@ -327,8 +320,10 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
       Attachments: [],
     };
 
-    // Mock S3 service to throw error
-    mockArchiveInboundEmailPayload.mockRejectedValueOnce(new Error('S3 connection failed'));
+    // Mock archiver to throw error
+    vi.mocked(mockArchiveInboundEmailPayload).mockRejectedValueOnce(
+      new Error('S3 connection failed')
+    );
 
     // ACT & ASSERT - Activity should fail when S3 archival fails
     await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
@@ -343,8 +338,8 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
 
     const executionOrder: string[] = [];
 
-    // Mock S3 service to track execution order
-    mockArchiveInboundEmailPayload.mockImplementation(() => {
+    // Mock archiver to track execution order
+    vi.mocked(mockArchiveInboundEmailPayload).mockImplementation(() => {
       executionOrder.push('s3-archive');
       return Promise.resolve('inbound-emails/2024/01/15/test-order.json');
     });

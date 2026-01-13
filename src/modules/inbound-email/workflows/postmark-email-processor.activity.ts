@@ -6,7 +6,7 @@
  * 2. Processing email via existing service
  */
 import { Context } from '@temporalio/activity';
-import { createS3StorageService } from '../../../shared/data-access/s3/index.js';
+import { archiveInboundEmailPayload } from '../services/email-archiver.js';
 import {
   type PostmarkWebhookPayload,
   processWebhook,
@@ -31,15 +31,8 @@ export async function processInboundEmailActivity(payload: PostmarkWebhookPayloa
   });
 
   // Step 1: Archive raw payload to S3 before any processing (FR-2 requirement)
-  const s3Service = createS3StorageService();
-  const receivedDate = payload.Date ? new Date(payload.Date) : undefined;
-
   try {
-    const s3Key = await s3Service.archiveInboundEmailPayload(
-      payload,
-      payload.MessageID,
-      receivedDate
-    );
+    const s3Key = await archiveInboundEmailPayload(payload);
 
     context.log.info('Successfully archived payload to S3', {
       messageId: payload.MessageID,

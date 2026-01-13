@@ -33,105 +33,50 @@ describe('S3StorageService', () => {
     });
   });
 
-  describe('generateInboundEmailKey', () => {
-    it('should generate correct S3 key with provided date', () => {
+  describe('uploadJson', () => {
+    it('should successfully upload JSON to S3', async () => {
       // ARRANGE
-      const messageId = 'test-message-123';
-      const receivedDate = new Date('2024-01-15T10:30:00Z');
-
-      // ACT
-      const key = s3Service.generateInboundEmailKey(messageId, receivedDate);
-
-      // ASSERT
-      expect(key).toBe('inbound-emails/2024/01/15/test-message-123.json');
-    });
-
-    it('should generate correct S3 key with current date when not provided', () => {
-      // ARRANGE
-      const messageId = 'test-message-456';
-      const now = new Date('2024-03-20T15:45:00Z');
-      vi.useFakeTimers();
-      vi.setSystemTime(now);
-
-      // ACT
-      const key = s3Service.generateInboundEmailKey(messageId);
-
-      // ASSERT
-      expect(key).toBe('inbound-emails/2024/03/20/test-message-456.json');
-
-      // Cleanup
-      vi.useRealTimers();
-    });
-
-    it('should pad month and day with zeros', () => {
-      // ARRANGE
-      const messageId = 'test-message-789';
-      const receivedDate = new Date('2024-01-05T08:00:00Z');
-
-      // ACT
-      const key = s3Service.generateInboundEmailKey(messageId, receivedDate);
-
-      // ASSERT
-      expect(key).toBe('inbound-emails/2024/01/05/test-message-789.json');
-    });
-
-    it('should handle different message ID formats', () => {
-      // ARRANGE
-      const messageId = 'b7bc2f4a-e38e-4336-af7d-e6c392c2f817';
-      const receivedDate = new Date('2024-12-31T23:59:59Z');
-
-      // ACT
-      const key = s3Service.generateInboundEmailKey(messageId, receivedDate);
-
-      // ASSERT
-      expect(key).toBe('inbound-emails/2024/12/31/b7bc2f4a-e38e-4336-af7d-e6c392c2f817.json');
-    });
-  });
-
-  describe('archiveInboundEmailPayload', () => {
-    it('should successfully archive payload to S3', async () => {
-      // ARRANGE
+      const key = 'test/path/file.json';
       const payload = {
-        MessageID: 'test-123',
-        From: 'sender@example.com',
-        To: 'recipient@example.com',
-        Subject: 'Test Email',
+        id: 'test-123',
+        data: 'test-data',
       };
-      const messageId = 'test-123';
-      const receivedDate = new Date('2024-01-15T10:30:00Z');
+      const metadata = {
+        testKey: 'testValue',
+        source: 'test',
+      };
 
       mockSend.mockResolvedValue({});
 
       // ACT
-      const key = await s3Service.archiveInboundEmailPayload(payload, messageId, receivedDate);
+      const resultKey = await s3Service.uploadJson(key, payload, metadata);
 
       // ASSERT
-      expect(key).toBe('inbound-emails/2024/01/15/test-123.json');
+      expect(resultKey).toBe(key);
       expect(mockSend).toHaveBeenCalledTimes(1);
 
       // Verify PutObjectCommand was called with correct parameters
       const putCommand = mockSend.mock.calls[0]?.[0] as PutObjectCommand;
       expect(putCommand).toBeInstanceOf(PutObjectCommand);
       expect(putCommand.input.Bucket).toBe('test-bucket');
-      expect(putCommand.input.Key).toBe('inbound-emails/2024/01/15/test-123.json');
+      expect(putCommand.input.Key).toBe(key);
       expect(putCommand.input.ContentType).toBe('application/json');
-      expect(putCommand.input.Metadata?.['messageId']).toBe('test-123');
-      expect(putCommand.input.Metadata?.['source']).toBe('postmark-webhook');
+      expect(putCommand.input.Metadata).toEqual(metadata);
     });
 
     it('should serialize payload as JSON', async () => {
       // ARRANGE
+      const key = 'test/nested.json';
       const payload = {
-        MessageID: 'test-456',
-        Nested: { data: 'value' },
-        Array: [1, 2, 3],
+        id: 'test-456',
+        nested: { data: 'value' },
+        array: [1, 2, 3],
       };
-      const messageId = 'test-456';
 
       mockSend.mockResolvedValue({});
 
       // ACT
-      await s3Service.archiveInboundEmailPayload(payload, messageId);
+      await s3Service.uploadJson(key, payload);
 
       // ASSERT
       const putCommand = mockSend.mock.calls[0]?.[0] as PutObjectCommand;
@@ -142,54 +87,47 @@ describe('S3StorageService', () => {
       expect(parsedPayload).toEqual(payload);
     });
 
-    it('should use current date when receivedDate not provided', async () => {
+    it('should upload without metadata if not provided', async () => {
       // ARRANGE
-      const payload = { MessageID: 'test-789' };
-      const messageId = 'test-789';
-      const now = new Date('2024-06-10T12:00:00Z');
+      const key = 'test/no-metadata.json';
+      const payload = { data: 'test' };
 
-      vi.useFakeTimers();
-      vi.setSystemTime(now);
       mockSend.mockResolvedValue({});
 
       // ACT
-      const key = await s3Service.archiveInboundEmailPayload(payload, messageId);
+      await s3Service.uploadJson(key, payload);
 
       // ASSERT
-      expect(key).toBe('inbound-emails/2024/06/10/test-789.json');
-
-      // Cleanup
-      vi.useRealTimers();
+      const putCommand = mockSend.mock.calls[0]?.[0] as PutObjectCommand;
+      expect(putCommand.input.Metadata).toBeUndefined();
     });
 
     it('should throw S3StorageError on S3 failure', async () => {
       // ARRANGE
-      const payload = { MessageID: 'test-error' };
-      const messageId = 'test-error';
+      const key = 'test/error.json';
+      const payload = { data: 'test' };
       const s3Error = new Error('S3 connection failed');
 
       mockSend.mockRejectedValue(s3Error);
 
       // ACT & ASSERT
-      await expect(s3Service.archiveInboundEmailPayload(payload, messageId)).rejects.toThrow(
-        S3StorageError
-      );
-      await expect(s3Service.archiveInboundEmailPayload(payload, messageId)).rejects.toThrow(
-        'Failed to archive inbound email payload to S3'
+      await expect(s3Service.uploadJson(key, payload)).rejects.toThrow(S3StorageError);
+      await expect(s3Service.uploadJson(key, payload)).rejects.toThrow(
+        'Failed to upload JSON to S3'
       );
     });
 
     it('should include error cause in S3StorageError', async () => {
       // ARRANGE
-      const payload = { MessageID: 'test-cause' };
-      const messageId = 'test-cause';
+      const key = 'test/cause.json';
+      const payload = { data: 'test' };
       const s3Error = new Error('Access denied');
 
       mockSend.mockRejectedValue(s3Error);
 
       // ACT & ASSERT
       try {
-        await s3Service.archiveInboundEmailPayload(payload, messageId);
+        await s3Service.uploadJson(key, payload);
         expect.fail('Should have thrown S3StorageError');
       } catch (error) {
         expect(error).toBeInstanceOf(S3StorageError);
@@ -199,23 +137,21 @@ describe('S3StorageService', () => {
 
     it('should handle large payloads', async () => {
       // ARRANGE
+      const key = 'test/large.json';
       const largePayload = {
-        MessageID: 'large-payload',
-        Attachments: Array.from({ length: 100 }, (_, i) => ({
-          Name: `file-${i}.pdf`,
-          Content: 'x'.repeat(1000), // Large base64 content
-          ContentType: 'application/pdf',
+        items: Array.from({ length: 100 }, (_, i) => ({
+          id: `item-${i}`,
+          data: 'x'.repeat(1000),
         })),
       };
-      const messageId = 'large-payload';
 
       mockSend.mockResolvedValue({});
 
       // ACT
-      const key = await s3Service.archiveInboundEmailPayload(largePayload, messageId);
+      const resultKey = await s3Service.uploadJson(key, largePayload);
 
       // ASSERT
-      expect(key).toBeTruthy();
+      expect(resultKey).toBe(key);
       expect(mockSend).toHaveBeenCalledTimes(1);
     });
   });

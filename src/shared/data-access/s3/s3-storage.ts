@@ -67,55 +67,24 @@ export class S3StorageService {
   }
 
   /**
-   * Generate S3 key for inbound email payload
-   * Format: inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json
-   * Uses UTC date/time for consistent key generation across timezones
-   * @param messageId - Postmark MessageID
-   * @param receivedDate - Email received date (defaults to now)
-   * @returns S3 key string
-   */
-  generateInboundEmailKey(messageId: string, receivedDate?: Date): string {
-    const date = receivedDate || new Date();
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-
-    const key = `inbound-emails/${year}/${month}/${day}/${messageId}.json`;
-
-    logger.debug(
-      {
-        messageId,
-        receivedDate: date.toISOString(),
-        key,
-      },
-      'Generated S3 key for inbound email'
-    );
-
-    return key;
-  }
-
-  /**
-   * Archive inbound email payload to S3
-   * Stores the raw, unmodified payload for debugging and audit purposes
-   * @param payload - Raw webhook payload object
-   * @param messageId - Postmark MessageID for key generation
-   * @param receivedDate - Email received date (optional, defaults to now)
+   * Upload JSON payload to S3
+   * Generic method for storing any JSON data to S3
+   * @param key - S3 key (path) where the file will be stored
+   * @param payload - JSON-serializable payload to upload
+   * @param metadata - Optional metadata to attach to the S3 object
    * @returns Promise<string> - S3 key where payload was stored
    */
-  async archiveInboundEmailPayload(
+  async uploadJson(
+    key: string,
     payload: unknown,
-    messageId: string,
-    receivedDate?: Date
+    metadata?: Record<string, string>
   ): Promise<string> {
-    const key = this.generateInboundEmailKey(messageId, receivedDate);
-
     logger.info(
       {
-        messageId,
         key,
         bucketName: this.config.bucketName,
       },
-      'Archiving inbound email payload to S3'
+      'Uploading JSON to S3'
     );
 
     try {
@@ -130,34 +99,28 @@ export class S3StorageService {
           Key: key,
           Body: contentBuffer,
           ContentType: 'application/json',
-          Metadata: {
-            messageId: messageId,
-            archivedAt: new Date().toISOString(),
-            source: 'postmark-webhook',
-          },
+          Metadata: metadata,
         })
       );
 
       logger.info(
         {
-          messageId,
           key,
           bucketName: this.config.bucketName,
           size: contentBuffer.length,
         },
-        'Successfully archived inbound email payload to S3'
+        'Successfully uploaded JSON to S3'
       );
 
       return key;
     } catch (error) {
-      const errorMessage = `Failed to archive inbound email payload to S3: ${
+      const errorMessage = `Failed to upload JSON to S3: ${
         error instanceof Error ? error.message : String(error)
       }`;
 
       logger.error(
         {
           error: error instanceof Error ? error.message : String(error),
-          messageId,
           key,
           bucketName: this.config.bucketName,
         },
