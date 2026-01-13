@@ -34,9 +34,17 @@ export default tseslint.config(
     rules: {
       // Temporarily disabled rules - gradually enable and fix
       // TODO: Enable these rules one by one and fix violations
-      '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+    },
+  },
+
+  // Test-specific overrides
+  {
+    files: ['**/*.test.ts'],
+    rules: {
+      // Fastify's response.json() and JSON.parse() return 'any' - acceptable in test code for ergonomics
+      '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   }
 );

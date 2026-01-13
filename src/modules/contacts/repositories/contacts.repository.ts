@@ -107,29 +107,38 @@ export function encodeCursor(data: CursorData): string {
 export function decodeCursor(cursor: string): CursorData | null {
   try {
     const jsonStr = Buffer.from(cursor, 'base64').toString('utf-8');
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(jsonStr) as unknown;
+
+    // Type guard: Validate parsed is an object
+    if (typeof parsed !== 'object' || parsed === null) {
+      return null;
+    }
+
+    // Now we can safely check properties
+    const data = parsed as Record<string, unknown>;
 
     // Validate required fields
-    if (!parsed.sf || !parsed.sd || parsed.sv === undefined || !parsed.id) {
+    if (!data['sf'] || !data['sd'] || data['sv'] === undefined || !data['id']) {
       return null;
     }
 
     // Validate sort field
     const validSortFields: ContactSortField[] = ['created_at', 'updated_at', 'name'];
-    if (!validSortFields.includes(parsed.sf)) {
+    if (!validSortFields.includes(data['sf'] as ContactSortField)) {
       return null;
     }
 
     // Validate sort direction
-    if (parsed.sd !== 'asc' && parsed.sd !== 'desc') {
+    if (data['sd'] !== 'asc' && data['sd'] !== 'desc') {
       return null;
     }
 
     return {
-      sortField: parsed.sf,
-      sortDirection: parsed.sd,
-      sortValue: parsed.sf === 'name' ? parsed.sv : new Date(parsed.sv),
-      id: parsed.id,
+      sortField: data['sf'] as ContactSortField,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Already validated above, need explicit type for return value
+      sortDirection: data['sd'] as 'asc' | 'desc',
+      sortValue: data['sf'] === 'name' ? (data['sv'] as string) : new Date(data['sv'] as string),
+      id: data['id'] as string,
     };
   } catch {
     return null;
