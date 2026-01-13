@@ -5,6 +5,20 @@ import { z } from 'zod';
 // Load environment variables from .env file
 config();
 
+// Check if we're in a development-like environment
+const isDev = () => {
+  const nodeEnv = process.env['NODE_ENV'];
+  return !nodeEnv || nodeEnv === 'development' || nodeEnv === 'test';
+};
+
+/**
+ * Helper that applies a default value only in development/test environments.
+ * In production/staging, the field becomes required (no default).
+ */
+const devDefault = <T extends z.ZodTypeAny>(schema: T, defaultValue: z.infer<T>): T => {
+  return (isDev() ? schema.default(defaultValue) : schema) as T;
+};
+
 export const env = createEnv({
   /*
    * Server-side environment variables, not available on the client.
@@ -12,20 +26,23 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
-    DATABASE_URL: z.string().url().min(1),
+    DATABASE_URL: devDefault(
+      z.string().url().min(1),
+      'postgresql://user:password@localhost:5432/accounting'
+    ),
     PORT: z.coerce.number().positive().default(3000),
     HOST: z.string().default('0.0.0.0'),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
     JWT_SECRET: z.string().min(32).optional(),
-    CORE_API_URL: z.string().url(),
-    CORE_API_KEY: z.string().min(1),
+    CORE_API_URL: devDefault(z.string().url(), 'http://localhost:4000'),
+    CORE_API_KEY: devDefault(z.string().min(1), 'dev-core-api-key'),
     CORE_API_TIMEOUT: z.coerce.number().positive().default(30000),
     CORE_API_RETRY_ATTEMPTS: z.coerce.number().positive().default(3),
     CORE_API_RETRY_DELAY_MS: z.coerce.number().positive().default(1000),
-    ODOO_URL: z.string().url().min(1),
-    ODOO_DATABASE: z.string().min(1),
-    ODOO_USERNAME: z.string().min(1),
-    ODOO_API_KEY: z.string().min(1),
+    ODOO_URL: devDefault(z.string().url(), 'http://localhost:8069'),
+    ODOO_DATABASE: devDefault(z.string().min(1), 'odoo'),
+    ODOO_USERNAME: devDefault(z.string().min(1), 'admin'),
+    ODOO_API_KEY: devDefault(z.string().min(1), 'dev-odoo-api-key'),
 
     // Temporal Configuration
     TEMPORAL_ADDRESS: z.string().default('localhost:7233'),
@@ -37,7 +54,7 @@ export const env = createEnv({
     POSTMARK_MAX_TOTAL_ATTACHMENT_SIZE: z.coerce.number().positive().default(52428800), // 50MB
 
     // API Bearer Token Authentication
-    API_BEARER_TOKENS: z.string().min(1),
+    API_BEARER_TOKENS: devDefault(z.string().min(1), 'dev-bearer-token-12345'),
 
     // Job Generation Configuration
     JOB_GENERATION_DUE_OFFSET_DAYS: z.coerce.number().positive().default(2),
@@ -45,7 +62,7 @@ export const env = createEnv({
     JOB_GENERATION_BATCH_SIZE: z.coerce.number().positive().default(100),
 
     // VIES API Configuration
-    VIES_API_KEY: z.string().min(1),
+    VIES_API_KEY: devDefault(z.string().min(1), 'dev-vies-api-key'),
     VIES_API_BASE_URL: z.string().url().default('https://api.vatcheckapi.com/v2'),
     VIES_API_TIMEOUT: z.coerce.number().positive().default(30000),
     VIES_API_RETRY_ATTEMPTS: z.coerce.number().nonnegative().default(2),
