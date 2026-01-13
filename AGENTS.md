@@ -6,6 +6,14 @@ Backend accounting system for practice management. Integrates with Odoo ERP and 
 
 Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest.
 
+## Running Scripts
+
+**Always use pnpm to run scripts instead of executing them directly.**
+
+1. Check `package.json` "scripts" section first - use `pnpm <script-name>` if it exists
+2. Otherwise, use `pnpm exec ./path/to/script` (e.g., `pnpm exec ./scripts/custom-script.sh`)
+3. Never run scripts directly like `./scripts/smoke-test.sh` or `bash scripts/smoke-test.sh`
+
 ## Code Style
 
 - **Biome** for formatting and basic linting - run `pnpm check:fix`
