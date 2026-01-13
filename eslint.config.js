@@ -43,7 +43,7 @@ export default tseslint.config(
   {
     files: ['**/*.test.ts'],
     rules: {
-      // Fastify's response.json() and JSON.parse() return 'any' - acceptable in test code for ergonomics
+      // Allow 'any' from response.json() and JSON.parse() in tests for ergonomics over strict typing
       '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   }

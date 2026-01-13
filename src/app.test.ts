@@ -241,9 +241,9 @@ describe('Global Error Handler', () => {
     it('should handle non-Error objects', async () => {
       // ARRANGE
       fastify.get('/test-non-error', () => {
-        // biome-ignore lint/suspicious/noExplicitAny: Testing error handling with non-standard errors
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw { custom: 'error object' } as any;
+        // Testing error handling with non-standard errors - intentionally throwing non-Error object
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
+        throw { custom: 'error object' } as never;
       });
 
       // ACT

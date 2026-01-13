@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createTestJobTemplate } from '../../../../tests/factories/job-templates.js';
+import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/index.js';
 import {
   createJobTemplateService,
@@ -137,9 +138,7 @@ describe('Job Templates Service', () => {
             },
           }),
         }),
-        // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      } as unknown as Database;
 
       // ACT & ASSERT
       await expect(createJobTemplateService(input, mockDb)).rejects.toThrow(
@@ -300,9 +299,7 @@ describe('Job Templates Service', () => {
             }),
           }),
         }),
-        // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      } as unknown as Database;
 
       // ACT & ASSERT
       await expect(updateJobTemplateService(id, input, mockDb)).rejects.toThrow(

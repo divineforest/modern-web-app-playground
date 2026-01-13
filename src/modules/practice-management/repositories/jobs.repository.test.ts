@@ -115,19 +115,18 @@ describe('Jobs Repository', () => {
       // ARRANGE
       const company = await createTestCompany();
       const serviceType = await getFirstServiceType(db);
-      // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value that bypasses TypeScript
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = buildTestJobData(
+      // Build test data and manually override status with invalid value
+      const data = buildTestJobData(
         { companyId: company.id, serviceTypeId: serviceType.id },
         {
           title: 'Test Job Invalid Status',
         }
       );
       // Manually override status with invalid value to bypass TypeScript
-      data.status = 'invalid_status';
+      (data as Record<string, unknown>)['status'] = 'invalid_status';
 
-      // ACT & ASSERT
-      await expect(createJob(data, db)).rejects.toThrow();
+      // ACT & ASSERT - use 'never' to bypass type checking for intentionally invalid data
+      await expect(createJob(data as never, db)).rejects.toThrow();
     });
   });
 
@@ -383,10 +382,8 @@ describe('Jobs Repository', () => {
       // ARRANGE
       const job = await createTestJob({}, db);
 
-      // ACT & ASSERT
-      // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await expect(updateJob(job.id, { status: 'invalid_status' as any }, db)).rejects.toThrow();
+      // ACT & ASSERT - use 'never' to bypass type checking for intentionally invalid status
+      await expect(updateJob(job.id, { status: 'invalid_status' as never }, db)).rejects.toThrow();
     });
   });
 

@@ -121,10 +121,8 @@ describe('Jobs Service', () => {
         title: 'Default Status Job',
       };
 
-      // ACT
-      // biome-ignore lint/suspicious/noExplicitAny: Testing default status behavior
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const job = await createJobService(input as any, db);
+      // ACT - use 'never' to bypass type checking for testing default status behavior
+      const job = await createJobService(input as never, db);
 
       // ASSERT
       expect(job.status).toBe('planned');
@@ -366,11 +364,9 @@ describe('Jobs Service', () => {
       // ARRANGE
       const created = await createTestJob({}, db);
 
-      // ACT & ASSERT
+      // ACT & ASSERT - use 'never' to bypass type checking for intentionally invalid status
       await expect(
-        // biome-ignore lint/suspicious/noExplicitAny: Testing invalid status value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        updateJobService(created.id, { status: 'invalid_status' as any }, db)
+        updateJobService(created.id, { status: 'invalid_status' as never }, db)
       ).rejects.toThrow();
     });
 
@@ -383,11 +379,10 @@ describe('Jobs Service', () => {
 
       // ACT
       // TypeScript should prevent these, but verify at runtime that they're ignored
+      // Use 'never' to bypass type checking for testing immutable field behavior
       const updated = await updateJobService(
         created.id,
-        // biome-ignore lint/suspicious/noExplicitAny: Testing immutable fields
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { companyId: company2.id, serviceTypeId: serviceType1.id } as any,
+        { companyId: company2.id, serviceTypeId: serviceType1.id } as never,
         db
       );
 

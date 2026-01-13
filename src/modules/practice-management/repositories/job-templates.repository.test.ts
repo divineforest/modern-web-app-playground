@@ -5,6 +5,7 @@ import {
   createTestJobTemplate,
   createTestJobTemplates,
 } from '../../../../tests/factories/job-templates.js';
+import type { Database } from '../../../db/connection.js';
 import { db } from '../../../db/index.js';
 import { jobTemplates } from '../../../db/schema.js';
 import {
@@ -99,9 +100,7 @@ describe('Job Templates Repository', () => {
             returning: () => [],
           }),
         }),
-        // biome-ignore lint/suspicious/noExplicitAny: Mock database for testing error paths
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      } as unknown as Database;
 
       // ACT & ASSERT
       await expect(createJobTemplate(data, mockDb)).rejects.toThrow(
