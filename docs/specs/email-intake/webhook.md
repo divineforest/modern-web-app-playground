@@ -6,6 +6,10 @@ This specification covers the webhook endpoint that receives inbound emails from
 
 For the actual email processing logic, see [Billing Inbound Email Workflow](./workflow.md).
 
+**Related Postmark Documentation:**
+- [Webhooks Overview](https://postmarkapp.com/developer/webhooks/webhooks-overview) - Official webhook documentation and security recommendations
+- [IP Addresses for Firewalls](https://postmarkapp.com/support/article/800-ips-for-firewalls) - Static IP addresses for webhook IP whitelisting
+
 ## Functional Requirements
 
 ### FR-1: Webhook Reception
@@ -30,7 +34,7 @@ For the actual email processing logic, see [Billing Inbound Email Workflow](./wo
 
 ### TR-1: Webhook Security
 
-- 🚧 The system SHALL verify webhook authenticity using IP whitelisting (Postmark provides static IP addresses)
+- 🚧 The system SHALL verify webhook authenticity using IP whitelisting (see [Postmark's static IP addresses](https://postmarkapp.com/support/article/800-ips-for-firewalls))
 - The system SHALL implement rate limiting for webhook endpoints
 - 🚧 The system SHALL validate request headers and payload format
 - 🚧 The system SHALL reject unauthorized or malformed requests with appropriate error responses
@@ -131,9 +135,9 @@ Postmark sends webhook notifications with the following structure:
 
 ## Security Validation
 
-- Verify request originates from Postmark's IP addresses
+- Verify request originates from [Postmark's IP addresses](https://postmarkapp.com/support/article/800-ips-for-firewalls)
 - Validate request headers and payload format
-- Optional: Implement HTTP Basic Authentication for additional security
+- Optional: Implement HTTP Basic Authentication for additional security (recommended by Postmark)
 
 ## Error Scenarios
 
