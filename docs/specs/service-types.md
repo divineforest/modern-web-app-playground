@@ -2,7 +2,7 @@
 
 ## Overview
 
-Service Types is an internal reference table that categorizes the different types of accounting and financial services offered. This table provides a controlled vocabulary for service classification and will be referenced by jobs to indicate what type of service work is being performed. The table is designed as a foundational data structure with no direct API exposure, serving as a lookup table for other features in the system.
+Service Types is an internal reference table that categorizes the different types of accounting and financial services offered. This table provides a controlled vocabulary for service classification. The table is designed as a foundational data structure with no direct API exposure, serving as a lookup table for other features in the system.
 
 Service types enable consistent categorization across the platform and support future reporting, filtering, and business logic based on service categories. Examples include payroll processing, accounting services, VAT returns, tax preparation, and other specialized financial services.
 
@@ -11,7 +11,7 @@ Service types enable consistent categorization across the platform and support f
 ### Goals
 
 - Provide a stable, versioned reference table for service type classification
-- Support referential integrity for jobs and other features requiring service categorization
+- Support referential integrity for features requiring service categorization
 - Enable status tracking for service types (active vs deprecated)
 - Allow for clear service type identification through human-readable codes and names
 - Establish a foundation for service-based business logic and reporting
@@ -175,25 +175,25 @@ CREATE INDEX idx_service_types_status ON service_types(status);
 ### Foreign Key Usage Example
 
 ```sql
--- Example: jobs table references service_types
-CREATE TABLE jobs (
+-- Example: a table that references service_types
+CREATE TABLE example_table (
   id UUID PRIMARY KEY,
   service_type_id UUID REFERENCES service_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  -- other job fields...
+  -- other fields...
 );
 
 -- Index for foreign key lookups
-CREATE INDEX idx_jobs_service_type_id ON jobs(service_type_id);
+CREATE INDEX idx_example_table_service_type_id ON example_table(service_type_id);
 ```
 
-## Integration with Jobs Module
+## Integration with Other Modules
 
-### Job Template Relationship
+### Service Type Relationship
 
-The jobs module will reference service types to categorize job templates:
+Other modules may reference service types to categorize their entities:
 
 ```typescript
-// Example: job-template.entity.ts
+// Example: entity with service type reference
 {
   id: string;
   serviceTypeId: string | null; // References service_types.id
@@ -214,17 +214,11 @@ const activeServiceTypes = await db
   .from(serviceTypes)
   .where(eq(serviceTypes.status, 'active'));
 
-// Get job templates by service type
-const jobTemplates = await db
+// Get invoices with service type details (join)
+const entitiesWithServiceTypes = await db
   .select()
-  .from(jobTemplates)
-  .where(eq(jobTemplates.serviceTypeId, serviceTypeId));
-
-// Get jobs with service type details (join)
-const jobsWithServiceTypes = await db
-  .select()
-  .from(jobs)
-  .leftJoin(serviceTypes, eq(jobs.serviceTypeId, serviceTypes.id));
+  .from(exampleTable)
+  .leftJoin(serviceTypes, eq(exampleTable.serviceTypeId, serviceTypes.id));
 ```
 
 ## Data Flow
@@ -248,7 +242,7 @@ const jobsWithServiceTypes = await db
    - **System** continues to honor existing references (no cascade delete)
 
 4. **Service Type Queries** (Reporting)
-   - **Reporting System** joins jobs with service types
+   - **Reporting System** joins entities with service types
    - **Database** returns combined data using foreign key relationship
    - **Reporting System** filters/groups by service type attributes
 
@@ -271,7 +265,7 @@ Since this is a pure data model without API endpoints, monitoring is not needed.
 
 ### Foreign Key Errors
 
-- **Invalid service type ID on job creation** → Database returns foreign key violation
+- **Invalid service type ID on entity creation** → Database returns foreign key violation
 - **Attempt to delete referenced service type** → Database returns foreign key violation (RESTRICT)
 - **NULL service type ID** → Allowed (optional association)
 
@@ -291,7 +285,7 @@ Since this is a pure data model without API endpoints, monitoring is not needed.
 
 ### Risk: Missing Foreign Key Indexes
 
-- **Risk:** Poor query performance on jobs filtering by service type
+- **Risk:** Poor query performance on entities filtering by service type
 - **Mitigation:** Include foreign key indexes in migration
 - **Mitigation:** Monitor query performance and add indexes as needed
 
@@ -313,9 +307,6 @@ src/db/
 └── seeds/                    # 🚧 Optional seed data
     └── service_types.sql     # 🚧 Initial service types
 
-src/modules/practice-management/
-└── domain/
-    └── job-template.types.ts # References service_type_id
 ```
 
 ## Future Enhancements

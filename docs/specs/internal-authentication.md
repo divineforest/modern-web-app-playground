@@ -186,14 +186,14 @@ Authorization: Bearer <api-token>
 **Example Service-to-Service Request (no user context):**
 
 ```
-GET /api/internal/job-templates
+GET /api/internal/contacts
 Authorization: Bearer sk_live_abc123xyz789
 ```
 
 **Example User-Initiated Request (with user context):**
 
 ```
-POST /api/internal/job-templates
+POST /api/internal/contacts
 Authorization: Bearer sk_live_abc123xyz789
 X-User-Email: john.doe@example.com
 X-User-Id: user-uuid-123
@@ -205,11 +205,9 @@ Content-Type: application/json
 
 All endpoints under `/api/internal/*` require API Bearer token authentication:
 
-- `POST /api/internal/job-templates`
-- `GET /api/internal/job-templates/:id`
-- `PATCH /api/internal/job-templates/:id`
-- `DELETE /api/internal/job-templates/:id`
-- `GET /api/internal/job-templates`
+- `POST /api/internal/contacts`
+- `GET /api/internal/contacts/:id`
+- `GET /api/internal/contacts`
 - All future internal API endpoints
 
 ### Unprotected Endpoints
@@ -355,7 +353,7 @@ const testToken = "test_token_12345"; // Match API_TOKENS in test env
 // Make authenticated test request (no user context)
 const response1 = await fastify.inject({
   method: "GET",
-  url: "/api/internal/job-templates",
+  url: "/api/internal/contacts",
   headers: {
     authorization: `Bearer ${testToken}`
   }
@@ -364,7 +362,7 @@ const response1 = await fastify.inject({
 // Make authenticated test request (with user context)
 const response2 = await fastify.inject({
   method: "POST",
-  url: "/api/internal/job-templates",
+  url: "/api/internal/contacts",
   headers: {
     authorization: `Bearer ${testToken}`,
     "x-user-email": "test@example.com",
@@ -434,14 +432,14 @@ const response2 = await fastify.inject({
   "level": "info",
   "msg": "Authentication successful",
   "user": "user@example.com",
-  "path": "/api/internal/job-templates",
+  "path": "/api/internal/contacts",
   "method": "POST"
 }
 
 {
   "level": "info",
   "msg": "Authentication successful",
-  "path": "/api/internal/job-templates",
+  "path": "/api/internal/contacts",
   "method": "GET",
   "note": "Service-to-service call (no user context)"
 }
@@ -450,7 +448,7 @@ const response2 = await fastify.inject({
   "level": "warn",
   "msg": "Authentication failed",
   "reason": "invalid_token",
-  "path": "/api/internal/job-templates",
+  "path": "/api/internal/contacts",
   "ip": "10.0.1.5"
 }
 ```

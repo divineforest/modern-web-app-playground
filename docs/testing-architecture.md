@@ -81,11 +81,6 @@ src/
 │   │   │   └── postmark-webhook-processor.test.ts  # Service tests
 │   │   └── workflows/
 │   │       └── postmark-email-processor.activity.test.ts  # Activity tests
-│   └── jobs/
-│       ├── services/
-│       │   └── job-templates.service.test.ts  # Service tests
-│       └── repositories/
-│           └── job-templates.repository.test.ts  # Repository tests
 ├── shared/
 │   ├── data-access/
 │   │   ├── core/
@@ -180,7 +175,7 @@ src/
 - **Scope**: Request validation, response formatting, authentication
 - **Framework**: Fastify test utilities with MSW mocking
 - **Coverage**: All endpoints, error scenarios, authentication flows
-- **Examples**: `postmark-webhook.routes.test.ts`, `job-templates.routes.test.ts`
+- **Examples**: `postmark-webhook.routes.test.ts`, `contacts.routes.test.ts`
 
 ## Testing Tools & Dependencies
 

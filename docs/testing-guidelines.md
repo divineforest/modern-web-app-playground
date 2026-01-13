@@ -177,8 +177,8 @@ describe('FeatureName', () => {
 |------|-----|-----|
 | **Auth** | `{ authorization: 'Bearer test_token_12345' }` | All `/api/internal/*` routes require this |
 | **Test app** | `await buildTestApp()` | Fastify instance without logging |
-| **DB factory** | `await createTestJobTemplate()` | Inserts to DB, returns record with ID |
-| **Data factory** | `buildTestJobTemplateData()` | Plain object for payloads (no DB hit) |
+| **DB factory** | `await createTestGlobalContact()` | Inserts to DB, returns record with ID |
+| **Data factory** | `buildTestGlobalContactData()` | Plain object for payloads (no DB hit) |
 | **External API mock** | Add to `src/mocks/handlers.ts` | MSW auto-started, reset after each test |
 | **One-off mock** | `server.use(http.get(...))` in test | Override or add mock for single test |
 | **Database** | Use real PostgreSQL test DB | Route tests = integration tests |
@@ -192,7 +192,7 @@ describe('FeatureName', () => {
 | Mock Odoo API | Add to `src/mocks/handlers.ts` | Mock in test | Reused across many tests |
 | Mock once | `server.use(...)` in test | Edit handlers.ts | Test-specific scenario |
 
-**Example**: `src/modules/practice-management/api/job-templates.routes.test.ts`
+**Example**: `src/modules/contacts/api/contacts.routes.test.ts`
 
 ---
 
@@ -200,14 +200,14 @@ describe('FeatureName', () => {
 
 ### Setup Pattern
 
-Standard structure for all route tests (see `src/modules/practice-management/api/job-templates.routes.test.ts`):
+Standard structure for all route tests (see `src/modules/contacts/api/contacts.routes.test.ts`):
 
 ```typescript
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildTestApp } from '../../../app.js';
-import { createTestJobTemplate } from '../../../../tests/factories/index.js';
+import { createTestGlobalContact } from '../../../../tests/factories/index.js';
 
-describe('Job Templates Routes', () => {
+describe('Contacts Routes', () => {
   let fastify: FastifyInstance;
 
   const authHeaders = { authorization: 'Bearer test_token_12345' };
@@ -220,22 +220,21 @@ describe('Job Templates Routes', () => {
     await fastify.close();
   });
 
-  it('retrieves a job template by ID', async () => {
-    const template = await createTestJobTemplate({
-      code: `TEST_${Date.now()}`,
-      name: 'Test Template',
+  it('retrieves a contact by ID', async () => {
+    const contact = await createTestGlobalContact({
+      name: `Test Contact ${Date.now()}`,
     });
 
     const response = await fastify.inject({
       method: 'GET',
-      url: `/api/internal/job-templates/${template.id}`,
+      url: `/api/internal/contacts/${contact.id}`,
       headers: authHeaders,
     });
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.payload);
-    expect(body.id).toBe(template.id);
-    expect(body.code).toBe(template.code);
+    expect(body.id).toBe(contact.id);
+    expect(body.name).toBe(contact.name);
   });
 });
 ```
@@ -245,17 +244,16 @@ describe('Job Templates Routes', () => {
 Group authentication tests into "ACL" describe blocks - one per endpoint:
 
 ```typescript
-describe('POST /api/internal/job-templates', () => {
-  it('creates a job template with valid data', async () => {
+describe('POST /api/internal/contacts', () => {
+  it('creates a contact with valid data', async () => {
     const response = await fastify.inject({
       method: 'POST',
-      url: '/api/internal/job-templates',
+      url: '/api/internal/contacts',
       headers: authHeaders,
       payload: {
-        code: `TEST_${Date.now()}`,
-        name: 'Test Template',
-        titlePattern: 'Test - {company_name}',
-        isActive: 'true',
+        companyId: company.id,
+        documentId: 'doc-123',
+        rawExtraction: { supplierName: { value: 'Test Supplier' } },
       },
     });
 
@@ -266,12 +264,11 @@ describe('POST /api/internal/job-templates', () => {
     it('returns 401 without authentication', async () => {
       const response = await fastify.inject({
         method: 'POST',
-        url: '/api/internal/job-templates',
+        url: '/api/internal/contacts',
         payload: {
-          code: 'TEST_CODE',
-          name: 'Test Template',
-          titlePattern: 'Test',
-          isActive: 'true',
+          companyId: company.id,
+          documentId: 'doc-123',
+          rawExtraction: { supplierName: { value: 'Test Supplier' } },
         },
       });
 
@@ -283,13 +280,12 @@ describe('POST /api/internal/job-templates', () => {
     it('returns 401 with invalid token', async () => {
       const response = await fastify.inject({
         method: 'POST',
-        url: '/api/internal/job-templates',
+        url: '/api/internal/contacts',
         headers: { authorization: 'Bearer invalid_token' },
         payload: {
-          code: 'TEST_CODE',
-          name: 'Test Template',
-          titlePattern: 'Test',
-          isActive: 'true',
+          companyId: company.id,
+          documentId: 'doc-123',
+          rawExtraction: { supplierName: { value: 'Test Supplier' } },
         },
       });
 
@@ -319,12 +315,12 @@ Benefits: All security requirements for an endpoint are visible in one place, ea
 **Example: Wrong factory choice**
 ```typescript
 // ❌ BAD - buildTest*Data() doesn't insert to DB
-const template = buildTestJobTemplateData();
-await fastify.inject({ url: `/api/templates/${template.id}` }); // id is undefined!
+const contact = buildTestGlobalContactData();
+await fastify.inject({ url: `/api/contacts/${contact.id}` }); // id is undefined!
 
 // ✅ GOOD - createTest*() inserts and returns DB record
-const template = await createTestJobTemplate({ code: `TEST_${Date.now()}` });
-await fastify.inject({ url: `/api/templates/${template.id}` }); // works!
+const contact = await createTestGlobalContact({ name: `Test ${Date.now()}` });
+await fastify.inject({ url: `/api/contacts/${contact.id}` }); // works!
 ```
 
 ---

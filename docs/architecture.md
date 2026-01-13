@@ -176,21 +176,6 @@ For comprehensive testing strategy, tools, and practices, see [Testing Architect
 │   │   │   │   ├── postmark-inbound-email.workflow.ts
 │   │   │   │   ├── postmark-email-processor.activity.ts
 │   │   │   │   └── postmark-email-processor.activity.test.ts
-│   │   └── jobs/                          # Job templates module
-│   │       ├── index.ts                   # Module exports
-│   │       ├── api/                       # HTTP layer
-│   │       │   ├── job-templates.contracts.ts
-│   │       │   ├── job-templates.routes.ts
-│   │       │   └── job-templates.routes.test.ts
-│   │       ├── services/                  # Business logic
-│   │       │   ├── job-templates.service.ts
-│   │       │   └── job-templates.service.test.ts
-│   │       ├── repositories/              # Data access
-│   │       │   ├── job-templates.repository.ts
-│   │       │   └── job-templates.repository.test.ts
-│   │       └── domain/                    # Domain models
-│   │           ├── job-template.entity.ts
-│   │           └── job-template.types.ts
 │   ├── server.ts                          # Fastify server setup and startup
 │   ├── instrument.ts                      # Sentry SDK initialization (must be imported first)
 │   ├── db/                                # Database layer

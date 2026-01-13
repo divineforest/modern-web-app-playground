@@ -80,14 +80,9 @@ export async function buildApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { jobTemplatesRoutes, registerJobsRoutes } = await import(
-      './modules/practice-management/index.js'
-    );
     const { registerContactsRoutes } = await import('./modules/contacts/index.js');
     const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
 
-    await protectedInstance.register(jobTemplatesRoutes);
-    await protectedInstance.register(registerJobsRoutes);
     await protectedInstance.register(registerContactsRoutes);
     await protectedInstance.register(registerInvoicesRoutes);
   });
@@ -182,14 +177,9 @@ export async function buildTestApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { jobTemplatesRoutes, registerJobsRoutes } = await import(
-      './modules/practice-management/index.js'
-    );
     const { registerContactsRoutes } = await import('./modules/contacts/index.js');
     const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
 
-    await protectedInstance.register(jobTemplatesRoutes);
-    await protectedInstance.register(registerJobsRoutes);
     await protectedInstance.register(registerContactsRoutes);
     await protectedInstance.register(registerInvoicesRoutes);
   });

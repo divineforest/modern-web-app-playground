@@ -34,7 +34,6 @@
     "secrets:history": "gitleaks detect --verbose --log-opts='--all'",
     "sync:contacts": "tsx src/scripts/contacts-sync.ts",
     "temporal:worker": "tsx src/shared/workflows/worker.ts",
-    "run:job-generation": "tsx src/scripts/automatic-job-generation.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:test": "NODE_ENV=test DATABASE_URL=postgresql://user:password@localhost:5432/accounting_test drizzle-kit migrate",

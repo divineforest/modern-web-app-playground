@@ -7,10 +7,10 @@
  * Usage:
  *   pnpm openapi:generate                          # Generate all APIs
  *   pnpm openapi:generate --contract=contacts      # Generate only contacts API
- *   pnpm openapi:generate --contract=contacts,jobs # Generate contacts and jobs APIs
+ *   pnpm openapi:generate --contract=contacts      # Generate only contacts API
  *   pnpm openapi:generate --yaml                   # Also generate YAML format
  *
- * Available contracts: contacts, jobs, jobTemplates
+ * Available contracts: contacts
  *
  * Output directory: generated/openapi/
  *   - openapi.json                    (all contracts)
@@ -24,16 +24,12 @@ import { generateOpenApi } from '@ts-rest/open-api';
 import type { OpenAPIObject, SecurityRequirementObject } from 'openapi3-ts/oas30';
 import { stringify as yamlStringify } from 'yaml';
 import { contactsContract } from '../modules/contacts/api/contacts.contracts.js';
-import { jobTemplatesContract } from '../modules/practice-management/api/job-templates.contracts.js';
-import { jobsContract } from '../modules/practice-management/api/jobs.contracts.js';
 
 /**
  * Available contracts that can be filtered
  */
 const AVAILABLE_CONTRACTS = {
   contacts: contactsContract,
-  jobs: jobsContract,
-  jobTemplates: jobTemplatesContract,
 } as const;
 
 type ContractName = keyof typeof AVAILABLE_CONTRACTS;
@@ -123,14 +119,6 @@ const TAGS = [
     description:
       'Contact management endpoints for creating, listing, and retrieving global contacts',
   },
-  {
-    name: 'Jobs',
-    description: 'Job management endpoints for CRUD operations on accounting jobs',
-  },
-  {
-    name: 'Job Templates',
-    description: 'Job template management for defining reusable job configurations',
-  },
 ];
 
 /**
@@ -139,12 +127,6 @@ const TAGS = [
 function getTagsForPath(path: string): string[] {
   if (path.includes('/contacts') || path.includes('/global-contacts')) {
     return ['Contacts'];
-  }
-  if (path.includes('/job-templates')) {
-    return ['Job Templates'];
-  }
-  if (path.includes('/jobs')) {
-    return ['Jobs'];
   }
   return [];
 }

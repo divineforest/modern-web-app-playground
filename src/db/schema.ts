@@ -71,28 +71,6 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
 /**
- * Billing Periods table schema
- * Stores billing period information for companies
- */
-export const billingPeriods = pgTable('billing_periods', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  companyId: uuid('company_id')
-    .notNull()
-    .references(() => companies.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    }),
-  startDate: timestamp('start_date', { withTimezone: true }).defaultNow().notNull(),
-  endDate: timestamp('end_date', { withTimezone: true }).defaultNow().notNull(),
-  isApproved: varchar('is_approved', { length: 10 }).notNull().default('false'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type BillingPeriod = typeof billingPeriods.$inferSelect;
-export type NewBillingPeriod = typeof billingPeriods.$inferInsert;
-
-/**
  * Bob Contacts table schema
  * Stores contact records from the Bob system
  * Used to lookup bob_id when creating global contact relationships
@@ -136,93 +114,6 @@ export const serviceTypes = pgTable(
 
 export type ServiceType = typeof serviceTypes.$inferSelect;
 export type NewServiceType = typeof serviceTypes.$inferInsert;
-
-/**
- * Job Templates table schema
- * Stores reusable job templates for billing and accounting workflows
- */
-export const jobTemplates = pgTable(
-  'job_templates',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-    serviceTypeId: uuid('service_type_id').references(() => serviceTypes.id, {
-      onDelete: 'restrict',
-      onUpdate: 'cascade',
-    }),
-    code: text('code').notNull().unique(),
-    name: varchar('name', { length: 255 }).notNull(),
-    description: text('description'),
-    isActive: varchar('is_active', { length: 10 }).notNull().default('true'),
-    defaultAssigneeId: uuid('default_assignee_id'),
-    titlePattern: text('title_pattern').notNull(),
-  },
-  (table) => [check('code_check', sql`${table.code} ~ '^[A-Z0-9_]+$'`)]
-);
-
-export type JobTemplate = typeof jobTemplates.$inferSelect;
-export type NewJobTemplate = typeof jobTemplates.$inferInsert;
-
-// =============================================================================
-// Practice Management Tables
-// =============================================================================
-
-/**
- * Jobs table schema
- * Stores individual jobs/tasks for companies based on service types
- */
-export const jobs = pgTable(
-  'jobs',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id, {
-        onDelete: 'cascade',
-        onUpdate: 'cascade',
-      }),
-    serviceTypeId: uuid('service_type_id')
-      .notNull()
-      .references(() => serviceTypes.id, {
-        onDelete: 'restrict',
-        onUpdate: 'cascade',
-      }),
-    title: text('title').notNull(),
-    status: varchar('status', { length: 32 }).notNull().default('planned'),
-    dueAt: timestamp('due_at', { withTimezone: true }),
-    completedAt: timestamp('completed_at', { withTimezone: true }),
-    assigneeId: uuid('assignee_id').references(() => users.id, {
-      onDelete: 'set null',
-      onUpdate: 'cascade',
-    }),
-    periodStart: date('period_start'),
-    periodEnd: date('period_end'),
-    billingPeriodId: uuid('billing_period_id').references(() => billingPeriods.id, {
-      onDelete: 'restrict',
-      onUpdate: 'cascade',
-    }),
-  },
-  (table) => [
-    check(
-      'jobs_status_check',
-      sql`${table.status} IN ('planned', 'in_progress', 'completed', 'canceled')`
-    ),
-    index('idx_jobs_company_id').on(table.companyId),
-    index('idx_jobs_service_type_id').on(table.serviceTypeId),
-    index('idx_jobs_status').on(table.status),
-    index('idx_jobs_assignee_id').on(table.assigneeId),
-    index('idx_jobs_due_at').on(table.dueAt),
-    uniqueIndex('idx_jobs_unique_billing_period')
-      .on(table.billingPeriodId)
-      .where(sql`${table.billingPeriodId} IS NOT NULL`),
-  ]
-);
-
-export type Job = typeof jobs.$inferSelect;
-export type NewJob = typeof jobs.$inferInsert;
 
 // =============================================================================
 // Contact Management Tables

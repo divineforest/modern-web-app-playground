@@ -33,7 +33,6 @@ export default defineConfig({
         '**/*.config.{js,ts}',
         '**/coverage/**',
         'src/mocks/**',
-        'src/modules/practice-management/index.ts', // Pure re-exports, no behavior
         'vitest.setup.ts',
       ],
       thresholds: {
@@ -41,13 +40,6 @@ export default defineConfig({
         functions: 80,
         branches: 75,
         statements: 80,
-        // Practice Management Module - stricter thresholds based on current coverage
-        'src/modules/practice-management/**': {
-          lines: 85,
-          functions: 95,
-          branches: 75,
-          statements: 85,
-        },
       },
     },
   },
