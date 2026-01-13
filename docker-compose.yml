@@ -23,8 +23,33 @@ services:
     networks:
       - backend-network
 
+  # LocalStack (AWS S3 Emulation)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: backend-accounting-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./config/docker/localstack-init.sh:/etc/localstack/init/ready.d/init-buckets.sh:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend-network
+
 volumes:
   postgres_data:
+    driver: local
+  localstack_data:
     driver: local
 
 networks:

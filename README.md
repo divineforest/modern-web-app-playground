@@ -34,13 +34,15 @@ This project uses centralized version management:
 
 ## Quick Start
 
-**1. Start PostgreSQL Database**:
+**1. Start PostgreSQL Database & LocalStack**:
 
 ```bash
-# Start PostgreSQL with dev and test databases
+# Start PostgreSQL and LocalStack services
 docker-compose up -d
 
-# Databases: accounting_dev (development), accounting_test (testing)
+# Services:
+# - PostgreSQL: accounting_dev (development), accounting_test (testing)
+# - LocalStack: S3 emulation at http://localhost:4566
 # Credentials: see POSTGRES_USER/POSTGRES_PASSWORD in docker-compose.yml
 ```
 
@@ -71,18 +73,23 @@ pnpm install
 # Set DATABASE_URL (use credentials from docker-compose.yml: POSTGRES_USER/POSTGRES_PASSWORD)
 export DATABASE_URL="postgresql://<user>:<password>@localhost:5432/accounting_dev"
 
+# Test LocalStack S3 connectivity
+pnpm test:s3
+
 # Run Fastify server locally
 pnpm dev
 ```
 
 ## Development
 
-**Database Management**:
+**Database & LocalStack Management**:
 
 ```bash
-docker-compose up          # Start PostgreSQL (foreground)
-docker-compose up -d       # Start PostgreSQL in background
-docker-compose logs        # View database logs
+docker-compose up          # Start services (foreground)
+docker-compose up -d       # Start services in background
+docker-compose logs        # View service logs
+docker-compose logs db     # View PostgreSQL logs only
+docker-compose logs localstack  # View LocalStack logs only
 docker-compose down -v     # Stop and reset (removes data)
 ```
 
@@ -142,6 +149,7 @@ pnpm build                 # TypeScript build to dist/
 pnpm test                  # Unit tests
 pnpm test:watch            # Watch mode
 pnpm test:coverage         # Coverage report
+pnpm test:s3               # LocalStack S3 integration test
 ```
 
 ## Code Quality

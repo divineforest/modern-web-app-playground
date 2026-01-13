@@ -133,6 +133,20 @@ For comprehensive testing strategy, tools, and practices, see [Testing Architect
 - **Health Checks**: Database connectivity monitoring and health checks
 - **Persistence**: Volume-based data persistence across container restarts
 
+#### AWS Services Emulation (LocalStack)
+
+- **Tool**: LocalStack for local AWS service emulation
+- **Services**: S3 for object storage (file uploads, document storage, attachments)
+- **Purpose**: Enable local development and testing without AWS credentials or costs
+- **Orchestration**: Docker Compose service alongside PostgreSQL
+- **SDK Compatibility**: Uses standard AWS SDK v3 with custom endpoint configuration
+- **Testing**: Isolated S3 buckets per test run for reliable, reproducible tests
+- **Benefits**:
+  - No AWS account required for local development
+  - Fast iteration without network latency to real AWS
+  - Identical API behavior to production AWS services
+  - Cost-free development and testing environment
+
 ## Project Structure
 
 ```
@@ -140,7 +154,7 @@ For comprehensive testing strategy, tools, and practices, see [Testing Architect
 ├── .env.example                           # Environment variable template
 ├── .env                                   # Environment variables (not committed)
 ├── .env.local                             # Local development overrides (not committed)
-├── docker-compose.yml                     # PostgreSQL database service
+├── docker-compose.yml                     # PostgreSQL database and LocalStack services
 ├── src/
 │   ├── lib/                               # Core utilities and configuration
 │   │   ├── env.ts                         # Environment schema (@t3-oss/env-core + Zod) - Single source of truth
@@ -490,6 +504,12 @@ This separation ensures:
 - **`@temporalio/workflow`**: Workflow development framework and runtime
 - **`@temporalio/activity`**: Activity function framework for external operations
 
+### AWS Services & LocalStack
+
+- **`@aws-sdk/client-s3`**: AWS SDK v3 client for S3 object storage operations
+- **`localstack`**: Local AWS service emulator (Docker image) for development and testing
+- **Configuration**: Custom endpoint URL for LocalStack, standard endpoints for production
+
 ### Technology Integration Benefits
 
 #### Type Coverage (type-coverage)
@@ -511,6 +531,17 @@ This separation ensures:
 - **Development Speed**: One-command database setup with `docker-compose up`
 - **Data Persistence**: Volume-based storage ensures data survives container restarts
 - **Easy Reset**: Clean database state with `docker-compose down -v` for testing
+
+#### LocalStack (AWS Services Emulation)
+
+- **Local AWS Development**: Full AWS S3 API compatibility without AWS account or credentials
+- **Cost Elimination**: No AWS charges during development or testing
+- **Network Independence**: No external network calls during local development or CI
+- **Test Isolation**: Create and destroy S3 buckets per test suite for clean test environments
+- **SDK Compatibility**: Standard `@aws-sdk/client-s3` works with LocalStack via endpoint override
+- **Docker Integration**: Runs as Docker Compose service alongside PostgreSQL
+- **Persistence Options**: Ephemeral mode for tests, persistent mode for development data
+- **Feature Parity**: Supports S3 operations including presigned URLs, multipart uploads, and bucket policies
 
 #### Drizzle ORM & Database Tools
 
@@ -632,6 +663,13 @@ LOG_LEVEL="info"
 
 # Security (production)
 JWT_SECRET="your-secure-jwt-secret-here"
+
+# AWS / LocalStack (S3)
+AWS_REGION="us-east-1"
+AWS_ACCESS_KEY_ID="test"              # LocalStack accepts any value
+AWS_SECRET_ACCESS_KEY="test"          # LocalStack accepts any value
+S3_ENDPOINT="http://localhost:4566"   # LocalStack endpoint (omit for production AWS)
+S3_BUCKET_NAME="my-bucket"
 ```
 
 ### Database Configuration
@@ -690,6 +728,43 @@ export const exampleTable = pgTable('example', {
 
 - **`docker-compose.yml`**: PostgreSQL database service with development and test databases
 - **`config/docker/init-db.sql`**: Database initialization script for creating multiple databases
+
+### LocalStack Configuration
+
+- **`docker-compose.yml`**: LocalStack service configuration for S3 emulation
+- **Port**: LocalStack exposes services on port 4566 (gateway port)
+- **Services**: Configured to run S3 service (`SERVICES=s3`)
+- **Persistence**: Optional data persistence via volume mounts for development
+- **Health Check**: LocalStack provides health endpoint at `http://localhost:4566/_localstack/health`
+
+**Example Docker Compose Service:**
+
+```yaml
+localstack:
+  image: localstack/localstack:latest
+  ports:
+    - "4566:4566"
+  environment:
+    - SERVICES=s3
+    - DEBUG=0
+  volumes:
+    - localstack-data:/var/lib/localstack  # Optional: persist data
+```
+
+**S3 Client Configuration:**
+
+```typescript
+import { S3Client } from '@aws-sdk/client-s3';
+
+const s3Client = new S3Client({
+  region: env.AWS_REGION,
+  // Use LocalStack endpoint for local development
+  ...(env.S3_ENDPOINT && {
+    endpoint: env.S3_ENDPOINT,
+    forcePathStyle: true,  // Required for LocalStack
+  }),
+});
+```
 
 ## Modular Architecture
 

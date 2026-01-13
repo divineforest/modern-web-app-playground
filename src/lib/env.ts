@@ -50,6 +50,14 @@ export const env = createEnv({
     VIES_API_TIMEOUT: z.coerce.number().positive().default(30000),
     VIES_API_RETRY_ATTEMPTS: z.coerce.number().nonnegative().default(2),
     VIES_API_RETRY_DELAY_MS: z.coerce.number().positive().default(1000),
+
+    // AWS / S3 Configuration
+    AWS_REGION: z.string().default('us-east-1'),
+    AWS_ACCESS_KEY_ID: z.string().default('test'),
+    AWS_SECRET_ACCESS_KEY: z.string().default('test'),
+    S3_ENDPOINT: z.string().url().optional(),
+    S3_BUCKET_NAME: z.string().default('backend-accounting-documents'),
+    S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
   },
 
   /*
@@ -105,6 +113,14 @@ export const env = createEnv({
     VIES_API_TIMEOUT: process.env['VIES_API_TIMEOUT'],
     VIES_API_RETRY_ATTEMPTS: process.env['VIES_API_RETRY_ATTEMPTS'],
     VIES_API_RETRY_DELAY_MS: process.env['VIES_API_RETRY_DELAY_MS'],
+
+    // AWS / S3 Configuration
+    AWS_REGION: process.env['AWS_REGION'],
+    AWS_ACCESS_KEY_ID: process.env['AWS_ACCESS_KEY_ID'],
+    AWS_SECRET_ACCESS_KEY: process.env['AWS_SECRET_ACCESS_KEY'],
+    S3_ENDPOINT: process.env['S3_ENDPOINT'],
+    S3_BUCKET_NAME: process.env['S3_BUCKET_NAME'],
+    S3_FORCE_PATH_STYLE: process.env['S3_FORCE_PATH_STYLE'],
   },
 
   /*
