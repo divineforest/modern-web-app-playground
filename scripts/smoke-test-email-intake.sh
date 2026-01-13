@@ -42,6 +42,7 @@ log_step() {
 
 # Cleanup function
 cleanup() {
+    local exit_code=$?
     log_info "Cleaning up test data..."
     
     # Remove test company from database if created
@@ -49,6 +50,9 @@ cleanup() {
         psql "${DATABASE_URL}" -c "DELETE FROM companies WHERE id = '${TEST_COMPANY_ID}';" >/dev/null 2>&1 || true
         log_info "Deleted test company: ${TEST_COMPANY_ID}"
     fi
+    
+    # Preserve the original exit code
+    exit $exit_code
 }
 
 # Trap to ensure cleanup on exit
