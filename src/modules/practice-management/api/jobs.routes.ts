@@ -181,7 +181,7 @@ const router = s.router(jobsContract, {
  * @param fastify Fastify instance
  */
 export function registerJobsRoutes(fastify: FastifyInstance) {
-  s.registerRouter(jobsContract, router, fastify, {
+  return s.registerRouter(jobsContract, router, fastify, {
     logInitialization: true,
   });
 }

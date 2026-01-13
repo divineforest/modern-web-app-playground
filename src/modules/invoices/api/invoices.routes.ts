@@ -208,7 +208,7 @@ const router = s.router(invoicesContract, {
  * @param fastify Fastify instance
  */
 export function registerInvoicesRoutes(fastify: FastifyInstance) {
-  s.registerRouter(invoicesContract, router, fastify, {
+  return s.registerRouter(invoicesContract, router, fastify, {
     logInitialization: true,
   });
 }
