@@ -22,6 +22,7 @@ Before considering work complete, ensure all checks pass locally:
 - `pnpm test`
 - `pnpm typecheck`
 - `pnpm type-coverage`
+- If implementing from `docs/specs/`: Remove 🚧 from completed items
 
 ## AI Feedback Loop
 
