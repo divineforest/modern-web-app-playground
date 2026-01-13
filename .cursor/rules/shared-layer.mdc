@@ -1,0 +1,31 @@
+---
+description: Shared layer must be domain-agnostic
+globs:
+  - "src/shared/**"
+alwaysApply: false
+---
+
+# Shared Layer Rules
+
+Code in `src/shared/` must be **domain-agnostic** and reusable across modules.
+
+## What belongs here
+
+- Generic SDK clients (HTTP, S3, database connections)
+- Infrastructure utilities (logging, error handling)
+- Low-level operations: `uploadJson()`, `sendRequest()`, `query()`
+
+## What does NOT belong here
+
+- Domain-specific logic (inbound-email, invoices, contacts)
+- Business rules or entity-specific methods
+- Methods named after domain concepts (e.g., `archiveInboundEmailPayload`)
+
+## Rule of thumb
+
+If your method name contains a domain term, it belongs in `src/modules/<domain>/`.
+
+Examples:
+- `uploadJson(key, payload)` → shared ✓
+- `archiveInboundEmailPayload()` → modules/inbound-email ✓
+- `generateInvoiceKey()` → modules/invoices ✓

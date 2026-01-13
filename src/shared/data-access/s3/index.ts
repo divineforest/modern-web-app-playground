@@ -1,6 +1,9 @@
 /**
  * S3 data access layer
- * Provides S3 storage operations for document archival and retrieval
+ * Provides generic S3 storage operations.
+ *
+ * NOTE: Keep methods domain-agnostic (e.g., uploadJson, getObject).
+ * Domain-specific logic belongs in src/modules/<domain>/
  */
 
 export * from './s3-storage.js';
