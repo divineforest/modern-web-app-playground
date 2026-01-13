@@ -142,20 +142,37 @@ create_test_company() {
 send_webhook() {
     log_step "Sending Postmark webhook..."
     
+    # Get the directory where this script is located
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local project_root="$(cd "${script_dir}/.." && pwd)"
+    local invoice_path="${project_root}/tests/fixtures/Invoice-UJYG5HZG-0007.pdf"
+    
+    # Check if invoice file exists
+    if [ ! -f "$invoice_path" ]; then
+        log_error "Invoice file not found at: ${invoice_path}"
+        exit 1
+    fi
+    
+    # Convert invoice PDF to base64
+    local invoice_base64=$(base64 -i "$invoice_path" | tr -d '\n')
+    local invoice_size=$(stat -f%z "$invoice_path" 2>/dev/null || stat -c%s "$invoice_path" 2>/dev/null)
+    
+    log_info "Using real Temporal invoice: Invoice-UJYG5HZG-0007.pdf (${invoice_size} bytes)"
+    
     # Create Postmark webhook payload with attachment
     local payload=$(cat <<EOF
 {
-  "FromName": "Smoke Test Sender",
-  "From": "smoke-test@example.com",
+  "FromName": "Temporal Technologies",
+  "From": "AR@temporal.io",
   "FromFull": {
-    "Email": "smoke-test@example.com",
-    "Name": "Smoke Test Sender"
+    "Email": "AR@temporal.io",
+    "Name": "Temporal Technologies"
   },
-  "To": "Smoke Test <${TEST_TOKEN}@example.com>",
+  "To": "EasyBiz <${TEST_TOKEN}@example.com>",
   "ToFull": [
     {
       "Email": "${TEST_TOKEN}@example.com",
-      "Name": "Smoke Test"
+      "Name": "EasyBiz"
     }
   ],
   "Cc": "",
@@ -163,11 +180,11 @@ send_webhook() {
   "Bcc": "",
   "BccFull": [],
   "OriginalRecipient": "${TEST_TOKEN}@example.com",
-  "Subject": "Smoke Test Email",
+  "Subject": "Invoice UJYG5HZG-0007 from Temporal Technologies",
   "MessageID": "${TEST_MESSAGE_ID}",
   "Date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "TextBody": "This is a smoke test email body.",
-  "HtmlBody": "<html><body><p>This is a smoke test email body.</p></body></html>",
+  "TextBody": "Please find attached your invoice UJYG5HZG-0007 for the service period Dec 01 2025 - Dec 31 2025. Amount due: \$100.00 USD by February 1, 2026.",
+  "HtmlBody": "<html><body><p>Please find attached your invoice <strong>UJYG5HZG-0007</strong> for the service period Dec 01 2025 - Dec 31 2025.</p><p>Amount due: <strong>\$100.00 USD</strong> by February 1, 2026.</p></body></html>",
   "Headers": [
     {
       "Name": "X-Smoke-Test",
@@ -176,10 +193,10 @@ send_webhook() {
   ],
   "Attachments": [
     {
-      "Name": "test-receipt.pdf",
-      "Content": "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL1Jlc291cmNlcyA8PC9Gb250IDw8L0YxIDEgMCBSPj4+Pi9NZWRpYUJveFswIDAgNTk1LjI4IDg0MS44OV0vQ29udGVudHMgNCAwIFI+PgplbmRvYmoKNCAwIG9iago8PC9MZW5ndGggNDQ+PgpzdHJlYW0KQlQKNzAgNTAgVGQKL0YxIDEyIFRmCihTbW9rZSBUZXN0IFBERikgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoxIDAgb2JqCjw8L1R5cGUvRm9udC9TdWJ0eXBlL1R5cGUxL0Jhc2VGb250L0hlbHZldGljYT4+CmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+CmVuZG9iago1IDAgb2JqCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iagp0cmFpbGVyCjw8L1NpemUgNi9Sb290IDUgMCBSPj4Kc3RhcnR4cmVmCjM0OAolJUVPRgo=",
+      "Name": "Invoice-UJYG5HZG-0007.pdf",
+      "Content": "${invoice_base64}",
       "ContentType": "application/pdf",
-      "ContentLength": 348
+      "ContentLength": ${invoice_size}
     }
   ]
 }
