@@ -4,6 +4,8 @@
  * This module handles inbound email webhooks for processing invoices and documents.
  * It provides webhook endpoints that trigger Temporal workflows for reliable background processing.
  *
+ * SMOKE TEST: scripts/smoke-test-email-intake.sh validates this module E2E
+ *
  * @module inbound-email
  *
  * ## Public API

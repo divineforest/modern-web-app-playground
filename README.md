@@ -24,6 +24,7 @@ _Use this README to set up the complete development and test environment. Execut
 - Docker & Docker Compose
 - Temporal CLI (for local development)
 - pnpm (via corepack)
+- AWS CLI (recommended: `brew install awscli`)
 
 ## Version Management
 

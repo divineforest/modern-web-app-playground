@@ -1,0 +1,329 @@
+#!/bin/bash
+
+# Email Intake Workflow Smoke Test
+# Runs E2E test from webhook reception through Temporal workflow execution
+
+set -e  # Exit on any error
+
+# Configuration
+SERVER_HOST="${SERVER_HOST:-localhost}"
+SERVER_PORT="${SERVER_PORT:-3000}"
+TIMEOUT="${TIMEOUT:-60}"
+WEBHOOK_URL="http://${SERVER_HOST}:${SERVER_PORT}/api/v2/webhooks/postmark/inbound"
+
+# Test data
+TEST_TOKEN="smoke-test-$(uuidgen | tr '[:upper:]' '[:lower:]')"
+TEST_MESSAGE_ID="smoke-test-$(uuidgen)"
+TEST_COMPANY_ID=""
+WORKFLOW_ID=""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+log_step() {
+    echo -e "${BLUE}[STEP]${NC} $1"
+}
+
+# Cleanup function
+cleanup() {
+    log_info "Cleaning up test data..."
+    
+    # Remove test company from database if created
+    if [ -n "$TEST_COMPANY_ID" ]; then
+        psql "${DATABASE_URL}" -c "DELETE FROM companies WHERE id = '${TEST_COMPANY_ID}';" >/dev/null 2>&1 || true
+        log_info "Deleted test company: ${TEST_COMPANY_ID}"
+    fi
+}
+
+# Trap to ensure cleanup on exit
+trap cleanup EXIT INT TERM
+
+# Check prerequisites
+check_prerequisites() {
+    log_step "Checking prerequisites..."
+    
+    # Check required commands
+    local missing_commands=()
+    for cmd in psql curl jq aws temporal; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing_commands+=("$cmd")
+        fi
+    done
+    
+    if [ ${#missing_commands[@]} -gt 0 ]; then
+        log_error "Missing required commands: ${missing_commands[*]}"
+        log_error "Install them before running this test:"
+        log_error "  - psql: PostgreSQL client (brew install postgresql)"
+        log_error "  - curl: HTTP client (usually pre-installed)"
+        log_error "  - jq: JSON processor (brew install jq)"
+        log_error "  - aws: AWS CLI (brew install awscli)"
+        log_error "  - temporal: Temporal CLI (brew install temporal)"
+        exit 1
+    fi
+    
+    # Check DATABASE_URL is set (dev default - use accounting_dev database)
+    : "${DATABASE_URL:=postgresql://user:password@localhost:5432/accounting_dev}"
+    
+    # Check PostgreSQL connection
+    if ! psql "${DATABASE_URL}" -c "SELECT 1;" >/dev/null 2>&1; then
+        log_error "Cannot connect to PostgreSQL at ${DATABASE_URL}"
+        log_error "Start docker-compose services: docker-compose up -d"
+        exit 1
+    fi
+    log_info "✓ PostgreSQL is accessible"
+    
+    # Check LocalStack S3
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 s3 ls >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        log_error "Cannot connect to LocalStack S3 at http://localhost:4566"
+        log_error "Start docker-compose services: docker-compose up -d"
+        exit 1
+    fi
+    log_info "✓ LocalStack S3 is accessible"
+    
+    # Check HTTP server
+    if ! curl -sf "http://${SERVER_HOST}:${SERVER_PORT}/healthz" >/dev/null 2>&1; then
+        log_error "HTTP server not responding at http://${SERVER_HOST}:${SERVER_PORT}"
+        log_error "Start the server: pnpm dev"
+        exit 1
+    fi
+    log_info "✓ HTTP server is running"
+    
+    # Check Temporal server
+    if ! temporal workflow list --limit 1 >/dev/null 2>&1; then
+        log_error "Cannot connect to Temporal server"
+        log_error "Start Temporal: temporal server start-dev"
+        exit 1
+    fi
+    log_info "✓ Temporal server is accessible"
+    
+    # Check Temporal worker (approximate check - verify task queue exists)
+    log_warn "Make sure Temporal worker is running: pnpm temporal:worker"
+    
+    log_info "✓ All prerequisites met"
+}
+
+# Create test company in database
+create_test_company() {
+    log_step "Creating test company with billing token: ${TEST_TOKEN}"
+    
+    # Insert company and capture the ID
+    TEST_COMPANY_ID=$(psql "${DATABASE_URL}" -t -c "
+        INSERT INTO companies (name, status, billing_inbound_token, billing_settings, company_details)
+        VALUES ('Smoke Test Company', 'active', '${TEST_TOKEN}', '{}', '{}')
+        RETURNING id;
+    " | xargs)
+    
+    if [ -z "$TEST_COMPANY_ID" ]; then
+        log_error "Failed to create test company"
+        exit 1
+    fi
+    
+    log_info "✓ Created test company: ${TEST_COMPANY_ID}"
+}
+
+# Send Postmark webhook
+send_webhook() {
+    log_step "Sending Postmark webhook..."
+    
+    # Create Postmark webhook payload with attachment
+    local payload=$(cat <<EOF
+{
+  "FromName": "Smoke Test Sender",
+  "From": "smoke-test@example.com",
+  "FromFull": {
+    "Email": "smoke-test@example.com",
+    "Name": "Smoke Test Sender"
+  },
+  "To": "Smoke Test <${TEST_TOKEN}@example.com>",
+  "ToFull": [
+    {
+      "Email": "${TEST_TOKEN}@example.com",
+      "Name": "Smoke Test"
+    }
+  ],
+  "Cc": "",
+  "CcFull": [],
+  "Bcc": "",
+  "BccFull": [],
+  "OriginalRecipient": "${TEST_TOKEN}@example.com",
+  "Subject": "Smoke Test Email",
+  "MessageID": "${TEST_MESSAGE_ID}",
+  "Date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "TextBody": "This is a smoke test email body.",
+  "HtmlBody": "<html><body><p>This is a smoke test email body.</p></body></html>",
+  "Headers": [
+    {
+      "Name": "X-Smoke-Test",
+      "Value": "true"
+    }
+  ],
+  "Attachments": [
+    {
+      "Name": "test-receipt.pdf",
+      "Content": "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL1Jlc291cmNlcyA8PC9Gb250IDw8L0YxIDEgMCBSPj4+Pi9NZWRpYUJveFswIDAgNTk1LjI4IDg0MS44OV0vQ29udGVudHMgNCAwIFI+PgplbmRvYmoKNCAwIG9iago8PC9MZW5ndGggNDQ+PgpzdHJlYW0KQlQKNzAgNTAgVGQKL0YxIDEyIFRmCihTbW9rZSBUZXN0IFBERikgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoxIDAgb2JqCjw8L1R5cGUvRm9udC9TdWJ0eXBlL1R5cGUxL0Jhc2VGb250L0hlbHZldGljYT4+CmVuZG9iagoyIDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1szIDAgUl0vQ291bnQgMT4+CmVuZG9iago1IDAgb2JqCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iagp0cmFpbGVyCjw8L1NpemUgNi9Sb290IDUgMCBSPj4Kc3RhcnR4cmVmCjM0OAolJUVPRgo=",
+      "ContentType": "application/pdf",
+      "ContentLength": 348
+    }
+  ]
+}
+EOF
+)
+    
+    # Send webhook and capture response
+    local response=$(curl -sf -X POST "${WEBHOOK_URL}" \
+        -H "Content-Type: application/json" \
+        -d "$payload" 2>&1)
+    
+    if [ $? -ne 0 ]; then
+        log_error "Failed to send webhook: ${response}"
+        exit 1
+    fi
+    
+    # Extract workflow ID from response
+    WORKFLOW_ID=$(echo "$response" | jq -r '.workflowId // empty')
+    
+    if [ -z "$WORKFLOW_ID" ]; then
+        log_error "No workflow ID in response: ${response}"
+        exit 1
+    fi
+    
+    log_info "✓ Webhook sent, workflow started: ${WORKFLOW_ID}"
+}
+
+# Wait for workflow to reach terminal state (completed or failed)
+wait_for_workflow() {
+    log_step "Waiting for workflow to reach terminal state (timeout: ${TIMEOUT}s)..."
+    log_info "NOTE: Workflow is expected to FAIL due to Core API being unavailable"
+    
+    local elapsed=0
+    local status=""
+    
+    while [ $elapsed -lt $TIMEOUT ]; do
+        # Query workflow status
+        status=$(temporal workflow describe \
+            --workflow-id "${WORKFLOW_ID}" \
+            --fields status \
+            2>/dev/null | grep -A1 "Status:" | tail -n1 | xargs || echo "")
+        
+        if [ "$status" = "Completed" ]; then
+            log_info "✓ Workflow completed successfully"
+            return 0
+        elif [ "$status" = "Failed" ]; then
+            log_warn "Workflow failed as expected (Core API unavailable)"
+            return 0
+        elif [ "$status" = "Terminated" ] || [ "$status" = "Canceled" ]; then
+            log_error "Workflow was terminated or canceled unexpectedly: ${status}"
+            temporal workflow describe --workflow-id "${WORKFLOW_ID}"
+            exit 1
+        fi
+        
+        sleep 2
+        elapsed=$((elapsed + 2))
+        
+        if [ $((elapsed % 10)) -eq 0 ]; then
+            log_info "Still waiting... (${elapsed}s elapsed, status: ${status:-unknown})"
+        fi
+    done
+    
+    log_error "Workflow did not reach terminal state within ${TIMEOUT} seconds"
+    log_error "Current status: ${status:-unknown}"
+    temporal workflow describe --workflow-id "${WORKFLOW_ID}"
+    exit 1
+}
+
+# Verify S3 archival
+verify_s3_archival() {
+    log_step "Verifying S3 archival..."
+    
+    # Generate expected S3 key
+    local date_path=$(date -u +"%Y/%m/%d")
+    local s3_key="inbound-emails/${date_path}/${TEST_MESSAGE_ID}.json"
+    
+    log_info "Expected S3 key: s3://backend-accounting-documents/${s3_key}"
+    
+    # Check if object exists in LocalStack
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 \
+        s3api head-object \
+        --bucket backend-accounting-documents \
+        --key "${s3_key}" >/dev/null 2>&1
+    
+    if [ $? -ne 0 ]; then
+        log_error "Payload not found in S3 at: ${s3_key}"
+        log_error "Listing S3 contents for debug:"
+        AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 \
+            s3 ls s3://backend-accounting-documents/inbound-emails/ --recursive | tail -n 10
+        exit 1
+    fi
+    
+    log_info "✓ Payload archived to S3 successfully"
+}
+
+# Verify workflow executed through S3 archival stage
+verify_workflow_execution() {
+    log_step "Verifying workflow execution..."
+    
+    # Get workflow history
+    local history=$(temporal workflow show \
+        --workflow-id "${WORKFLOW_ID}" \
+        --output json 2>/dev/null || echo "{}")
+    
+    # Check if activity started (workflow reached execution phase)
+    local activity_started=$(echo "$history" | jq -r '.events[] | select(.eventType == "ActivityTaskScheduled") | .eventType' 2>/dev/null | head -n1)
+    
+    if [ "$activity_started" = "ActivityTaskScheduled" ]; then
+        log_info "✓ Activity was scheduled (workflow execution started)"
+    else
+        log_error "Activity was never scheduled - workflow may have failed early"
+        exit 1
+    fi
+}
+
+# Main test execution
+main() {
+    log_info "==================================="
+    log_info "Email Intake Workflow Smoke Test"
+    log_info "==================================="
+    log_info ""
+    log_warn "NOTE: This test expects Core API to be unavailable."
+    log_warn "The workflow will fail at file upload stage - this is expected."
+    log_info ""
+    
+    check_prerequisites
+    create_test_company
+    send_webhook
+    wait_for_workflow
+    verify_s3_archival
+    verify_workflow_execution
+    
+    log_info ""
+    log_info "==================================="
+    log_info "✅ SMOKE TEST PASSED"
+    log_info "==================================="
+    log_info "Workflow ID: ${WORKFLOW_ID}"
+    log_info "Company ID: ${TEST_COMPANY_ID}"
+    log_info "Billing Token: ${TEST_TOKEN}"
+    log_info "Message ID: ${TEST_MESSAGE_ID}"
+    log_info ""
+    log_info "View workflow in Temporal UI:"
+    log_info "  http://localhost:8233/namespaces/default/workflows/${WORKFLOW_ID}"
+}
+
+# Run main function
+main "$@"

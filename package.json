@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:smoke": "./scripts/smoke-test.sh",
     "test:smoke:build": "./scripts/smoke-test.sh build",
+    "test:smoke:email-intake": "./scripts/smoke-test-email-intake.sh",
     "test:s3": "tsx src/scripts/test-s3.ts",
     "typecheck": "tsc --noEmit",
     "type-coverage": "type-coverage",
