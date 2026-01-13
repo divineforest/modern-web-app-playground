@@ -1,17 +1,20 @@
 /**
  * Postmark Email Processing Activity
  *
- * Simple wrapper around existing postmark-webhook-processor service
+ * Processes inbound emails by:
+ * 1. Archiving raw payload to S3 (FR-2 requirement)
+ * 2. Processing email via existing service
  */
 import { Context } from '@temporalio/activity';
+import { createS3StorageService } from '../../../shared/data-access/s3/index.js';
 import {
   type PostmarkWebhookPayload,
   processWebhook,
 } from '../services/postmark-webhook-processor.js';
 
 /**
- * Process Postmark inbound email using existing service
- * This activity simply wraps the existing processWebhook function
+ * Process Postmark inbound email
+ * First archives the raw payload to S3, then processes via existing service
  */
 /**
  * @lintignore
@@ -27,7 +30,31 @@ export async function processInboundEmailActivity(payload: PostmarkWebhookPayloa
     attachmentCount: payload.Attachments?.length || 0,
   });
 
-  // Use the existing service to process the webhook - throws on failure
+  // Step 1: Archive raw payload to S3 before any processing (FR-2 requirement)
+  const s3Service = createS3StorageService();
+  const receivedDate = payload.Date ? new Date(payload.Date) : undefined;
+
+  try {
+    const s3Key = await s3Service.archiveInboundEmailPayload(
+      payload,
+      payload.MessageID,
+      receivedDate
+    );
+
+    context.log.info('Successfully archived payload to S3', {
+      messageId: payload.MessageID,
+      s3Key,
+    });
+  } catch (error) {
+    context.log.error('Failed to archive payload to S3', {
+      messageId: payload.MessageID,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Re-throw to fail the activity - archival is mandatory per FR-2
+    throw error;
+  }
+
+  // Step 2: Use the existing service to process the webhook - throws on failure
   await processWebhook(payload);
 
   context.log.info('Postmark email processing completed successfully', {

@@ -93,7 +93,10 @@
     "Wolfratshausen",
     "Rica",
     "Globex",
-    "sarl"
+    "sarl",
+    "localstack",
+    "awslocal",
+    "reavers"
   ],
   "ignorePaths": [
     "node_modules/**",

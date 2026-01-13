@@ -1,10 +1,35 @@
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestCompany } from '../../../../tests/factories/index.js';
 import { server } from '../../../mocks/server.js';
 import type { FileUploadResponse } from '../../../shared/data-access/core/index.js';
 import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
 import { processWebhook } from '../services/postmark-webhook-processor.js';
+import { processInboundEmailActivity } from './postmark-email-processor.activity.js';
+
+// Mock S3 storage service
+const mockArchiveInboundEmailPayload = vi
+  .fn()
+  .mockResolvedValue('inbound-emails/2024/01/15/test-123.json');
+vi.mock('../../../shared/data-access/s3/index.js', () => ({
+  createS3StorageService: vi.fn(() => ({
+    archiveInboundEmailPayload: mockArchiveInboundEmailPayload,
+  })),
+}));
+
+// Mock Temporal Activity Context
+vi.mock('@temporalio/activity', () => ({
+  Context: {
+    current: vi.fn(() => ({
+      log: {
+        info: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+      },
+    })),
+  },
+}));
 
 // Request data tracking interface for tests
 interface CoreApiRequestData {
@@ -218,5 +243,163 @@ describe('Postmark Email Processing Service (via Activity)', () => {
     await expect(processWebhook(postmarkPayload)).rejects.toThrow(
       'File upload failed! status: 500'
     );
+  });
+});
+
+describe('Postmark Email Processing Activity (S3 Archival)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockArchiveInboundEmailPayload.mockResolvedValue('inbound-emails/2024/01/15/test-123.json');
+    server.resetHandlers();
+  });
+
+  it('should archive payload to S3 before processing email', async () => {
+    // ARRANGE
+    const company = await createTestCompany({ name: 'Test Company' });
+    const billingInboundToken = company.billingInboundToken;
+
+    // Mock Core API to accept file uploads
+    server.use(
+      http.post('*/api/internal/documents', () => {
+        return HttpResponse.json({
+          id: 'mock-file-id',
+          type: 'expence_document',
+          name: null,
+          notes: null,
+          fileName: 'receipt.pdf',
+          mimeType: 'application/pdf',
+          issueDate: new Date().toISOString(),
+          documentMetadata: null,
+          bookeepingMetadata: {},
+          contactId: null,
+          adminStatus: 'ready',
+          recognitionDetails: null,
+          createdAt: new Date().toISOString(),
+          bobStatus: null,
+          externalStatus: null,
+          contact: null,
+          transactions: [],
+          paymentStatus: 'waiting_for_payment',
+          potentialDuplicate: null,
+          potentialTransactions: null,
+          url: 'https://api.example.com/files/mock-file-id',
+        });
+      })
+    );
+
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'john.customer@example.com',
+      To: `"John Customer" <${billingInboundToken}@example.com>`,
+      OriginalRecipient: `${billingInboundToken}@example.com`,
+      Subject: 'Test Email',
+      MessageID: 'test-message-123',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [
+        {
+          Name: 'receipt.pdf',
+          Content: 'VGVzdCBQREYgcmVjZWlwdA==',
+          ContentType: 'application/pdf',
+          ContentLength: 1234,
+        },
+      ],
+    };
+
+    // ACT
+    await processInboundEmailActivity(postmarkPayload);
+
+    // ASSERT - S3 archival should be called with correct parameters
+    expect(mockArchiveInboundEmailPayload).toHaveBeenCalledWith(
+      postmarkPayload,
+      'test-message-123',
+      new Date('2024-01-15T14:30:00.000Z')
+    );
+  });
+
+  it('should fail activity if S3 archival fails', async () => {
+    // ARRANGE
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'test@example.com',
+      To: '"Test" <test@example.com>',
+      OriginalRecipient: 'test@example.com',
+      Subject: 'Test',
+      MessageID: 'test-fail-s3',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [],
+    };
+
+    // Mock S3 service to throw error
+    mockArchiveInboundEmailPayload.mockRejectedValueOnce(new Error('S3 connection failed'));
+
+    // ACT & ASSERT - Activity should fail when S3 archival fails
+    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
+      'S3 connection failed'
+    );
+  });
+
+  it('should process webhook only after successful S3 archival', async () => {
+    // ARRANGE
+    const company = await createTestCompany({ name: 'Test Company' });
+    const billingInboundToken = company.billingInboundToken;
+
+    const executionOrder: string[] = [];
+
+    // Mock S3 service to track execution order
+    mockArchiveInboundEmailPayload.mockImplementation(() => {
+      executionOrder.push('s3-archive');
+      return Promise.resolve('inbound-emails/2024/01/15/test-order.json');
+    });
+
+    // Mock Core API to track execution order
+    server.use(
+      http.post('*/api/internal/documents', () => {
+        executionOrder.push('core-api-upload');
+        return HttpResponse.json({
+          id: 'mock-file-id',
+          type: 'expence_document',
+          name: null,
+          notes: null,
+          fileName: 'receipt.pdf',
+          mimeType: 'application/pdf',
+          issueDate: new Date().toISOString(),
+          documentMetadata: null,
+          bookeepingMetadata: {},
+          contactId: null,
+          adminStatus: 'ready',
+          recognitionDetails: null,
+          createdAt: new Date().toISOString(),
+          bobStatus: null,
+          externalStatus: null,
+          contact: null,
+          transactions: [],
+          paymentStatus: 'waiting_for_payment',
+          potentialDuplicate: null,
+          potentialTransactions: null,
+          url: 'https://api.example.com/files/mock-file-id',
+        });
+      })
+    );
+
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'john.customer@example.com',
+      To: `"John Customer" <${billingInboundToken}@example.com>`,
+      OriginalRecipient: `${billingInboundToken}@example.com`,
+      Subject: 'Test Order',
+      MessageID: 'test-order',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [
+        {
+          Name: 'receipt.pdf',
+          Content: 'VGVzdCBQREYgcmVjZWlwdA==',
+          ContentType: 'application/pdf',
+          ContentLength: 1234,
+        },
+      ],
+    };
+
+    // ACT
+    await processInboundEmailActivity(postmarkPayload);
+
+    // ASSERT - S3 archival should happen before Core API upload
+    expect(executionOrder).toEqual(['s3-archive', 'core-api-upload']);
   });
 });
