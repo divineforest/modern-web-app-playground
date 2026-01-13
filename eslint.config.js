@@ -32,9 +32,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      // Temporarily disabled rules - gradually enable and fix
-      // TODO: Enable these rules one by one and fix violations
-      '@typescript-eslint/no-unsafe-argument': 'off',
+      // Do not add any rules here
     },
   },
 
@@ -45,6 +43,7 @@ export default tseslint.config(
       // Allow 'any' from response.json() and JSON.parse() in tests for ergonomics over strict typing
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   }
 );
