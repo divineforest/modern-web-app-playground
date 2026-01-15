@@ -1,6 +1,6 @@
 # AI Apply
 
-Complete the user's task while following AI-friendliness principles from `docs/ai-guide.md`.
+Complete the user's task while following AI-friendliness principles from `docs/ai-principles.md`.
 
 ## Core Rules
 
