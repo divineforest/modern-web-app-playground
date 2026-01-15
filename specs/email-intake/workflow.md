@@ -33,26 +33,23 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 - The system SHALL store the raw, unmodified payload to preserve the exact data received
 - This storage serves debugging and audit purposes and enables workflow replay if needed
 
-### FR-2.1: Invoice Record Creation
+### FR-3: Invoice Record Creation
 
 - The system SHALL create a new record in the invoices table after the original payload has been successfully uploaded to S3
-- The system SHALL extract the company ID from the billing inbound token in the recipient email address (same as used for Core API uploads)
+- The system SHALL extract the company ID from the billing inbound token in the recipient email address
 - The system SHALL set the invoice type to "purchase" (received from suppliers/vendors)
-- The system SHALL set the invoice status to "draft" (default status)
-- The system SHALL generate a unique invoice number using format: `EMAIL-{MessageID}` (where MessageID is from Postmark)
-- The system SHALL set the issue date to the current date when the invoice record is created
-- The system SHALL set the currency to "USD" as default (can be updated later)
-- The system SHALL set totalAmount to 0.00 as default (can be updated later)
+- The system SHALL set the invoice status to "new"
+- The system SHALL set invoice number, issue date, currency, and total amount to null (to be populated by OCR recognition later)
 - The system SHALL log the created invoice ID for audit purposes
 
-### FR-3: Email Storage and Processing
+### FR-4: Email Storage and Processing
 
 - 🚧 The system SHALL store processed email data in a structured format
 - 🚧 The system SHALL associate emails with relevant business entities (contacts, companies, etc.)
 - 🚧 The system SHALL trigger appropriate business logic based on email content and metadata
 - 🚧 The system SHALL maintain audit trail of processed emails
 
-### FR-4: Attachment Handling
+### FR-5: Attachment Handling
 
 - The system SHALL process and decode base64-encoded attachments from webhook payloads
 - The system SHALL validate attachment types and sizes before processing
@@ -60,7 +57,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 - 🚧 The system SHALL scan attachments for security threats (virus scanning)
 - The system SHALL associate uploaded files with the originating email record
 
-### FR-5: Core API Integration
+### FR-6: Core API Integration
 
 - The system SHALL upload email attachments to Core API files/upload endpoint
 - The system SHALL include the extracted company ID when uploading invoices to Core API
@@ -139,16 +136,15 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 - Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json` (UTC timezone)
 - Preserve raw, unmodified payload for debugging and audit purposes
 
-### 1.1. Invoice Creation Phase
+### 2. Invoice Creation Phase
 
 - Create a new invoice record in the invoices table after S3 archival
 - Extract company ID from billing inbound token in recipient email
-- Generate invoice number using format: `EMAIL-{MessageID}`
-- Set invoice type to "purchase", status to "draft", currency to "USD", totalAmount to 0.00
-- Set issue date to current date
+- Set invoice type to "purchase", status to "new"
+- Set invoice number, issue date, currency, and total amount to null (populated by OCR recognition later)
 - Log created invoice ID for audit purposes
 
-### 2. Extraction Phase
+### 3. Extraction Phase
 
 - Parse email metadata (from, to, subject, date)
 - Extract billing inbound token from recipient email address format `<billing-inbound-token>@something.com`
@@ -159,26 +155,26 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 - Extract and decode email content (text/HTML)
 - Process attachments and validate file types
 
-### 3. Validation Phase
+### 4. Validation Phase
 
 - 🚧 Check sender against allowlist/blocklist
 - Validate attachment types and sizes
 - Validate company exists in the system
 
-### 4. Business Logic Phase
+### 5. Business Logic Phase
 
 - 🚧 Identify recipient context and business rules
 - 🚧 Route email to appropriate handlers
 - 🚧 Trigger automated workflows if applicable
 
-### 5. Storage Phase
+### 6. Storage Phase
 
 - Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
 - 🚧 Store email metadata in Core API with file references and company association
 - 🚧 Associate email and files with the identified company entity
 - 🚧 Update contact records and business context for the specific company
 
-### 6. Completion Phase
+### 7. Completion Phase
 
 - Log processing results
 - 🚧 Send notifications if configured

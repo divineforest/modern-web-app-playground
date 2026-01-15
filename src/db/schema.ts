@@ -277,21 +277,23 @@ export const invoices = pgTable(
     }),
     type: varchar('type', { length: 32 }).notNull(),
     status: varchar('status', { length: 32 }).notNull().default('draft'),
-    invoiceNumber: text('invoice_number').notNull(),
-    issueDate: date('issue_date').notNull(),
+    invoiceNumber: text('invoice_number'),
+    issueDate: date('issue_date'),
     dueDate: date('due_date'),
     paidAt: timestamp('paid_at', { withTimezone: true }),
-    currency: varchar('currency', { length: 3 }).notNull(),
-    totalAmount: text('total_amount').notNull(), // NUMERIC(15,2) stored as text for precision
+    currency: varchar('currency', { length: 3 }),
+    totalAmount: text('total_amount'), // NUMERIC(15,2) stored as text for precision
     description: text('description'),
   },
   (table) => [
     check('invoices_type_check', sql`${table.type} IN ('sales', 'purchase')`),
     check(
       'invoices_status_check',
-      sql`${table.status} IN ('draft', 'sent', 'paid', 'overdue', 'cancelled')`
+      sql`${table.status} IN ('new', 'draft', 'sent', 'paid', 'overdue', 'cancelled')`
     ),
-    uniqueIndex('idx_invoices_company_invoice_number').on(table.companyId, table.invoiceNumber),
+    uniqueIndex('idx_invoices_company_invoice_number')
+      .on(table.companyId, table.invoiceNumber)
+      .where(sql`${table.invoiceNumber} IS NOT NULL`),
     index('idx_invoices_company_id').on(table.companyId),
     index('idx_invoices_contact_id').on(table.contactId),
     index('idx_invoices_status').on(table.status),

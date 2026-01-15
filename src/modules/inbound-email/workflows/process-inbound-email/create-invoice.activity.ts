@@ -54,15 +54,14 @@ export async function createInvoiceActivity(payload: PostmarkWebhookPayload): Pr
       throw new Error(error);
     }
 
-    const today = new Date();
     const invoiceData = {
       companyId: company.id,
       type: 'purchase' as const,
-      status: 'draft' as const,
-      invoiceNumber: `EMAIL-${payload.MessageID}`,
-      issueDate: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`, // YYYY-MM-DD format
-      currency: 'USD',
-      totalAmount: 0,
+      status: 'new' as const,
+      invoiceNumber: null,
+      issueDate: null,
+      currency: null,
+      totalAmount: null,
     };
 
     const invoice = await createInvoiceService(invoiceData);
@@ -71,7 +70,6 @@ export async function createInvoiceActivity(payload: PostmarkWebhookPayload): Pr
       messageId: payload.MessageID,
       invoiceId: invoice.id,
       companyId: company.id,
-      invoiceNumber: invoiceData.invoiceNumber,
     });
 
     return invoice.id;

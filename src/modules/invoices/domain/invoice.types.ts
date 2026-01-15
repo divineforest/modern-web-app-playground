@@ -9,7 +9,7 @@ export type InvoiceType = (typeof invoiceTypeEnum)[number];
 /**
  * Invoice status enum
  */
-const invoiceStatusEnum = ['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const;
+const invoiceStatusEnum = ['new', 'draft', 'sent', 'paid', 'overdue', 'cancelled'] as const;
 export type InvoiceStatus = (typeof invoiceStatusEnum)[number];
 
 /**
@@ -40,13 +40,13 @@ const invoiceContactIdSchema = z.string().uuid('Invalid contact ID').nullable().
 /**
  * Validation schema for invoice number
  */
-const invoiceNumberSchema = z.string().min(1, 'Invoice number is required');
+const invoiceNumberSchema = z.string().min(1, 'Invoice number is required').nullable().optional();
 
 /**
  * Validation schema for issue date
  * Note: stored as DATE in postgres, comes back as string
  */
-const invoiceIssueDateSchema = z.string().min(1, 'Issue date is required');
+const invoiceIssueDateSchema = z.string().min(1, 'Issue date is required').nullable().optional();
 
 /**
  * Validation schema for due date
@@ -57,15 +57,25 @@ const invoiceDueDateSchema = z.string().nullable().optional();
 /**
  * Validation schema for currency (ISO 4217 code)
  */
-const invoiceCurrencySchema = z.string().length(3, 'Currency must be a 3-letter ISO code');
+const invoiceCurrencySchema = z
+  .string()
+  .length(3, 'Currency must be a 3-letter ISO code')
+  .nullable()
+  .optional();
 
 /**
  * Validation schema for total amount
+ * Uses union to handle null before coercion (z.coerce runs before .nullable())
  */
-const invoiceTotalAmountSchema = z.coerce
-  .number()
-  .min(0, 'Total amount must be non-negative')
-  .transform((val) => val.toFixed(2));
+const invoiceTotalAmountSchema = z
+  .union([
+    z.null(),
+    z.coerce
+      .number()
+      .min(0, 'Total amount must be non-negative')
+      .transform((val) => val.toFixed(2)),
+  ])
+  .optional();
 
 /**
  * Validation schema for description

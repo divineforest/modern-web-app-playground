@@ -23,12 +23,12 @@ const invoiceResponseSchema = z.object({
   contactId: z.string().uuid().nullable(),
   type: invoiceTypeSchema,
   status: invoiceStatusSchema,
-  invoiceNumber: z.string(),
-  issueDate: z.string(), // DATE in postgres returns as string
+  invoiceNumber: z.string().nullable(),
+  issueDate: z.string().nullable(), // DATE in postgres returns as string
   dueDate: z.string().nullable(), // DATE in postgres returns as string
   paidAt: z.date().nullable(),
-  currency: z.string(),
-  totalAmount: z.string(), // NUMERIC stored as string for precision
+  currency: z.string().nullable(),
+  totalAmount: z.string().nullable(), // NUMERIC stored as string for precision
   description: z.string().nullable(),
 });
 

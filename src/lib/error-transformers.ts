@@ -90,7 +90,7 @@ const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }>
   },
   [CONSTRAINTS.INVOICES_STATUS_CHECK]: {
     message: 'Invalid invoice status',
-    details: 'Status must be one of: draft, sent, paid, overdue, cancelled',
+    details: 'Status must be one of: new, draft, sent, paid, overdue, cancelled',
   },
 };
 

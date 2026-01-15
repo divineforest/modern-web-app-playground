@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestCompany } from '../../../../../tests/factories/index.js';
 import { db } from '../../../../db/index.js';
-import { invoices } from '../../../../db/schema.js';
 import type { PostmarkWebhookPayload } from '../../services/postmark-webhook-processor.js';
 import { createInvoiceActivity } from './index.js';
 
@@ -57,11 +56,11 @@ describe('Create Invoice Activity', () => {
     expect(createdInvoice).toBeDefined();
     expect(createdInvoice?.companyId).toBe(company.id);
     expect(createdInvoice?.type).toBe('purchase');
-    expect(createdInvoice?.status).toBe('draft');
-    expect(createdInvoice?.invoiceNumber).toBe(`EMAIL-${postmarkPayload.MessageID}`);
-    expect(createdInvoice?.issueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD format
-    expect(createdInvoice?.currency).toBe('USD');
-    expect(createdInvoice?.totalAmount).toBe('0.00');
+    expect(createdInvoice?.status).toBe('new');
+    expect(createdInvoice?.invoiceNumber).toBeNull();
+    expect(createdInvoice?.issueDate).toBeNull();
+    expect(createdInvoice?.currency).toBeNull();
+    expect(createdInvoice?.totalAmount).toBeNull();
   });
 
   it('should fail activity when company not found', async () => {
@@ -82,33 +81,38 @@ describe('Create Invoice Activity', () => {
     );
   });
 
-  it('should fail activity when invoice number already exists', async () => {
+  it('should allow creating multiple invoices with null invoice numbers', async () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
     const billingInboundToken = company.billingInboundToken;
 
-    const postmarkPayload: PostmarkWebhookPayload = {
+    const postmarkPayload1: PostmarkWebhookPayload = {
       From: 'test@example.com',
       To: `"Test" <${billingInboundToken}@example.com>`,
       OriginalRecipient: `${billingInboundToken}@example.com`,
-      Subject: 'Test Invoice Failure',
-      MessageID: 'test-duplicate-invoice',
+      Subject: 'Test Invoice 1',
+      MessageID: 'test-invoice-1',
       Date: '2024-01-15T14:30:00.000Z',
       Attachments: [],
     };
 
-    // Create invoice with the same invoice number first
-    await db.insert(invoices).values({
-      companyId: company.id,
-      type: 'purchase',
-      status: 'draft',
-      invoiceNumber: `EMAIL-${postmarkPayload.MessageID}`,
-      issueDate: '2024-01-15',
-      currency: 'USD',
-      totalAmount: '0.00',
-    });
+    const postmarkPayload2: PostmarkWebhookPayload = {
+      From: 'test@example.com',
+      To: `"Test" <${billingInboundToken}@example.com>`,
+      OriginalRecipient: `${billingInboundToken}@example.com`,
+      Subject: 'Test Invoice 2',
+      MessageID: 'test-invoice-2',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [],
+    };
 
-    // ACT & ASSERT - Activity should fail when invoice number already exists
-    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow();
+    // ACT - Create two invoices with null invoice numbers
+    const invoiceId1 = await createInvoiceActivity(postmarkPayload1);
+    const invoiceId2 = await createInvoiceActivity(postmarkPayload2);
+
+    // ASSERT - Both should succeed since null invoice numbers are allowed
+    expect(invoiceId1).toBeTruthy();
+    expect(invoiceId2).toBeTruthy();
+    expect(invoiceId1).not.toBe(invoiceId2);
   });
 });
