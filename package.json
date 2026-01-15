@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:smoke": "vitest run --config tests/smoke/vitest.config.smoke.ts",
     "test:smoke:build": "SMOKE_MODE=build vitest run --config tests/smoke/vitest.config.smoke.ts",
-    "test:smoke:email-intake": "pnpm exec ./scripts/smoke-test-email-intake.sh",
+    "test:smoke:email-intake": "vitest run --config tests/smoke/vitest.config.smoke.ts tests/smoke/email-intake.smoke.test.ts",
     "test:s3": "tsx src/scripts/test-s3.ts",
     "typecheck": "tsc --noEmit",
     "type-coverage": "type-coverage",
