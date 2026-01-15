@@ -7,4 +7,4 @@
  */
 
 // Export all workflows from modules
-export { postmarkInboundEmailWorkflow } from '../../modules/inbound-email/workflows/postmark-inbound-email.workflow.js';
+export { postmarkInboundEmailWorkflow } from '../../modules/inbound-email/workflows/process-inbound-email.workflow.js';
