@@ -25,6 +25,16 @@ When in doubt, use the most common/standard value and proceed. Only ask when the
 2. Otherwise, use `pnpm exec ./path/to/script` (e.g., `pnpm exec ./scripts/custom-script.sh`)
 3. Never run scripts directly like `./scripts/smoke-test.sh` or `bash scripts/smoke-test.sh`
 
+## File Operations
+
+When renaming or moving files, use `git mv` via Shell instead of Write + Delete:
+
+```bash
+git mv old/path/file.ts new/path/file.ts
+```
+
+This avoids the Delete permission prompt that breaks auto-agent mode.
+
 ## Code Style
 
 - **Biome** for formatting and basic linting - run `pnpm check:fix`
