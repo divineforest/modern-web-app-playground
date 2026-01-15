@@ -38,7 +38,7 @@
     "temporal:worker": "tsx src/shared/workflows/worker.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate:test": "NODE_ENV=test DATABASE_URL=postgresql://user:password@localhost:5432/accounting_test drizzle-kit migrate",
+    "db:migrate:test": "NODE_ENV=test drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:introspect": "drizzle-kit introspect",

@@ -4,9 +4,19 @@ import { defineConfig } from 'drizzle-kit';
 // Load environment variables
 config();
 
-// Use default DATABASE_URL for development if not set
-const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-const databaseUrl = process.env.DATABASE_URL ?? (isDev ? 'postgresql://user:password@localhost:5432/accounting_dev' : '');
+// Use appropriate default DATABASE_URL based on NODE_ENV
+const getDefaultDatabaseUrl = () => {
+  const nodeEnv = process.env.NODE_ENV;
+  if (nodeEnv === 'test') {
+    return 'postgresql://user:password@localhost:5432/accounting_test';
+  }
+  if (!nodeEnv || nodeEnv === 'development') {
+    return 'postgresql://user:password@localhost:5432/accounting_dev';
+  }
+  return ''; // Production/staging requires explicit DATABASE_URL
+};
+
+const databaseUrl = process.env.DATABASE_URL || getDefaultDatabaseUrl();
 
 export default defineConfig({
   // Database dialect

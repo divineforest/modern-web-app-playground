@@ -7,7 +7,9 @@ globs:
 
 # Drizzle Migration Rules
 
-## NEVER manually edit migration files
+## NEVER manually create or edit migration files
+
+**Critical:** Drizzle-kit tracks migrations via `meta/_journal.json`. Manually created `.sql` files are ignored and will NOT be applied, even if the command reports "success".
 
 The following files must ONLY be modified via `drizzle-kit` commands:
 
@@ -34,5 +36,3 @@ pnpm db:studio        # Open Drizzle Studio for database inspection
 ## Technical note
 
 The `db:generate`, `db:push`, `db:introspect`, and `db:check` commands automatically run `tsc` first because drizzle-kit requires compiled JS files to resolve ES module imports.
-
-Do NOT work around failures by manually creating migration files or editing the journal.
