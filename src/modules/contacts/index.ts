@@ -1,12 +1,3 @@
-/**
- * Contacts module exports
- *
- * This module provides:
- * - VIES API integration for VAT ID validation
- * - Contact resolution from OCR extraction data
- * - Global contacts database management
- */
-
 // API exports
 export { registerContactsRoutes } from './api/contacts.routes.js';
 
