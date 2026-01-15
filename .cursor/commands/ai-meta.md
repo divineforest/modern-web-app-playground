@@ -20,6 +20,12 @@ Evaluate a codebase's AI-friendliness from first principles.
 3. **What doesn't help**: Patterns that seem useful but aren't (explain why mechanically)
 4. **Recommendations**: With expected impact and confidence (1-10)
 
+## Known Potential Issues
+
+Common AI-unfriendly patterns to check for:
+
+1. **Code inconsistencies** - Same concept implemented differently across the codebase. Search for patterns that should be uniform (e.g., utility usage, error handling, naming conventions). Inconsistencies force AI to learn multiple approaches instead of one.
+
 ## Validation
 
 For any recommendation: Can you explain the concrete mechanical effect on LLM operation?
