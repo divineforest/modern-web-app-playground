@@ -46,11 +46,6 @@ export async function findInvoiceById(
   return (results[0] as Invoice | undefined) || null;
 }
 
-/**
- * Builds SQL filter conditions from invoice filters
- * @param filters Optional invoice filters to apply
- * @returns Array of SQL conditions
- */
 function buildInvoiceFilterConditions(filters?: InvoiceFilters): SQL[] {
   const conditions: SQL[] = [];
 

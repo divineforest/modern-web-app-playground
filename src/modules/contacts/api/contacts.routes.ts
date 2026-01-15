@@ -25,9 +25,6 @@ import { contactsContract } from './contacts.contracts.js';
 const logger = rootLogger.child({ module: 'contacts-routes' });
 const s = initServer();
 
-/**
- * Parse sort parameter into sort configuration
- */
 function parseSort(sortParam?: string): { field: ContactSortField; direction: SortDirection } {
   if (!sortParam) {
     return { field: 'updated_at', direction: 'desc' };

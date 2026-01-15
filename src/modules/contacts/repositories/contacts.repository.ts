@@ -145,9 +145,6 @@ export function decodeCursor(cursor: string): CursorData | null {
   }
 }
 
-/**
- * Get sort value from a contact based on sort field
- */
 function getSortValue(contact: GlobalContact, sortField: ContactSortField): string | Date {
   switch (sortField) {
     case 'created_at':
@@ -159,9 +156,6 @@ function getSortValue(contact: GlobalContact, sortField: ContactSortField): stri
   }
 }
 
-/**
- * Get the Drizzle column for a sort field
- */
 function getSortColumn(sortField: ContactSortField) {
   switch (sortField) {
     case 'created_at':
@@ -174,11 +168,6 @@ function getSortColumn(sortField: ContactSortField) {
 }
 
 /**
- * Validate and decode cursor for pagination
- * Uses early-return guard clauses for cleaner flow
- * @param cursor - The cursor string to validate
- * @param sort - The sort options to validate against
- * @returns Decoded cursor data or null if no cursor provided
  * @throws InvalidCursorError if cursor is malformed
  * @throws CursorSortMismatchError if cursor sort doesn't match request sort
  */
@@ -202,12 +191,6 @@ function validateCursor(
   return cursorData;
 }
 
-/**
- * Build SQL condition for cursor-based pagination
- * @param cursorData - The decoded cursor data
- * @param sort - The sort options
- * @returns SQL condition for cursor pagination
- */
 function buildCursorCondition(
   cursorData: CursorData,
   sort: { field: ContactSortField; direction: 'asc' | 'desc' }
