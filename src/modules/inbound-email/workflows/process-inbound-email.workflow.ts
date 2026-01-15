@@ -5,24 +5,36 @@
  */
 import { proxyActivities } from '@temporalio/workflow';
 import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
-import type * as activities from './postmark-email-processor.activity.js';
+import type * as activities from './process-inbound-email/index.js';
 
 // Proxy activities with timeout configuration (using default retry settings)
-const { processInboundEmailActivity } = proxyActivities<typeof activities>({
-  startToCloseTimeout: '5 minutes', // Max time for processing
+const { archiveToS3Activity, createInvoiceActivity, processWebhookActivity } = proxyActivities<
+  typeof activities
+>({
+  startToCloseTimeout: '2 minutes', // Max time for each activity
 });
 
 /**
  * PostmarkInboundEmailWorkflow
  *
  * This workflow processes a single inbound email from Postmark by:
- * 1. Executing the ProcessInboundEmailActivity (which uses existing service)
- * 2. Handling retries and failures using Temporal's default mechanisms
+ * 1. Archiving the raw payload to S3
+ * 2. Creating an invoice record
+ * 3. Processing the email via the existing service
+ *
+ * Each step is a separate activity with independent retry behavior.
  *
  * @param payload - The Postmark webhook payload
  * @returns Promise<void> - Throws on processing failure
  */
+
 export async function postmarkInboundEmailWorkflow(payload: PostmarkWebhookPayload): Promise<void> {
-  // Single activity execution as per specification - throws on failure
-  await processInboundEmailActivity(payload);
+  // Step 1: Archive to S3 (mandatory per FR-2)
+  await archiveToS3Activity(payload);
+
+  // Step 2: Create invoice record
+  await createInvoiceActivity(payload);
+
+  // Step 3: Process webhook
+  await processWebhookActivity(payload);
 }

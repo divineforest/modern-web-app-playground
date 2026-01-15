@@ -1,18 +1,12 @@
 /**
- * Postmark Email Processing Activity
+ * Create Invoice Activity
  *
- * Processes inbound emails by:
- * 1. Archiving raw payload to S3 (FR-2 requirement)
- * 2. Processing email via existing service
+ * Creates invoice record from inbound email
  */
 import { Context } from '@temporalio/activity';
-import { createInvoiceService } from '../../../modules/invoices/services/invoices.service.js';
-import { getCompanyByBillingInboundToken } from '../../../shared/data-access/core/companies.repository.js';
-import { archiveInboundEmailPayload } from '../services/email-archiver.js';
-import {
-  type PostmarkWebhookPayload,
-  processWebhook,
-} from '../services/postmark-webhook-processor.js';
+import { createInvoiceService } from '../../../../modules/invoices/services/invoices.service.js';
+import { getCompanyByBillingInboundToken } from '../../../../shared/data-access/core/companies.repository.js';
+import type { PostmarkWebhookPayload } from '../../services/postmark-webhook-processor.js';
 
 function extractBillingInboundToken(email?: string): string | undefined {
   if (!email) return undefined;
@@ -28,41 +22,17 @@ function extractBillingInboundToken(email?: string): string | undefined {
 }
 
 /**
- * Process Postmark inbound email
- * First archives the raw payload to S3, then creates invoice record, then processes via existing service
- */
-/**
+ * Activity 2: Create invoice record
  * @lintignore
  * Knip can't detect Temporal's dynamic activity wiring, but this export is required.
  */
-export async function processInboundEmailActivity(payload: PostmarkWebhookPayload): Promise<void> {
+export async function createInvoiceActivity(payload: PostmarkWebhookPayload): Promise<string> {
   const context = Context.current();
 
-  context.log.info('Processing Postmark email via existing service', {
+  context.log.info('Creating invoice record', {
     messageId: payload.MessageID,
-    from: payload.From,
-    to: payload.To,
-    attachmentCount: payload.Attachments?.length || 0,
   });
 
-  // Step 1: Archive raw payload to S3 before any processing (FR-2 requirement)
-  try {
-    const s3Key = await archiveInboundEmailPayload(payload);
-
-    context.log.info('Successfully archived payload to S3', {
-      messageId: payload.MessageID,
-      s3Key,
-    });
-  } catch (error) {
-    context.log.error('Failed to archive payload to S3', {
-      messageId: payload.MessageID,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    // Re-throw to fail the activity - archival is mandatory per FR-2
-    throw error;
-  }
-
-  // Step 2: Create invoice record after S3 archival
   try {
     const billingInboundToken = extractBillingInboundToken(payload.OriginalRecipient);
     if (!billingInboundToken) {
@@ -103,6 +73,8 @@ export async function processInboundEmailActivity(payload: PostmarkWebhookPayloa
       companyId: company.id,
       invoiceNumber: invoiceData.invoiceNumber,
     });
+
+    return invoice.id;
   } catch (error) {
     context.log.error('Failed to create invoice record', {
       messageId: payload.MessageID,
@@ -111,12 +83,4 @@ export async function processInboundEmailActivity(payload: PostmarkWebhookPayloa
     // Re-throw to fail the activity - invoice creation is mandatory
     throw error;
   }
-
-  // Step 3: Use the existing service to process the webhook - throws on failure
-  await processWebhook(payload);
-
-  context.log.info('Postmark email processing completed successfully', {
-    messageId: payload.MessageID,
-    attachmentCount: payload.Attachments?.length || 0,
-  });
 }

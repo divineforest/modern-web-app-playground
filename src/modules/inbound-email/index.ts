@@ -12,6 +12,10 @@ export { processWebhook } from './services/postmark-webhook-processor.js';
 
 // Workflow Exports
 /** @lintignore - Public API for Temporal workflows */
-export { processInboundEmailActivity } from './workflows/postmark-email-processor.activity.js';
+export {
+  archiveToS3Activity,
+  createInvoiceActivity,
+  processWebhookActivity,
+} from './workflows/process-inbound-email/index.js';
 /** @lintignore - Public API for Temporal workflows */
 export { postmarkInboundEmailWorkflow } from './workflows/process-inbound-email.workflow.js';

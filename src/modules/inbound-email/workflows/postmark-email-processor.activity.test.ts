@@ -5,7 +5,11 @@ import { server } from '../../../mocks/server.js';
 import type { FileUploadResponse } from '../../../shared/data-access/core/index.js';
 import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
 import { processWebhook } from '../services/postmark-webhook-processor.js';
-import { processInboundEmailActivity } from './postmark-email-processor.activity.js';
+import {
+  archiveToS3Activity,
+  createInvoiceActivity,
+  processWebhookActivity,
+} from './process-inbound-email/index.js';
 
 // Mock invoice service
 vi.mock('../../../modules/invoices/services/invoices.service.js', () => ({
@@ -260,75 +264,15 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     vi.mocked(mockArchiveInboundEmailPayload).mockResolvedValue(
       'inbound-emails/2024/01/15/test-123.json'
     );
-    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValue({
-      id: 'company-123',
-      name: 'Test Company',
-      status: 'active',
-      billingInboundToken: 'test-token',
-      billingSettings: {},
-      billingAddress: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      bobReferenceId: null,
-      companyDetails: {},
-    });
-    vi.mocked(mockCreateInvoiceService).mockResolvedValue({
-      id: 'invoice-123',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      companyId: 'company-123',
-      contactId: null,
-      type: 'purchase',
-      status: 'draft',
-      invoiceNumber: 'EMAIL-test-123',
-      issueDate: '2024-01-15',
-      dueDate: null,
-      paidAt: null,
-      currency: 'USD',
-      totalAmount: '0.00',
-      description: null,
-    });
     server.resetHandlers();
   });
 
-  it('should archive payload to S3 before processing email', async () => {
+  it('should archive payload to S3', async () => {
     // ARRANGE
-    const company = await createTestCompany({ name: 'Test Company' });
-    const billingInboundToken = company.billingInboundToken;
-
-    // Mock Core API to accept file uploads
-    server.use(
-      http.post('*/api/internal/documents', () => {
-        return HttpResponse.json({
-          id: 'mock-file-id',
-          type: 'expence_document',
-          name: null,
-          notes: null,
-          fileName: 'receipt.pdf',
-          mimeType: 'application/pdf',
-          issueDate: new Date().toISOString(),
-          documentMetadata: null,
-          bookeepingMetadata: {},
-          contactId: null,
-          adminStatus: 'ready',
-          recognitionDetails: null,
-          createdAt: new Date().toISOString(),
-          bobStatus: null,
-          externalStatus: null,
-          contact: null,
-          transactions: [],
-          paymentStatus: 'waiting_for_payment',
-          potentialDuplicate: null,
-          potentialTransactions: null,
-          url: 'https://api.example.com/files/mock-file-id',
-        });
-      })
-    );
-
     const postmarkPayload: PostmarkWebhookPayload = {
       From: 'john.customer@example.com',
-      To: `"John Customer" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
+      To: '"John Customer" <test-token@example.com>',
+      OriginalRecipient: 'test-token@example.com',
       Subject: 'Test Email',
       MessageID: 'test-message-123',
       Date: '2024-01-15T14:30:00.000Z',
@@ -343,10 +287,11 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     };
 
     // ACT
-    await processInboundEmailActivity(postmarkPayload);
+    const s3Key = await archiveToS3Activity(postmarkPayload);
 
     // ASSERT - Email archiver should be called with payload
     expect(vi.mocked(mockArchiveInboundEmailPayload)).toHaveBeenCalledWith(postmarkPayload);
+    expect(s3Key).toBe('inbound-emails/2024/01/15/test-123.json');
   });
 
   it('should fail activity if S3 archival fails', async () => {
@@ -367,22 +312,44 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     );
 
     // ACT & ASSERT - Activity should fail when S3 archival fails
-    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
-      'S3 connection failed'
-    );
+    await expect(archiveToS3Activity(postmarkPayload)).rejects.toThrow('S3 connection failed');
   });
 
-  it('should process webhook only after successful S3 archival', async () => {
+  it('should process activities in correct order (integration test)', async () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
     const billingInboundToken = company.billingInboundToken;
 
     const executionOrder: string[] = [];
 
+    // Mock company lookup
+    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValue(company);
+
     // Mock archiver to track execution order
     vi.mocked(mockArchiveInboundEmailPayload).mockImplementation(() => {
       executionOrder.push('s3-archive');
       return Promise.resolve('inbound-emails/2024/01/15/test-order.json');
+    });
+
+    // Mock invoice creation to track execution order
+    vi.mocked(mockCreateInvoiceService).mockImplementation((data) => {
+      executionOrder.push('invoice-create');
+      return Promise.resolve({
+        id: 'invoice-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companyId: data.companyId,
+        contactId: null,
+        type: data.type,
+        status: data.status || 'draft',
+        invoiceNumber: data.invoiceNumber,
+        issueDate: data.issueDate,
+        dueDate: null,
+        paidAt: null,
+        currency: data.currency,
+        totalAmount: String(data.totalAmount),
+        description: null,
+      });
     });
 
     // Mock Core API to track execution order
@@ -432,46 +399,38 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
       ],
     };
 
-    // ACT
-    await processInboundEmailActivity(postmarkPayload);
+    // ACT - Call activities in sequence (simulating workflow)
+    await archiveToS3Activity(postmarkPayload);
+    await createInvoiceActivity(postmarkPayload);
+    await processWebhookActivity(postmarkPayload);
 
-    // ASSERT - S3 archival should happen before Core API upload
-    expect(executionOrder).toEqual(['s3-archive', 'core-api-upload']);
+    // ASSERT - Activities should execute in correct order
+    expect(executionOrder).toEqual(['s3-archive', 'invoice-create', 'core-api-upload']);
   });
 
-  it('should create invoice record after successful S3 archival', async () => {
+  it('should create invoice record', async () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
     const billingInboundToken = company.billingInboundToken;
 
-    // Mock Core API to accept file uploads
-    server.use(
-      http.post('*/api/internal/documents', () => {
-        return HttpResponse.json({
-          id: 'mock-file-id',
-          type: 'expence_document',
-          name: null,
-          notes: null,
-          fileName: 'receipt.pdf',
-          mimeType: 'application/pdf',
-          issueDate: new Date().toISOString(),
-          documentMetadata: null,
-          bookeepingMetadata: {},
-          contactId: null,
-          adminStatus: 'ready',
-          recognitionDetails: null,
-          createdAt: new Date().toISOString(),
-          bobStatus: null,
-          externalStatus: null,
-          contact: null,
-          transactions: [],
-          paymentStatus: 'waiting_for_payment',
-          potentialDuplicate: null,
-          potentialTransactions: null,
-          url: 'https://api.example.com/files/mock-file-id',
-        });
-      })
-    );
+    // Mock company lookup for this specific test
+    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(company);
+    vi.mocked(mockCreateInvoiceService).mockResolvedValueOnce({
+      id: 'invoice-123',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      companyId: company.id,
+      contactId: null,
+      type: 'purchase',
+      status: 'draft',
+      invoiceNumber: `EMAIL-test-invoice-creation`,
+      issueDate: '2026-01-15',
+      dueDate: null,
+      paidAt: null,
+      currency: 'USD',
+      totalAmount: '0.00',
+      description: null,
+    });
 
     const postmarkPayload: PostmarkWebhookPayload = {
       From: 'john.customer@example.com',
@@ -491,7 +450,7 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     };
 
     // ACT
-    await processInboundEmailActivity(postmarkPayload);
+    const invoiceId = await createInvoiceActivity(postmarkPayload);
 
     // ASSERT - Invoice service should be called with correct data
     expect(vi.mocked(mockCreateInvoiceService)).toHaveBeenCalledWith({
@@ -503,6 +462,7 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
       currency: 'USD',
       totalAmount: 0,
     });
+    expect(invoiceId).toBe('invoice-123');
   });
 
   it('should fail activity when company not found', async () => {
@@ -521,7 +481,7 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(null);
 
     // ACT & ASSERT - Activity should fail when company not found
-    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
+    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow(
       'No company found for billing inbound token'
     );
   });
@@ -530,6 +490,13 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
     const billingInboundToken = company.billingInboundToken;
+
+    // Mock company lookup
+    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(company);
+    // Mock invoice creation to throw error
+    vi.mocked(mockCreateInvoiceService).mockRejectedValueOnce(
+      new Error('Database connection failed')
+    );
 
     const postmarkPayload: PostmarkWebhookPayload = {
       From: 'test@example.com',
@@ -541,13 +508,8 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
       Attachments: [],
     };
 
-    // Mock invoice creation to throw error
-    vi.mocked(mockCreateInvoiceService).mockRejectedValueOnce(
-      new Error('Database connection failed')
-    );
-
     // ACT & ASSERT - Activity should fail when invoice creation fails
-    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
+    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow(
       'Database connection failed'
     );
   });
