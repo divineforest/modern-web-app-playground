@@ -1,16 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, it } from 'vitest';
-import type { PostmarkWebhookPayload } from '../../src/modules/inbound-email/services/postmark-webhook-processor.js';
 import { env } from '../../src/lib/env.js';
+import type { PostmarkWebhookPayload } from '../../src/modules/inbound-email/services/postmark-webhook-processor.js';
+import { createTestCompany, deleteTestCompany } from './helpers/database.js';
 import { createS3Client, verifyS3Archival } from './helpers/s3.js';
 import {
   createTemporalClient,
   verifyWorkflowExecution,
   waitForWorkflow,
 } from './helpers/temporal.js';
-import { createTestCompany, deleteTestCompany } from './helpers/database.js';
 
 /**
  * Prepare webhook payload with PDF attachment

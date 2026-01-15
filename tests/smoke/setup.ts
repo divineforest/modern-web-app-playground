@@ -1,5 +1,5 @@
-import { beforeAll, afterAll } from 'vitest';
-import { startServer, type ServerResult } from './helpers/server.js';
+import { afterAll, beforeAll } from 'vitest';
+import { type ServerResult, startServer } from './helpers/server.js';
 
 // Global server instance for cleanup
 let serverInstance: ServerResult | null = null;
