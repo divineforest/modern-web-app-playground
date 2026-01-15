@@ -4,8 +4,8 @@
  * Orchestrates the processing of inbound emails received via Postmark webhooks
  */
 import { proxyActivities } from '@temporalio/workflow';
-import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
-import type * as activities from './process-inbound-email/index.js';
+import type { PostmarkWebhookPayload } from '../../services/postmark-webhook-processor.js';
+import type * as activities from './index.js';
 
 // Proxy activities with timeout configuration (using default retry settings)
 const { archiveToS3Activity, createInvoiceActivity, processWebhookActivity } = proxyActivities<

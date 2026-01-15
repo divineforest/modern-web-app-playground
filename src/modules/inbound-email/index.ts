@@ -16,6 +16,5 @@ export {
   archiveToS3Activity,
   createInvoiceActivity,
   processWebhookActivity,
+  postmarkInboundEmailWorkflow,
 } from './workflows/process-inbound-email/index.js';
-/** @lintignore - Public API for Temporal workflows */
-export { postmarkInboundEmailWorkflow } from './workflows/process-inbound-email.workflow.js';
