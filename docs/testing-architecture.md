@@ -11,6 +11,7 @@ This document outlines the comprehensive testing strategy for the backend accoun
 - **Unit Testing**: Complete function coverage with isolated dependencies
 - **Integration Testing**: API endpoint validation with real database instances
 - **Database Testing**: Dedicated PostgreSQL test database referenced via `DATABASE_URL`
+- **Smoke Testing**: Real infrastructure validation with Vitest (not bash scripts)
 - **Mock Strategy**: Comprehensive API mocking with MSW for external services
 - **Test Isolation**: Shared test database with unique factory data per scenario
 - **Coverage**: Enforced thresholds - 90% lines/functions/statements, 85% branches
@@ -31,6 +32,31 @@ This document outlines the comprehensive testing strategy for the backend accoun
 - **Database Integration**: Real PostgreSQL instance connected through `DATABASE_URL`
 - **Service Integration**: Business logic testing with actual database operations
 - **End-to-End Flows**: Complete user workflows and data transformations
+
+#### Smoke Testing
+
+- **Framework**: Vitest with separate configuration (`vitest.config.smoke.ts`)
+- **Scope**: Real infrastructure validation against running services
+- **Purpose**: Verify server startup, health endpoints, and critical workflows
+- **Infrastructure**: Tests against real PostgreSQL, LocalStack S3, and Temporal
+- **Execution**: Separate test suite with extended timeouts (`pnpm test:smoke`)
+
+**Why Vitest over Bash Scripts:**
+
+| Factor | Bash Scripts | Vitest |
+|--------|--------------|--------|
+| Type safety | None | Full TypeScript types for payloads |
+| Error messages | Parse logs manually | Structured diffs and assertions |
+| Debugging | `echo` statements | IDE breakpoints, watch mode |
+| Refactoring | Manual grep | LSP/IDE support |
+| AI Agent compatibility | Poor (CLI tools blocked by sandbox) | Native Node SDKs work seamlessly |
+| Codebase consistency | Different patterns | Same patterns as unit/integration tests |
+
+**Smoke Test Categories:**
+
+1. **Server Health**: Validates `/healthz`, `/ready`, and `/docs` endpoints
+2. **Workflow E2E**: Tests Temporal workflows with real webhook payloads
+3. **Infrastructure**: Verifies database connectivity, S3 archival, external integrations
 
 #### Database Testing
 
@@ -152,6 +178,28 @@ src/
 - **Independent Testing**: Modules can be tested in isolation
 - **AI-Friendly**: Easier for AI assistants to scope test generation and updates
 
+#### Smoke Test Structure
+
+```
+tests/
+├── smoke/                              # Smoke test suite (separate from unit/integration)
+│   ├── vitest.config.smoke.ts          # Smoke-specific Vitest config (extended timeouts)
+│   ├── setup.ts                        # Smoke test setup (server lifecycle, cleanup)
+│   ├── server-health.smoke.test.ts     # Health endpoint validation
+│   ├── email-intake.smoke.test.ts      # Webhook → Temporal workflow E2E
+│   └── helpers/
+│       ├── server.ts                   # Server spawn/wait/kill utilities
+│       ├── s3.ts                       # S3 verification (uses @aws-sdk, not aws CLI)
+│       └── temporal.ts                 # Temporal client for workflow verification
+```
+
+**Smoke Test Design Principles:**
+
+- **Native Node Clients**: Use `@aws-sdk/client-s3` instead of `aws` CLI, Drizzle instead of `psql`
+- **Typed Payloads**: Webhook payloads defined as TypeScript types, not bash heredocs
+- **Reusable Utilities**: Share test factories and helpers with unit/integration tests
+- **AI-Friendly**: No external CLI tools that break in sandboxed environments
+
 ### Test Categories by Layer
 
 #### Shared SDK Tests (`src/shared/data-access/*/*.test.ts`)
@@ -207,9 +255,11 @@ src/
 
 ### Test Setup Files
 
-- **`vitest.config.ts`**: Global test configuration
+- **`vitest.config.ts`**: Global test configuration for unit/integration tests
+- **`tests/smoke/vitest.config.smoke.ts`**: Smoke test configuration with extended timeouts
 - **`tests/setup/env.ts`**: Ensures test-specific environment variables (NODE_ENV, DATABASE_URL)
 - **`vitest.setup.ts`**: Global test setup (MSW, hooks)
+- **`tests/smoke/setup.ts`**: Smoke test setup (server lifecycle management)
 - **Database Factories**: Reusable test data generation
 
 ## Performance Considerations
@@ -236,6 +286,13 @@ src/
 - **Docker-in-Docker**: Supports containerized testing environments when required
 - **Resource Limits**: Appropriate memory and CPU limits for workflow service containers
 - **Parallel Jobs**: Multiple test jobs with isolated PostgreSQL databases
+
+### Smoke Testing in CI
+
+- **Execution**: Smoke tests run after unit/integration tests pass
+- **Mode**: Uses built server (`pnpm test:smoke:build`) for production-like validation
+- **Infrastructure**: Requires PostgreSQL, LocalStack, and Temporal services
+- **Timeout**: Extended timeouts (60s+) for server startup and workflow completion
 
 ### Coverage Reporting
 
@@ -286,9 +343,8 @@ src/
 ## Future Testing Considerations
 
 - **Performance Testing**: Load testing and stress testing frameworks
-- **End-to-End Testing**: Browser automation testing with Playwright
+- **Browser E2E Testing**: Browser automation testing with Playwright (if UI added)
 - **Contract Testing**: API contract testing with Pact or similar tools
 - **Mutation Testing**: Code quality validation with mutation testing
-- **Visual Testing**: UI regression testing for frontend components
 - **Security Testing**: Automated security vulnerability scanning
 - **Chaos Engineering**: Fault injection and resilience testing
