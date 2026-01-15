@@ -5,14 +5,13 @@ Complete the user's task while following AI-friendliness principles from `docs/a
 ## Core Rules
 
 1. **Do the task** - Complete what the user asked for
-2. **Maintain consistency** - Follow existing patterns in the codebase
-3. **Prefer mechanical improvements** - Type coverage, uniform patterns, clear boundaries
+2. **Make AI's life easier, not harder** - Will future AI understand this easily? Will it find things quickly?
 
 ## Validation
 
 After completing the task, briefly check:
-- Did this introduce any inconsistencies?
-- Does the change follow existing codebase patterns?
+
+- Did this make things easier or harder for AI to work with?
 
 If either fails, fix before considering done.
 
