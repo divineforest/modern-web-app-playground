@@ -12,6 +12,103 @@ import {
 } from './helpers/temporal.js';
 import { createTestCompany, deleteTestCompany } from './helpers/database.js';
 
+/**
+ * Prepare webhook payload with PDF attachment
+ */
+function prepareWebhookPayload(testToken: string, testMessageId: string): PostmarkWebhookPayload {
+  console.log('[SMOKE] Preparing webhook payload...');
+
+  // Read invoice PDF fixture
+  const invoicePath = join(process.cwd(), 'tests', 'fixtures', 'Invoice-UJYG5HZG-0007.pdf');
+  const invoiceBuffer = readFileSync(invoicePath);
+  const invoiceBase64 = invoiceBuffer.toString('base64');
+  const invoiceSize = invoiceBuffer.length;
+
+  console.log(
+    `[SMOKE] Using real Temporal invoice: Invoice-UJYG5HZG-0007.pdf (${invoiceSize} bytes)`
+  );
+
+  return {
+    MessageID: testMessageId,
+    From: 'AR@temporal.io',
+    To: `EasyBiz <${testToken}@example.com>`,
+    OriginalRecipient: `${testToken}@example.com`,
+    Subject: 'Invoice UJYG5HZG-0007 from Temporal Technologies',
+    Date: new Date().toISOString(),
+    Attachments: [
+      {
+        Name: 'Invoice-UJYG5HZG-0007.pdf',
+        Content: invoiceBase64,
+        ContentType: 'application/pdf',
+        ContentLength: invoiceSize,
+      },
+    ],
+  };
+}
+
+/**
+ * Send webhook and return workflow ID
+ */
+async function sendWebhookAndGetWorkflowId(
+  webhookUrl: string,
+  payload: PostmarkWebhookPayload
+): Promise<string> {
+  console.log('[SMOKE] Sending Postmark webhook...');
+
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Smoke-Test': 'true',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Webhook request failed: ${response.status} ${response.statusText}\n${errorBody}`
+    );
+  }
+
+  const responseBody = (await response.json()) as {
+    success: boolean;
+    workflowId: string;
+    messageId: string;
+  };
+
+  if (!responseBody.success || !responseBody.workflowId) {
+    throw new Error(`No workflow ID in response: ${JSON.stringify(responseBody)}`);
+  }
+
+  const workflowId = responseBody.workflowId;
+  console.log(`[SMOKE] ✓ Webhook sent, workflow started: ${workflowId}`);
+
+  return workflowId;
+}
+
+/**
+ * Log test results
+ */
+function logTestResults(
+  workflowId: string,
+  testCompanyId: string | null,
+  testToken: string,
+  testMessageId: string
+): void {
+  console.log('');
+  console.log('[SMOKE] ===================================');
+  console.log('[SMOKE] ✅ SMOKE TEST PASSED');
+  console.log('[SMOKE] ===================================');
+  console.log(`[SMOKE] Workflow ID: ${workflowId}`);
+  console.log(`[SMOKE] Company ID: ${testCompanyId}`);
+  console.log(`[SMOKE] Billing Token: ${testToken}`);
+  console.log(`[SMOKE] Message ID: ${testMessageId}`);
+  console.log('');
+  console.log('[SMOKE] View workflow in Temporal UI:');
+  console.log(`[SMOKE]   http://localhost:8233/namespaces/default/workflows/${workflowId}`);
+}
+
 describe('Smoke Tests - Email Intake Workflow', () => {
   // Use the same defaults as vitest.config.smoke.ts
   const host = process.env['HOST'] || 'localhost';
@@ -93,96 +190,26 @@ describe('Smoke Tests - Email Intake Workflow', () => {
   }, 10000);
 
   it('should process email intake workflow end-to-end', async () => {
+    if (!temporalClient || !s3Client) {
+      throw new Error('Required clients not initialized');
+    }
+
     // ARRANGE: Prepare webhook payload
-    console.log('[SMOKE] Preparing webhook payload...');
+    const payload = prepareWebhookPayload(testToken, testMessageId);
 
-    // Read invoice PDF fixture
-    const invoicePath = join(process.cwd(), 'tests', 'fixtures', 'Invoice-UJYG5HZG-0007.pdf');
-    const invoiceBuffer = readFileSync(invoicePath);
-    const invoiceBase64 = invoiceBuffer.toString('base64');
-    const invoiceSize = invoiceBuffer.length;
-
-    console.log(
-      `[SMOKE] Using real Temporal invoice: Invoice-UJYG5HZG-0007.pdf (${invoiceSize} bytes)`
-    );
-
-    // Create Postmark webhook payload
-    const payload: PostmarkWebhookPayload = {
-      MessageID: testMessageId,
-      From: 'AR@temporal.io',
-      To: `EasyBiz <${testToken}@example.com>`,
-      OriginalRecipient: `${testToken}@example.com`,
-      Subject: 'Invoice UJYG5HZG-0007 from Temporal Technologies',
-      Date: new Date().toISOString(),
-      Attachments: [
-        {
-          Name: 'Invoice-UJYG5HZG-0007.pdf',
-          Content: invoiceBase64,
-          ContentType: 'application/pdf',
-          ContentLength: invoiceSize,
-        },
-      ],
-    };
-
-    // ACT: Send webhook
-    console.log('[SMOKE] Sending Postmark webhook...');
-
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Smoke-Test': 'true',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(
-        `Webhook request failed: ${response.status} ${response.statusText}\n${errorBody}`
-      );
-    }
-
-    const responseBody = (await response.json()) as {
-      success: boolean;
-      workflowId: string;
-      messageId: string;
-    };
-
-    if (!responseBody.success || !responseBody.workflowId) {
-      throw new Error(`No workflow ID in response: ${JSON.stringify(responseBody)}`);
-    }
-
-    workflowId = responseBody.workflowId;
-    console.log(`[SMOKE] ✓ Webhook sent, workflow started: ${workflowId}`);
+    // ACT: Send webhook and get workflow ID
+    workflowId = await sendWebhookAndGetWorkflowId(webhookUrl, payload);
 
     // ACT: Wait for workflow to complete or reach expected state
-    if (!temporalClient || !workflowId) {
-      throw new Error('Temporal client or workflow ID not available');
-    }
-
     await waitForWorkflow(temporalClient, workflowId, 60000);
 
     // ASSERT: Verify workflow executed
     await verifyWorkflowExecution(temporalClient, workflowId);
 
     // ASSERT: Verify S3 archival
-    if (!s3Client) {
-      throw new Error('S3 client not available');
-    }
-
     await verifyS3Archival(s3Client, env.S3_BUCKET_NAME, testMessageId);
 
-    console.log('');
-    console.log('[SMOKE] ===================================');
-    console.log('[SMOKE] ✅ SMOKE TEST PASSED');
-    console.log('[SMOKE] ===================================');
-    console.log(`[SMOKE] Workflow ID: ${workflowId}`);
-    console.log(`[SMOKE] Company ID: ${testCompanyId}`);
-    console.log(`[SMOKE] Billing Token: ${testToken}`);
-    console.log(`[SMOKE] Message ID: ${testMessageId}`);
-    console.log('');
-    console.log('[SMOKE] View workflow in Temporal UI:');
-    console.log(`[SMOKE]   http://localhost:8233/namespaces/default/workflows/${workflowId}`);
+    // Log success details
+    logTestResults(workflowId, testCompanyId, testToken, testMessageId);
   }, 120000); // 2 minute timeout for E2E workflow
 });
