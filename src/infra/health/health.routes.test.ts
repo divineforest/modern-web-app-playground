@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildTestApp } from '../../app.js';
-import { db } from '../../db/connection.js';
+import { db } from '../../db/index.js';
 import { DATABASE_READINESS_TIMEOUT_MS } from './health.routes.js';
 
 // Type definitions for API responses

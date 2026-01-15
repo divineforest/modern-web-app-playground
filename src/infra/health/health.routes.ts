@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
-import { db } from '../../db/connection.js';
+import { db } from '../../db/index.js';
 import { env } from '../../lib/env.js';
 
 export const DATABASE_READINESS_TIMEOUT_MS = 5000;

@@ -1,5 +1,5 @@
-import type { Database } from '../../../db/connection.js';
-import { db } from '../../../db/connection.js';
+import type { Database } from '../../../db/index.js';
+import { db } from '../../../db/index.js';
 import {
   transformDatabaseError,
   ValidationError,

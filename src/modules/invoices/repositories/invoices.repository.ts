@@ -1,7 +1,6 @@
 import { and, desc, eq, type SQL } from 'drizzle-orm';
-import type { Database } from '../../../db/connection.js';
-import { db } from '../../../db/connection.js';
-import { invoices } from '../../../db/schema.js';
+import type { Database } from '../../../db/index.js';
+import { db, invoices } from '../../../db/index.js';
 import type { Invoice, NewInvoice, UpdateInvoice } from '../domain/invoice.entity.js';
 
 /**

@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../src/db/connection.js';
-import { companies } from '../../../src/db/schema.js';
+import { companies, db } from '../../../src/db/index.js';
 
 /**
  * Create a test company in the database for smoke testing
