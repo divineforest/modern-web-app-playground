@@ -6,11 +6,22 @@ Backend accounting system for practice management. Integrates with Odoo ERP and 
 
 Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest.
 
+## Convention Over Configuration
+
+Prefer sensible defaults over explicit configuration. Don't ask for or require values that can be reasonably inferred:
+
+- **Local URLs**: Use `http://localhost:3000` for the web server unless told otherwise
+- **Database**: Assume standard local dev connection (see docker-compose or .env.example)
+- **Test environments**: Smoke tests run against local dev server by default
+- **File paths**: Use project-standard locations (e.g., `src/`, `tests/`, `scripts/`)
+
+When in doubt, use the most common/standard value and proceed. Only ask when the default genuinely won't work.
+
 ## Running Scripts
 
 **Always use pnpm to run scripts instead of executing them directly.**
 
-1. Check `package.json` "scripts" section first - use `pnpm <script-name>` if it exists
+ 1. Check `package.json` "scripts" section first - use `pnpm <script-name>` if it exists
 2. Otherwise, use `pnpm exec ./path/to/script` (e.g., `pnpm exec ./scripts/custom-script.sh`)
 3. Never run scripts directly like `./scripts/smoke-test.sh` or `bash scripts/smoke-test.sh`
 
