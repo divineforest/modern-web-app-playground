@@ -47,6 +47,18 @@ This avoids the Delete permission prompt that breaks auto-agent mode.
 
 Before considering work complete, ensure all checks pass locally:
 
+### Verification Strategy
+
+Use a two-phase approach to avoid timeouts on large codebases:
+
+**Phase 1: Check modified files first**
+- Run TypeScript check on changed files only: `npx tsc --noEmit path/to/file1.ts path/to/file2.ts`
+- Include direct importers of modified files
+- This catches 95% of issues in <5 seconds
+- Example: If you modified `src/modules/foo/bar.ts`, also check `src/modules/foo/index.ts` and any files that import from it
+
+**Phase 2: Run full project checks**
+- Only after Phase 1 passes, run full checks:
 - `pnpm lint`
 - `pnpm test`
 - `pnpm typecheck`
