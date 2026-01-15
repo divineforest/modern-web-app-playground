@@ -55,7 +55,7 @@
   },
   "packageManager": "pnpm@10.15.0",
   "typeCoverage": {
-    "atLeast": 97.9,
+    "atLeast": 98,
     "strict": true,
     "ignoreFiles": [
       "dist/**",

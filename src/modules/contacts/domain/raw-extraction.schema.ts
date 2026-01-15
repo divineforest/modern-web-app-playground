@@ -5,7 +5,11 @@
 import { z } from 'zod';
 
 import { logger } from '../../../lib/logger.js';
-import type { RawExtractionData } from './raw-extraction.types.js';
+import type {
+  RawExtractionData,
+  CompanyRegistration,
+  OcrValueField,
+} from './raw-extraction.types.js';
 
 /**
  * Zod schema for company registration validation
@@ -14,7 +18,7 @@ import type { RawExtractionData } from './raw-extraction.types.js';
 const companyRegistrationSchema = z.object({
   type: z.string(),
   value: z.string(),
-});
+}) as z.ZodSchema<CompanyRegistration>;
 
 /**
  * Zod schema for OCR value field validation
@@ -22,7 +26,7 @@ const companyRegistrationSchema = z.object({
  */
 const ocrValueFieldSchema = z.object({
   value: z.string().optional(),
-});
+}) as z.ZodSchema<OcrValueField>;
 
 /**
  * Zod schema for RawExtractionData validation
@@ -51,7 +55,7 @@ export const rawExtractionSchema = z
     /** Customer's company registration details (VAT, registration numbers, etc.) */
     customerCompanyRegistrations: z.array(companyRegistrationSchema).optional(),
   })
-  .passthrough(); // Allow additional fields from the full OCR response
+  .passthrough() as z.ZodSchema<RawExtractionData>; // Allow additional fields from the full OCR response
 
 /**
  * Parse and validate an unknown value as RawExtractionData
@@ -73,7 +77,7 @@ export function parseRawExtraction(value: unknown): RawExtractionData | null {
   const result = rawExtractionSchema.safeParse(value);
 
   if (result.success) {
-    return result.data as RawExtractionData;
+    return result.data;
   }
 
   // Log validation failure for debugging (data integrity issue)

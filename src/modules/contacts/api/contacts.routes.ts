@@ -11,7 +11,6 @@ import type {
   ContactSortField,
   SortDirection,
 } from '../domain/contact.types.js';
-import type { RawExtractionData } from '../domain/raw-extraction.types.js';
 
 import { findContactByIdWithCompanies, listContacts } from '../repositories/contacts.repository.js';
 import type { ContactResolveResult } from '../services/contact-resolver.service.js';
@@ -112,7 +111,7 @@ const router = s.router(contactsContract, {
       result = await resolveContactFromExtraction({
         companyId,
         documentId,
-        rawExtraction: rawExtraction as RawExtractionData,
+        rawExtraction,
       });
     } catch (error) {
       // Handle known domain errors with 400 response
