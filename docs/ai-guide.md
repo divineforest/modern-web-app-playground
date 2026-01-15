@@ -1,15 +1,23 @@
-# AI-Friendliness Assessment
+# AI-Friendliness Guide
 
-**Score: 9.4/10** - Exceptional. Achieved 98% type coverage in production code.
+> **Meta-programming file**: This document captures validated insights about what makes a codebase AI-friendly. Consult this only when explicitly working on improving AI-friendliness (e.g., refining tooling, adjusting quality metrics, or evaluating AI friction reports). This is NOT a ruleset for everyday production code work.
 
-## What Works (Keep Doing)
+---
 
-- **98% type coverage** (production code) - Enforced via `pnpm type-coverage`
+**Current Score: 9.4/10** - Exceptional. Achieved 98%+ type coverage in production code.
+
+## Current State (What Works)
+
+Factors that contribute to the high AI-friendliness score:
+
+- **98%+ type coverage** (production code) - Enforced via `pnpm type-coverage`
 - **Consistent patterns** - Same structure across all modules
 - **Machine-enforced conventions** - Pre-commit hooks catch issues
 - **Working code examples** - 5 modules to learn from
 
-## What Doesn't Help AI (Don't Add)
+## Anti-Patterns (What Doesn't Help AI)
+
+Additions that seem helpful but provide no measurable AI benefit:
 
 - Step-by-step guides and tutorials
 - Visual diagrams (ER, sequence, architecture)
@@ -56,22 +64,29 @@ Insights validated through actual AI interaction with this codebase:
 
 **Rule**: Exclude test files from type-coverage metric. Trust TypeScript inference for test utilities. Focus type quality efforts on production code.
 
-## Practical Actions
+## When to Update This Guide
 
-### If AI struggles with a task
+### Collecting Friction Reports
 
-Ask: "What specific friction did you encounter?"
+When AI struggles with a task, ask: "What specific friction did you encounter?"
 
-Only fix if:
+Only act on friction if:
 1. Friction was in code quality (not documentation)
 2. Fix improves patterns/types/consistency
-3. AI confirms the fix would have helped
+3. AI confirms the fix would have helped (score >= 7/10)
 
-### Maintenance
+### Adding New Insights
 
-Run these checks - they're what actually helps AI:
+New entries in "AI-Centric Principles" should:
+- Be validated through actual AI interaction (not theoretical)
+- Include concrete evidence (metrics, examples)
+- Follow the Myth/Reality/Rule format
+
+## Quality Checks (Reference)
+
+These checks maintain AI-friendliness - enforced automatically via CI:
 ```bash
-pnpm type-coverage  # Keep at 98%+ (production code only, tests excluded)
+pnpm type-coverage  # 98%+ (production code only, tests excluded)
 pnpm lint           # Consistent patterns
 pnpm test           # Working examples
 ```
