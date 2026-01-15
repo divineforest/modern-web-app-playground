@@ -301,7 +301,7 @@ Benefits: All security requirements for an endpoint are visible in one place, ea
 
 ---
 
-## Common Mistakes
+## Route Testing Mistakes
 
 | ❌ Don't | ✅ Do | Why |
 |----------|--------|-----|
