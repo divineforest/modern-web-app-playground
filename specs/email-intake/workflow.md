@@ -28,12 +28,9 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 ### FR-2: Original Payload Archival
 
 - The system SHALL store the original webhook payload to S3 before any processing begins
-  - Implementation: `src/modules/inbound-email/services/email-archiver.ts` (`archiveInboundEmailPayload`)
 - The system SHALL use a consistent key structure for S3 storage: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json`
-  - Implementation: `src/modules/inbound-email/services/email-archiver.ts` (`generateInboundEmailKey`)
   - Uses UTC timezone for consistency across environments
 - The system SHALL store the raw, unmodified payload to preserve the exact data received
-  - Implementation: Generic S3 service `src/shared/data-access/s3/s3-storage.ts` (`uploadJson`)
 - This storage serves debugging and audit purposes and enables workflow replay if needed
 
 ### FR-2.1: Invoice Record Creation
