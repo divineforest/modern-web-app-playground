@@ -26,12 +26,11 @@ describe('Create Invoice Activity', () => {
   it('should create invoice record', async () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
-    const billingInboundToken = company.billingInboundToken;
 
     const postmarkPayload: PostmarkWebhookPayload = {
       From: 'john.customer@example.com',
-      To: `"John Customer" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
+      To: '"John Customer" <test-token@example.com>',
+      OriginalRecipient: 'test-token@example.com',
       Subject: 'Test Invoice Creation',
       MessageID: 'test-invoice-creation',
       Date: '2024-01-15T14:30:00.000Z',
@@ -46,7 +45,7 @@ describe('Create Invoice Activity', () => {
     };
 
     // ACT
-    const invoiceId = await createInvoiceActivity(postmarkPayload);
+    const invoiceId = await createInvoiceActivity(postmarkPayload, company.id);
 
     // ASSERT - Verify invoice was created in database
     expect(invoiceId).toBeTruthy();
@@ -63,33 +62,14 @@ describe('Create Invoice Activity', () => {
     expect(createdInvoice?.totalAmount).toBeNull();
   });
 
-  it('should fail activity when company not found', async () => {
-    // ARRANGE
-    const postmarkPayload: PostmarkWebhookPayload = {
-      From: 'test@example.com',
-      To: '"Test" <nonexistent-token@example.com>',
-      OriginalRecipient: 'nonexistent-token@example.com',
-      Subject: 'Test No Company',
-      MessageID: 'test-no-company',
-      Date: '2024-01-15T14:30:00.000Z',
-      Attachments: [],
-    };
-
-    // ACT & ASSERT - Activity should fail when company not found
-    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow(
-      'No company found for billing inbound token'
-    );
-  });
-
   it('should allow creating multiple invoices with null invoice numbers', async () => {
     // ARRANGE
     const company = await createTestCompany({ name: 'Test Company' });
-    const billingInboundToken = company.billingInboundToken;
 
     const postmarkPayload1: PostmarkWebhookPayload = {
       From: 'test@example.com',
-      To: `"Test" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
+      To: '"Test" <test-token@example.com>',
+      OriginalRecipient: 'test-token@example.com',
       Subject: 'Test Invoice 1',
       MessageID: 'test-invoice-1',
       Date: '2024-01-15T14:30:00.000Z',
@@ -98,8 +78,8 @@ describe('Create Invoice Activity', () => {
 
     const postmarkPayload2: PostmarkWebhookPayload = {
       From: 'test@example.com',
-      To: `"Test" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
+      To: '"Test" <test-token@example.com>',
+      OriginalRecipient: 'test-token@example.com',
       Subject: 'Test Invoice 2',
       MessageID: 'test-invoice-2',
       Date: '2024-01-15T14:30:00.000Z',
@@ -107,8 +87,8 @@ describe('Create Invoice Activity', () => {
     };
 
     // ACT - Create two invoices with null invoice numbers
-    const invoiceId1 = await createInvoiceActivity(postmarkPayload1);
-    const invoiceId2 = await createInvoiceActivity(postmarkPayload2);
+    const invoiceId1 = await createInvoiceActivity(postmarkPayload1, company.id);
+    const invoiceId2 = await createInvoiceActivity(postmarkPayload2, company.id);
 
     // ASSERT - Both should succeed since null invoice numbers are allowed
     expect(invoiceId1).toBeTruthy();

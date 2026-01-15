@@ -5,57 +5,27 @@
  */
 import { Context } from '@temporalio/activity';
 import { createInvoiceService } from '../../../../modules/invoices/services/invoices.service.js';
-import { getCompanyByBillingInboundToken } from '../../../../shared/data-access/core/companies.repository.js';
 import type { PostmarkWebhookPayload } from '../../services/postmark-webhook-processor.js';
-
-function extractBillingInboundToken(email?: string): string | undefined {
-  if (!email) return undefined;
-
-  // Split by @ and use the part before @ as billing inbound token
-  const parts = email.split('@');
-  if (parts.length !== 2) {
-    return undefined;
-  }
-
-  const billingInboundToken = parts[0];
-  return billingInboundToken || undefined;
-}
 
 /**
  * Create invoice record
  * @lintignore
  * Knip can't detect Temporal's dynamic activity wiring, but this export is required.
  */
-export async function createInvoiceActivity(payload: PostmarkWebhookPayload): Promise<string> {
+export async function createInvoiceActivity(
+  payload: PostmarkWebhookPayload,
+  companyId: string
+): Promise<string> {
   const context = Context.current();
 
   context.log.info('Creating invoice record', {
     messageId: payload.MessageID,
+    companyId,
   });
 
   try {
-    const billingInboundToken = extractBillingInboundToken(payload.OriginalRecipient);
-    if (!billingInboundToken) {
-      const error = 'No billing inbound token found in recipient email';
-      context.log.error(error, {
-        messageId: payload.MessageID,
-        originalRecipient: payload.OriginalRecipient,
-      });
-      throw new Error(error);
-    }
-
-    const company = await getCompanyByBillingInboundToken(billingInboundToken);
-    if (!company) {
-      const error = 'No company found for billing inbound token';
-      context.log.error(error, {
-        messageId: payload.MessageID,
-        billingInboundToken,
-      });
-      throw new Error(error);
-    }
-
     const invoiceData = {
-      companyId: company.id,
+      companyId,
       type: 'purchase' as const,
       status: 'new' as const,
       invoiceNumber: null,
@@ -69,13 +39,14 @@ export async function createInvoiceActivity(payload: PostmarkWebhookPayload): Pr
     context.log.info('Successfully created invoice record', {
       messageId: payload.MessageID,
       invoiceId: invoice.id,
-      companyId: company.id,
+      companyId,
     });
 
     return invoice.id;
   } catch (error) {
     context.log.error('Failed to create invoice record', {
       messageId: payload.MessageID,
+      companyId,
       error: error instanceof Error ? error.message : String(error),
     });
     // Re-throw to fail the activity - invoice creation is mandatory

@@ -18,12 +18,18 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
   - Attachments (if present)
   - Message headers
   - Timestamp (received date)
+- The system SHALL handle malformed or incomplete email data gracefully
+
+### FR-1.5: Company Identification
+
 - The system SHALL parse the recipient email address to extract billing inbound token from format `<billing-inbound-token>@something.com`
 - The system SHALL convert the extracted billing inbound token to lowercase for consistent lookup
 - The system SHALL look up the company ID by querying the database for companies.billing_inbound_token using case-insensitive matching against the lowercased token
 - The system SHALL use the companies.id column value as the company ID for processing
-- The system SHALL validate the extracted company exists in the system
-- The system SHALL handle malformed or incomplete email data gracefully
+- If no company is found matching the billing inbound token, the system SHALL:
+  - Log a warning message with the unmatched token
+  - Complete the workflow successfully without further processing
+  - NOT treat this as an error or failure condition
 
 ### FR-2: Original Payload Archival
 
@@ -35,12 +41,13 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 
 ### FR-3: Invoice Record Creation
 
-- The system SHALL create a new record in the invoices table after the original payload has been successfully uploaded to S3
-- The system SHALL extract the company ID from the billing inbound token in the recipient email address
+- The system SHALL create a new record in the invoices table after successful company identification
+- The system SHALL use the company ID obtained from the Company Identification step
 - The system SHALL set the invoice type to "purchase" (received from suppliers/vendors)
 - The system SHALL set the invoice status to "new"
 - The system SHALL set invoice number, issue date, currency, and total amount to null (to be populated by OCR recognition later)
 - The system SHALL log the created invoice ID for audit purposes
+- If no company was identified, this step SHALL be skipped
 
 ### FR-4: Email Storage and Processing
 
@@ -113,18 +120,21 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
 
 ### PostmarkInboundEmailWorkflow
 
-The workflow executes a single activity **ProcessInboundEmailActivity** that performs all processing steps:
+The workflow executes activities in sequence to process inbound emails:
 
-1. Store original webhook payload to S3 for debugging and audit purposes
-2. Extract and process email metadata (sender, subject, body, headers)
-3. Parse recipient email address to extract billing inbound token
-4. Convert billing inbound token to lowercase and query database for companies.billing_inbound_token using case-insensitive matching
-5. Validate the extracted company exists in the system
-6. Decode base64 attachment content and validate file types/sizes
-7. Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
-8. Store email metadata in Core API with references to uploaded files and company association
-9. Apply business logic and routing rules based on email content and company context
-10. Trigger relevant workflows and notifications
+1. **ArchivePayloadActivity**: Store original webhook payload to S3 for debugging and audit purposes
+2. **ExtractCompanyIdActivity**: 
+   - Parse recipient email address to extract billing inbound token
+   - Convert billing inbound token to lowercase and query database for companies.billing_inbound_token using case-insensitive matching
+   - If no company found: log warning and terminate workflow successfully
+   - If company found: return company ID for subsequent steps
+3. **CreateInvoiceActivity**: Create invoice record with company ID (only if company was found)
+4. **ProcessAttachmentsActivity**: 
+   - Decode base64 attachment content and validate file types/sizes
+   - Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
+5. **StoreEmailMetadataActivity**: Store email metadata in Core API with references to uploaded files and company association
+6. **ApplyBusinessLogicActivity**: Apply business logic and routing rules based on email content and company context
+7. **TriggerNotificationsActivity**: Trigger relevant workflows and notifications
 
 Failed activities are handled gracefully by Temporal's built-in resilience mechanisms, and workflow failures are tracked for investigation.
 
@@ -136,45 +146,52 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 - Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json` (UTC timezone)
 - Preserve raw, unmodified payload for debugging and audit purposes
 
-### 2. Invoice Creation Phase
+### 2. Company Identification Phase
 
-- Create a new invoice record in the invoices table after S3 archival
-- Extract company ID from billing inbound token in recipient email
+- Extract billing inbound token from recipient email address format `<billing-inbound-token>@something.com`
+- Convert the extracted billing inbound token to lowercase for consistent lookup
+- Query the database for companies.billing_inbound_token using case-insensitive matching against the lowercased token
+- If company found:
+  - Use the companies.id column value as the company ID for subsequent processing
+  - Continue to next phase
+- If company NOT found:
+  - Log warning message with the unmatched token
+  - Complete workflow successfully without further processing
+  - Exit workflow gracefully
+
+### 3. Invoice Creation Phase
+
+- Create a new invoice record in the invoices table after successful company identification
+- Use company ID from Company Identification phase
 - Set invoice type to "purchase", status to "new"
 - Set invoice number, issue date, currency, and total amount to null (populated by OCR recognition later)
 - Log created invoice ID for audit purposes
 
-### 3. Extraction Phase
+### 4. Extraction Phase
 
 - Parse email metadata (from, to, subject, date)
-- Extract billing inbound token from recipient email address format `<billing-inbound-token>@something.com`
-- Convert the extracted billing inbound token to lowercase for consistent lookup
-- Query the database for companies.billing_inbound_token using case-insensitive matching against the lowercased token
-- Use the companies.id column value as the company ID for processing
-- Validate extracted company exists in the system
 - Extract and decode email content (text/HTML)
 - Process attachments and validate file types
 
-### 4. Validation Phase
+### 5. Validation Phase
 
 - 🚧 Check sender against allowlist/blocklist
 - Validate attachment types and sizes
-- Validate company exists in the system
 
-### 5. Business Logic Phase
+### 6. Business Logic Phase
 
 - 🚧 Identify recipient context and business rules
 - 🚧 Route email to appropriate handlers
 - 🚧 Trigger automated workflows if applicable
 
-### 6. Storage Phase
+### 7. Storage Phase
 
 - Upload attachments to Core API files/upload endpoint with company ID context and MessageID as externalId
 - 🚧 Store email metadata in Core API with file references and company association
 - 🚧 Associate email and files with the identified company entity
 - 🚧 Update contact records and business context for the specific company
 
-### 7. Completion Phase
+### 8. Completion Phase
 
 - Log processing results
 - 🚧 Send notifications if configured
@@ -227,9 +244,9 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 ### Workflow Processing Errors
 
 - **S3 Storage Failure**: Activity fails and workflow retries; archival is mandatory to ensure audit trail and replay capability
+- **Company Not Found**: Log warning message with unmatched token and complete workflow successfully without further processing (NOT treated as error)
 - **Invoice Creation Failure**: Activity fails when creating invoice record; Temporal will retry the activity according to configured retry policy
-- **Invalid Billing Inbound Token**: Activity fails and workflow handles the failure appropriately
-- **Company Not Found**: Activity fails when companies.billing_inbound_token lookup fails, workflow handles accordingly
+- **Invalid Billing Inbound Token Format**: Log warning and complete workflow successfully without further processing
 - **Processing Failure**: Activities are handled with appropriate failure recovery mechanisms
 - **Attachment Too Large**: Skip attachment processing activity but continue with email metadata workflow
 - **Core API Upload Failure**: Activity failures are handled with appropriate recovery mechanisms

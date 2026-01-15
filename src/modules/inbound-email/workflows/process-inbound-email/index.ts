@@ -5,5 +5,6 @@
  */
 export { archiveToS3Activity } from './archive-to-s3.activity.js';
 export { createInvoiceActivity } from './create-invoice.activity.js';
+export { extractCompanyIdActivity } from './extract-company-id.activity.js';
 export { postmarkInboundEmailWorkflow } from './postmark-inbound-email.workflow.js';
 export { processWebhookActivity } from './process-webhook.activity.js';
