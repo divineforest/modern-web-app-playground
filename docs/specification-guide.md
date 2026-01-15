@@ -323,7 +323,22 @@ Bad example:
 
 ---
 
-### 14. Status Indicators
+### 14. Writing Style
+
+Specifications are human-readable documents, not code. Use natural language instead of code-level naming conventions.
+
+**Naming:**
+
+- ✅ "invoice number", "issue date", "total amount"
+- ❌ "invoiceNumber", "issueDate", "totalAmount"
+- ✅ "billing inbound token", "company ID"
+- ❌ "billingInboundToken", "companyId"
+
+**Rationale:** Specifications describe business requirements for a broad audience — product managers, QA engineers, and future maintainers. Code-level naming creates unnecessary coupling to implementation details and reduces readability.
+
+---
+
+### 15. Status Indicators
 
 Use emoji to mark implementation state:
 
@@ -341,7 +356,7 @@ Example:
 
 ---
 
-### 15. Review and Approval Process
+### 16. Review and Approval Process
 
 1. Draft — author writes the initial version.
 2. Technical Review — peers and architect validate feasibility.
@@ -352,7 +367,7 @@ Example:
 
 ---
 
-### 16. Version Control
+### 17. Version Control
 
 - Store specifications in `docs/specs/` or a dedicated folder.
 - Use descriptive filenames such as `billing-chargebee-migration.md`.
