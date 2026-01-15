@@ -4,7 +4,7 @@
 
 ## What Works (Keep Doing)
 
-- **97% type coverage** - Enforced via `pnpm type-coverage`
+- **97.9% type coverage** (production code) - Enforced via `pnpm type-coverage`
 - **Consistent patterns** - Same structure across all modules
 - **Machine-enforced conventions** - Pre-commit hooks catch issues
 - **Working code examples** - 5 modules to learn from
@@ -36,12 +36,25 @@ Insights validated through actual AI interaction with this codebase:
 
 **Myth**: "More documentation helps AI understand code"
 
-**Reality**: AI infers intent from types and patterns. 97% type coverage provides:
+**Reality**: AI infers intent from types and patterns. High type coverage provides:
 - Precise function signatures AI can rely on
 - Compile-time validation of AI suggestions
 - Self-documenting code through explicit types
 
 **Rule**: Invest in type coverage before writing explanatory docs.
+
+### Type Coverage: Production > Tests
+
+**Myth**: "High type coverage everywhere (including tests) helps AI"
+
+**Reality**: Test type coverage has diminishing returns for AI. Value breakdown:
+- Production code types: **9/10** - Essential for understanding APIs and data flow
+- Test utilities/factories: **7/10** - Naturally typed via TypeScript inference
+- Test response bodies (`JSON.parse`): **2/10** - Low signal, high ceremony
+
+**Evidence**: ~550 of 789 untyped identifiers were in test files, mostly `JSON.parse()` results. Fixing them adds tokens without adding information - AI infers response shape from assertions anyway.
+
+**Rule**: Exclude test files from type-coverage metric. Trust TypeScript inference for test utilities. Focus type quality efforts on production code.
 
 ## Practical Actions
 
@@ -58,7 +71,7 @@ Only fix if:
 
 Run these checks - they're what actually helps AI:
 ```bash
-pnpm type-coverage  # Keep at 97%+
+pnpm type-coverage  # Keep at 97.9%+ (production code only, tests excluded)
 pnpm lint           # Consistent patterns
 pnpm test           # Working examples
 ```

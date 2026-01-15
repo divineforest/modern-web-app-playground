@@ -55,11 +55,13 @@
   },
   "packageManager": "pnpm@10.15.0",
   "typeCoverage": {
-    "atLeast": 97,
+    "atLeast": 97.9,
     "strict": true,
     "ignoreFiles": [
       "dist/**",
-      "node_modules/**"
+      "node_modules/**",
+      "**/*.test.ts",
+      "tests/**"
     ]
   },
   "pnpm": {
