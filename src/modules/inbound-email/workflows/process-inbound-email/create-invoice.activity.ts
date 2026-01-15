@@ -22,7 +22,7 @@ function extractBillingInboundToken(email?: string): string | undefined {
 }
 
 /**
- * Activity 2: Create invoice record
+ * Create invoice record
  * @lintignore
  * Knip can't detect Temporal's dynamic activity wiring, but this export is required.
  */

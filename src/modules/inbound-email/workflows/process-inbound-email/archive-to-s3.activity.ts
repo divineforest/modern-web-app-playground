@@ -8,7 +8,7 @@ import { archiveInboundEmailPayload } from '../../services/email-archiver.js';
 import type { PostmarkWebhookPayload } from '../../services/postmark-webhook-processor.js';
 
 /**
- * Activity 1: Archive raw payload to S3
+ * Archive raw payload to S3
  * @lintignore
  * Knip can't detect Temporal's dynamic activity wiring, but this export is required.
  */
