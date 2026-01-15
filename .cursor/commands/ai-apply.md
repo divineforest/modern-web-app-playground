@@ -15,3 +15,7 @@ After completing the task, briefly check:
 - Does the change follow existing codebase patterns?
 
 If either fails, fix before considering done.
+
+## Meta
+
+When editing this file, apply the same principles to itself.
