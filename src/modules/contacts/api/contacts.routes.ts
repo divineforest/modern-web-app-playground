@@ -3,7 +3,7 @@
  */
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
-import { logger as rootLogger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
 import { CursorSortMismatchError, InvalidCursorError } from '../domain/contact.errors.js';
 import type {
   ContactListFilters,
@@ -22,7 +22,7 @@ import {
 import { ContactNameNotFoundError } from '../services/raw-extraction-parser.service.js';
 import { contactsContract } from './contacts.contracts.js';
 
-const logger = rootLogger.child({ module: 'contacts-routes' });
+const logger = createModuleLogger('contacts-routes');
 const s = initServer();
 
 function parseSort(sortParam?: string): { field: ContactSortField; direction: SortDirection } {

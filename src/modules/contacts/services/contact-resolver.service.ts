@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { companies, db } from '../../../db/index.js';
 import { isUniqueViolation } from '../../../lib/database-errors.js';
-import { logger as rootLogger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
 import type { Address } from '../domain/address.types.js';
 import type { Contact, ContactResponse } from '../domain/contact.entity.js';
 import { toContact, toContactResponse } from '../domain/contact.entity.js';
@@ -25,7 +25,7 @@ import {
 import { createContactDocumentLink } from '../repositories/global-contacts-documents.repository.js';
 import { normalizeVatId, type ViesServiceConfig, validateVatId } from './vies.service.js';
 
-const logger = rootLogger.child({ module: 'contact-resolver' });
+const logger = createModuleLogger('contact-resolver');
 
 /**
  * Input data from OCR extraction

@@ -4,10 +4,10 @@
  */
 import { z } from 'zod';
 
-import { logger as rootLogger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
 import type { ContactEntityType, ContactSource, ContactVatType } from './contact.types.js';
 
-const logger = rootLogger.child({ module: 'contact-schema' });
+const logger = createModuleLogger('contact-schema');
 
 /**
  * Zod schema for ContactEntityType validation

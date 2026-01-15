@@ -3,14 +3,14 @@
  */
 import { env } from '../../../lib/env.js';
 import { type HttpOptions, http } from '../../../lib/http.js';
-import { logger as rootLogger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
 import type {
   ViesApiResponse,
   ViesRawResponse,
   ViesValidationResult,
 } from '../domain/contact.types.js';
 
-const logger = rootLogger.child({ module: 'vies-service' });
+const logger = createModuleLogger('vies-service');
 
 /**
  * VIES service configuration
