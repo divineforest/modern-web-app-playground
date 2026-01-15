@@ -17,6 +17,32 @@
 - Module-level READMEs
 - Process documentation
 
+## AI-Centric Principles (Validated)
+
+Insights validated through actual AI interaction with this codebase:
+
+### Cohesion > File Size
+
+**Myth**: "Large files (>300 lines) should be split for AI readability"
+
+**Reality**: AI semantic search returns chunks, not files. A 600-line cohesive service is ONE search hit with full context. Splitting creates:
+- Multiple files to discover and correlate
+- Import/export boilerplate overhead
+- Fuzzy boundaries that obscure logic flow
+
+**Rule**: Split files only when they violate single responsibility, not based on line count.
+
+### Type Coverage > Documentation
+
+**Myth**: "More documentation helps AI understand code"
+
+**Reality**: AI infers intent from types and patterns. 97% type coverage provides:
+- Precise function signatures AI can rely on
+- Compile-time validation of AI suggestions
+- Self-documenting code through explicit types
+
+**Rule**: Invest in type coverage before writing explanatory docs.
+
 ## Practical Actions
 
 ### If AI struggles with a task
