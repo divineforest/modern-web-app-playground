@@ -1,5 +1,5 @@
-import { createS3StorageService } from '../../../shared/data-access/s3/index.js';
 import { createModuleLogger } from '../../../lib/logger.js';
+import { createS3StorageService } from '../../../shared/data-access/s3/index.js';
 import type { PostmarkWebhookPayload } from './postmark-webhook-processor.js';
 
 const logger = createModuleLogger('email-archiver');

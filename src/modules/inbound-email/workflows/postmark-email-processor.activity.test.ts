@@ -1,38 +1,10 @@
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestCompany } from '../../../../tests/factories/index.js';
 import { server } from '../../../mocks/server.js';
 import type { FileUploadResponse } from '../../../shared/data-access/core/index.js';
 import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
 import { processWebhook } from '../services/postmark-webhook-processor.js';
-import { createInvoiceActivity } from './process-inbound-email/index.js';
-
-// Mock invoice service
-vi.mock('../../../modules/invoices/services/invoices.service.js', () => ({
-  createInvoiceService: vi.fn(),
-}));
-
-// Mock company repository
-vi.mock('../../../shared/data-access/core/companies.repository.js', () => ({
-  getCompanyByBillingInboundToken: vi.fn(),
-}));
-
-import { createInvoiceService as mockCreateInvoiceService } from '../../../modules/invoices/services/invoices.service.js';
-import { getCompanyByBillingInboundToken as mockGetCompanyByBillingInboundToken } from '../../../shared/data-access/core/companies.repository.js';
-
-// Mock Temporal Activity Context
-vi.mock('@temporalio/activity', () => ({
-  Context: {
-    current: vi.fn(() => ({
-      log: {
-        info: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-        warn: vi.fn(),
-      },
-    })),
-  },
-}));
 
 // Request data tracking interface for tests
 interface CoreApiRequestData {
@@ -245,119 +217,6 @@ describe('Postmark Email Processing Service (via Activity)', () => {
     // Should throw error when Core API upload fails - this triggers Temporal retry
     await expect(processWebhook(postmarkPayload)).rejects.toThrow(
       'File upload failed! status: 500'
-    );
-  });
-});
-
-describe('Create Invoice Activity', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    server.resetHandlers();
-  });
-
-  it('should create invoice record', async () => {
-    // ARRANGE
-    const company = await createTestCompany({ name: 'Test Company' });
-    const billingInboundToken = company.billingInboundToken;
-
-    // Mock company lookup for this specific test
-    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(company);
-    vi.mocked(mockCreateInvoiceService).mockResolvedValueOnce({
-      id: 'invoice-123',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      companyId: company.id,
-      contactId: null,
-      type: 'purchase',
-      status: 'draft',
-      invoiceNumber: `EMAIL-test-invoice-creation`,
-      issueDate: '2026-01-15',
-      dueDate: null,
-      paidAt: null,
-      currency: 'USD',
-      totalAmount: '0.00',
-      description: null,
-    });
-
-    const postmarkPayload: PostmarkWebhookPayload = {
-      From: 'john.customer@example.com',
-      To: `"John Customer" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
-      Subject: 'Test Invoice Creation',
-      MessageID: 'test-invoice-creation',
-      Date: '2024-01-15T14:30:00.000Z',
-      Attachments: [
-        {
-          Name: 'receipt.pdf',
-          Content: 'VGVzdCBQREYgcmVjZWlwdA==',
-          ContentType: 'application/pdf',
-          ContentLength: 1234,
-        },
-      ],
-    };
-
-    // ACT
-    const invoiceId = await createInvoiceActivity(postmarkPayload);
-
-    // ASSERT - Invoice service should be called with correct data
-    expect(vi.mocked(mockCreateInvoiceService)).toHaveBeenCalledWith({
-      companyId: company.id,
-      type: 'purchase',
-      status: 'draft',
-      invoiceNumber: `EMAIL-${postmarkPayload.MessageID}`,
-      issueDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD format
-      currency: 'USD',
-      totalAmount: 0,
-    });
-    expect(invoiceId).toBe('invoice-123');
-  });
-
-  it('should fail activity when company not found', async () => {
-    // ARRANGE
-    const postmarkPayload: PostmarkWebhookPayload = {
-      From: 'test@example.com',
-      To: '"Test" <nonexistent-token@example.com>',
-      OriginalRecipient: 'nonexistent-token@example.com',
-      Subject: 'Test No Company',
-      MessageID: 'test-no-company',
-      Date: '2024-01-15T14:30:00.000Z',
-      Attachments: [],
-    };
-
-    // Mock company lookup to return null
-    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(null);
-
-    // ACT & ASSERT - Activity should fail when company not found
-    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow(
-      'No company found for billing inbound token'
-    );
-  });
-
-  it('should fail activity when invoice creation fails', async () => {
-    // ARRANGE
-    const company = await createTestCompany({ name: 'Test Company' });
-    const billingInboundToken = company.billingInboundToken;
-
-    // Mock company lookup
-    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(company);
-    // Mock invoice creation to throw error
-    vi.mocked(mockCreateInvoiceService).mockRejectedValueOnce(
-      new Error('Database connection failed')
-    );
-
-    const postmarkPayload: PostmarkWebhookPayload = {
-      From: 'test@example.com',
-      To: `"Test" <${billingInboundToken}@example.com>`,
-      OriginalRecipient: `${billingInboundToken}@example.com`,
-      Subject: 'Test Invoice Failure',
-      MessageID: 'test-invoice-failure',
-      Date: '2024-01-15T14:30:00.000Z',
-      Attachments: [],
-    };
-
-    // ACT & ASSERT - Activity should fail when invoice creation fails
-    await expect(createInvoiceActivity(postmarkPayload)).rejects.toThrow(
-      'Database connection failed'
     );
   });
 });

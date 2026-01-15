@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PostmarkWebhookPayload } from './postmark-webhook-processor.js';
 import { archiveInboundEmailPayload, generateInboundEmailKey } from './email-archiver.js';
+import type { PostmarkWebhookPayload } from './postmark-webhook-processor.js';
 
 // Mock S3 storage service
 const mockUploadJson = vi.fn();

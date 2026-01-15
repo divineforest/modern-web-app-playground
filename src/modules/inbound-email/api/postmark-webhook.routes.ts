@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
 import { createTemporalClient, TASK_QUEUE } from '../../../shared/workflows/index.js';
-import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
 import { postmarkInboundEmailWorkflow } from '../index.js';
+import type { PostmarkWebhookPayload } from '../services/postmark-webhook-processor.js';
 
 const logger = createModuleLogger('postmark-webhook');
 

@@ -15,6 +15,6 @@ export { processWebhook } from './services/postmark-webhook-processor.js';
 export {
   archiveToS3Activity,
   createInvoiceActivity,
-  processWebhookActivity,
   postmarkInboundEmailWorkflow,
+  processWebhookActivity,
 } from './workflows/process-inbound-email/index.js';
