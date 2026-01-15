@@ -36,6 +36,18 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
   - Implementation: Generic S3 service `src/shared/data-access/s3/s3-storage.ts` (`uploadJson`)
 - This storage serves debugging and audit purposes and enables workflow replay if needed
 
+### FR-2.1: Invoice Record Creation
+
+- The system SHALL create a new record in the invoices table after the original payload has been successfully uploaded to S3
+- The system SHALL extract the company ID from the billing inbound token in the recipient email address (same as used for Core API uploads)
+- The system SHALL set the invoice type to "purchase" (received from suppliers/vendors)
+- The system SHALL set the invoice status to "draft" (default status)
+- The system SHALL generate a unique invoice number using format: `EMAIL-{MessageID}` (where MessageID is from Postmark)
+- The system SHALL set the issue date to the current date when the invoice record is created
+- The system SHALL set the currency to "USD" as default (can be updated later)
+- The system SHALL set totalAmount to 0.00 as default (can be updated later)
+- The system SHALL log the created invoice ID for audit purposes
+
 ### FR-3: Email Storage and Processing
 
 - 🚧 The system SHALL store processed email data in a structured format
@@ -88,7 +100,7 @@ For the webhook endpoint that initiates this workflow, see [Billing Inbound Emai
   - Core API endpoint URLs and authentication credentials
   - File upload settings (max file size, allowed file types)
   - 🚧 Attachment processing rules and virus scanning configuration
-  - Database connection for company lookup via companies.billing_inbound_token
+  - Database connection for company lookup via companies.billing_inbound_token and invoice creation
   - Temporal workflow configurations (timeouts, retention policies)
   - Workflow execution policies and activity configurations
   - 🚧 Rate limiting configuration for Core API requests
@@ -129,6 +141,15 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 - Store original webhook payload to S3 before any processing
 - Use key structure: `inbound-emails/{YYYY}/{MM}/{DD}/{MessageID}.json` (UTC timezone)
 - Preserve raw, unmodified payload for debugging and audit purposes
+
+### 1.1. Invoice Creation Phase
+
+- Create a new invoice record in the invoices table after S3 archival
+- Extract company ID from billing inbound token in recipient email
+- Generate invoice number using format: `EMAIL-{MessageID}`
+- Set invoice type to "purchase", status to "draft", currency to "USD", totalAmount to 0.00
+- Set issue date to current date
+- Log created invoice ID for audit purposes
 
 ### 2. Extraction Phase
 
@@ -213,6 +234,7 @@ Failed activities are handled gracefully by Temporal's built-in resilience mecha
 ### Workflow Processing Errors
 
 - **S3 Storage Failure**: Activity fails and workflow retries; archival is mandatory to ensure audit trail and replay capability
+- **Invoice Creation Failure**: Activity fails when creating invoice record; Temporal will retry the activity according to configured retry policy
 - **Invalid Billing Inbound Token**: Activity fails and workflow handles the failure appropriately
 - **Company Not Found**: Activity fails when companies.billing_inbound_token lookup fails, workflow handles accordingly
 - **Processing Failure**: Activities are handled with appropriate failure recovery mechanisms

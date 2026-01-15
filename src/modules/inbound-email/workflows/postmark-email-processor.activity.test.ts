@@ -7,6 +7,19 @@ import type { PostmarkWebhookPayload } from '../services/postmark-webhook-proces
 import { processWebhook } from '../services/postmark-webhook-processor.js';
 import { processInboundEmailActivity } from './postmark-email-processor.activity.js';
 
+// Mock invoice service
+vi.mock('../../../modules/invoices/services/invoices.service.js', () => ({
+  createInvoiceService: vi.fn(),
+}));
+
+// Mock company repository
+vi.mock('../../../shared/data-access/core/companies.repository.js', () => ({
+  getCompanyByBillingInboundToken: vi.fn(),
+}));
+
+import { createInvoiceService as mockCreateInvoiceService } from '../../../modules/invoices/services/invoices.service.js';
+import { getCompanyByBillingInboundToken as mockGetCompanyByBillingInboundToken } from '../../../shared/data-access/core/companies.repository.js';
+
 // Mock email archiver service
 vi.mock('../services/email-archiver.js');
 
@@ -247,6 +260,34 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
     vi.mocked(mockArchiveInboundEmailPayload).mockResolvedValue(
       'inbound-emails/2024/01/15/test-123.json'
     );
+    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValue({
+      id: 'company-123',
+      name: 'Test Company',
+      status: 'active',
+      billingInboundToken: 'test-token',
+      billingSettings: {},
+      billingAddress: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      bobReferenceId: null,
+      companyDetails: {},
+    });
+    vi.mocked(mockCreateInvoiceService).mockResolvedValue({
+      id: 'invoice-123',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      companyId: 'company-123',
+      contactId: null,
+      type: 'purchase',
+      status: 'draft',
+      invoiceNumber: 'EMAIL-test-123',
+      issueDate: '2024-01-15',
+      dueDate: null,
+      paidAt: null,
+      currency: 'USD',
+      totalAmount: '0.00',
+      description: null,
+    });
     server.resetHandlers();
   });
 
@@ -396,5 +437,118 @@ describe('Postmark Email Processing Activity (S3 Archival)', () => {
 
     // ASSERT - S3 archival should happen before Core API upload
     expect(executionOrder).toEqual(['s3-archive', 'core-api-upload']);
+  });
+
+  it('should create invoice record after successful S3 archival', async () => {
+    // ARRANGE
+    const company = await createTestCompany({ name: 'Test Company' });
+    const billingInboundToken = company.billingInboundToken;
+
+    // Mock Core API to accept file uploads
+    server.use(
+      http.post('*/api/internal/documents', () => {
+        return HttpResponse.json({
+          id: 'mock-file-id',
+          type: 'expence_document',
+          name: null,
+          notes: null,
+          fileName: 'receipt.pdf',
+          mimeType: 'application/pdf',
+          issueDate: new Date().toISOString(),
+          documentMetadata: null,
+          bookeepingMetadata: {},
+          contactId: null,
+          adminStatus: 'ready',
+          recognitionDetails: null,
+          createdAt: new Date().toISOString(),
+          bobStatus: null,
+          externalStatus: null,
+          contact: null,
+          transactions: [],
+          paymentStatus: 'waiting_for_payment',
+          potentialDuplicate: null,
+          potentialTransactions: null,
+          url: 'https://api.example.com/files/mock-file-id',
+        });
+      })
+    );
+
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'john.customer@example.com',
+      To: `"John Customer" <${billingInboundToken}@example.com>`,
+      OriginalRecipient: `${billingInboundToken}@example.com`,
+      Subject: 'Test Invoice Creation',
+      MessageID: 'test-invoice-creation',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [
+        {
+          Name: 'receipt.pdf',
+          Content: 'VGVzdCBQREYgcmVjZWlwdA==',
+          ContentType: 'application/pdf',
+          ContentLength: 1234,
+        },
+      ],
+    };
+
+    // ACT
+    await processInboundEmailActivity(postmarkPayload);
+
+    // ASSERT - Invoice service should be called with correct data
+    expect(vi.mocked(mockCreateInvoiceService)).toHaveBeenCalledWith({
+      companyId: company.id,
+      type: 'purchase',
+      status: 'draft',
+      invoiceNumber: `EMAIL-${postmarkPayload.MessageID}`,
+      issueDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD format
+      currency: 'USD',
+      totalAmount: 0,
+    });
+  });
+
+  it('should fail activity when company not found', async () => {
+    // ARRANGE
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'test@example.com',
+      To: '"Test" <nonexistent-token@example.com>',
+      OriginalRecipient: 'nonexistent-token@example.com',
+      Subject: 'Test No Company',
+      MessageID: 'test-no-company',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [],
+    };
+
+    // Mock company lookup to return null
+    vi.mocked(mockGetCompanyByBillingInboundToken).mockResolvedValueOnce(null);
+
+    // ACT & ASSERT - Activity should fail when company not found
+    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
+      'No company found for billing inbound token'
+    );
+  });
+
+  it('should fail activity when invoice creation fails', async () => {
+    // ARRANGE
+    const company = await createTestCompany({ name: 'Test Company' });
+    const billingInboundToken = company.billingInboundToken;
+
+    const postmarkPayload: PostmarkWebhookPayload = {
+      From: 'test@example.com',
+      To: `"Test" <${billingInboundToken}@example.com>`,
+      OriginalRecipient: `${billingInboundToken}@example.com`,
+      Subject: 'Test Invoice Failure',
+      MessageID: 'test-invoice-failure',
+      Date: '2024-01-15T14:30:00.000Z',
+      Attachments: [],
+    };
+
+    // Mock invoice creation to throw error
+    vi.mocked(mockCreateInvoiceService).mockRejectedValueOnce(
+      new Error('Database connection failed')
+    );
+
+    // ACT & ASSERT - Activity should fail when invoice creation fails
+    await expect(processInboundEmailActivity(postmarkPayload)).rejects.toThrow(
+      'Database connection failed'
+    );
   });
 });
