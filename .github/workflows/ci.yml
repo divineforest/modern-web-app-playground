@@ -195,7 +195,3 @@ jobs:
           VIES_API_KEY: ci_test_vies_key
           CORE_API_URL: http://localhost:4000
           CORE_API_KEY: ci_test_api_key
-          ODOO_URL: https://test.odoo.com
-          ODOO_DATABASE: test_db
-          ODOO_USERNAME: test_user
-          ODOO_API_KEY: test_api_key

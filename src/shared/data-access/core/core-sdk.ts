@@ -6,7 +6,7 @@ const logger = createModuleLogger('core-sdk');
 
 export interface CoreContactUpsert {
   company_id: string;
-  source_system: 'odoo';
+  source_system: string;
   source_id: string;
   name: string;
 }

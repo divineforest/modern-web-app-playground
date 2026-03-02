@@ -84,14 +84,6 @@ envVarGroups:
         value: staging
       - key: API_BEARER_TOKENS
         sync: false
-      - key: ODOO_API_KEY
-        sync: false
-      - key: ODOO_USERNAME
-        sync: false
-      - key: ODOO_DATABASE
-        sync: false
-      - key: ODOO_URL
-        sync: false
       - key: CORE_API_KEY
         sync: false
       - key: CORE_API_URL
@@ -110,14 +102,6 @@ envVarGroups:
       - key: NODE_ENV
         value: production
       - key: API_BEARER_TOKENS
-        sync: false
-      - key: ODOO_API_KEY
-        sync: false
-      - key: ODOO_USERNAME
-        sync: false
-      - key: ODOO_DATABASE
-        sync: false
-      - key: ODOO_URL
         sync: false
       - key: CORE_API_KEY
         sync: false

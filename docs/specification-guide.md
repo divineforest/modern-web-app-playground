@@ -128,8 +128,8 @@ Example:
 ```markdown
 ### FR-1: Contact Retrieval
 
-- The system SHALL fetch contacts from Odoo using the JSON-RPC API.
-- The system SHALL retrieve all active contacts from the `res.partner` model.
+- The system SHALL fetch contacts from the external ERP system using its REST API.
+- The system SHALL retrieve all active contacts.
 - The system SHALL handle pagination for large datasets.
 ```
 
@@ -167,8 +167,8 @@ Example:
 ```markdown
 ### TR-1: Authentication
 
-- The system SHALL authenticate using Odoo credentials.
-- The system SHALL manage JSON-RPC sessions securely.
+- The system SHALL authenticate using API key authentication.
+- The system SHALL manage sessions securely.
 
 ### TR-2: Database Schema
 

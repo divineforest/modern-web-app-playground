@@ -17,10 +17,6 @@ export default defineConfig({
       CORE_API_TIMEOUT: '5000',
       CORE_API_RETRY_ATTEMPTS: '2',
       CORE_API_RETRY_DELAY_MS: '100',
-      ODOO_URL: 'https://test.odoo.com',
-      ODOO_DATABASE: 'test_db',
-      ODOO_USERNAME: 'test_user',
-      ODOO_API_KEY: 'test_api_key',
     },
     coverage: {
       provider: 'v8',

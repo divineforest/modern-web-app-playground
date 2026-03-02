@@ -2,7 +2,7 @@
 
 ## Overview
 
-Backend accounting system for practice management. Integrates with Odoo ERP and Core microservice.
+Backend accounting system for practice management. Integrates with Core microservice.
 
 **Stack**: Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal, ts-rest, Drizzle ORM, Vitest.
 
@@ -22,13 +22,12 @@ src/
 │   └── health/             # Health check routes (/healthz, /ready)
 ├── modules/                # Domain-driven feature modules
 │   ├── contacts/           # Contact management
-│   ├── contacts-sync/      # Odoo → Core synchronization
+│   ├── contacts-sync/      # Contact synchronization
 │   ├── inbound-email/      # Postmark webhook + Temporal workflows
 │   └── invoices/           # Invoice management
 ├── shared/                 # Cross-module infrastructure
 │   ├── data-access/        # External system clients
 │   │   ├── core/           # Core microservice (SDK + repository)
-│   │   ├── odoo/           # Odoo ERP JSON-RPC client
 │   │   └── s3/             # S3 storage client
 │   └── workflows/          # Temporal infrastructure (client, worker, registry)
 ├── scripts/                # CLI scripts
@@ -63,7 +62,7 @@ Self-contained domain features. Each module may contain:
 ### Shared (`src/shared/`)
 
 Cross-module infrastructure:
-- **data-access/**: External system clients grouped by system (core, odoo, s3)
+- **data-access/**: External system clients grouped by system (core, s3)
 - **workflows/**: Temporal client factory, worker setup, workflow registry
 
 ### Infrastructure (`src/infra/`)

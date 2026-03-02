@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Backend accounting system for practice management. Integrates with Odoo ERP and Core microservice.
+Backend accounting system for practice management. Integrates with Core microservice.
 
 ## Project Stack
 

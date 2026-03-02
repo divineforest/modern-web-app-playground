@@ -53,13 +53,6 @@ export const env = createEnv({
     CORE_API_RETRY_ATTEMPTS: z.coerce.number().positive().default(3),
     CORE_API_RETRY_DELAY_MS: z.coerce.number().positive().default(1000),
 
-    // Odoo ERP Integration
-    // Dev: Uses local Odoo instance with default credentials. Production: REQUIRED
-    ODOO_URL: devDefault(z.string().url(), 'http://localhost:8069'),
-    ODOO_DATABASE: devDefault(z.string().min(1), 'odoo'),
-    ODOO_USERNAME: devDefault(z.string().min(1), 'admin'),
-    ODOO_API_KEY: devDefault(z.string().min(1), 'dev-odoo-api-key'),
-
     // Temporal Workflow Orchestration
     TEMPORAL_ADDRESS: z.string().default('localhost:7233'),
     TEMPORAL_NAMESPACE: z.string().default('default'),
@@ -123,10 +116,6 @@ export const env = createEnv({
     CORE_API_TIMEOUT: process.env['CORE_API_TIMEOUT'],
     CORE_API_RETRY_ATTEMPTS: process.env['CORE_API_RETRY_ATTEMPTS'],
     CORE_API_RETRY_DELAY_MS: process.env['CORE_API_RETRY_DELAY_MS'],
-    ODOO_URL: process.env['ODOO_URL'],
-    ODOO_DATABASE: process.env['ODOO_DATABASE'],
-    ODOO_USERNAME: process.env['ODOO_USERNAME'],
-    ODOO_API_KEY: process.env['ODOO_API_KEY'],
 
     // Temporal Configuration
     TEMPORAL_ADDRESS: process.env['TEMPORAL_ADDRESS'],

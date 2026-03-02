@@ -189,7 +189,7 @@ describe('FeatureName', () => {
 |--------------|-------------|--------|-----|
 | Test a route | `createTest*()` factory | `buildTest*Data()` | Routes need real DB records with IDs |
 | Test validation | `buildTest*Data()` | `createTest*()` | Faster, validation doesn't need DB |
-| Mock Odoo API | Add to `src/mocks/handlers.ts` | Mock in test | Reused across many tests |
+| Mock external API | Add to `src/mocks/handlers.ts` | Mock in test | Reused across many tests |
 | Mock once | `server.use(...)` in test | Edit handlers.ts | Test-specific scenario |
 
 **Example**: `src/modules/contacts/api/contacts.routes.test.ts`
