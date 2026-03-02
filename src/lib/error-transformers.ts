@@ -76,10 +76,6 @@ const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }>
     message: 'Invalid company reference',
     details: 'The specified company does not exist',
   },
-  [CONSTRAINTS.INVOICES_CONTACT_FK]: {
-    message: 'Invalid contact reference',
-    details: 'The specified contact does not exist',
-  },
   [CONSTRAINTS.INVOICES_COMPANY_INVOICE_NUMBER_UNIQUE]: {
     message: 'Duplicate invoice number',
     details: 'An invoice with this number already exists for this company',
@@ -91,6 +87,14 @@ const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }>
   [CONSTRAINTS.INVOICES_STATUS_CHECK]: {
     message: 'Invalid invoice status',
     details: 'Status must be one of: new, draft, sent, paid, overdue, cancelled',
+  },
+  [CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE]: {
+    message: 'Duplicate order number',
+    details: 'An order with this number already exists',
+  },
+  [CONSTRAINTS.ORDERS_STATUS_CHECK]: {
+    message: 'Invalid order status',
+    details: 'Status must be one of: draft, confirmed, processing, shipped, fulfilled, cancelled',
   },
 };
 

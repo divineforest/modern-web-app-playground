@@ -80,11 +80,11 @@ export async function buildApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { registerContactsRoutes } = await import('./modules/contacts/index.js');
     const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
+    const { registerOrdersRoutes } = await import('./modules/orders/index.js');
 
-    await protectedInstance.register(registerContactsRoutes);
     await protectedInstance.register(registerInvoicesRoutes);
+    await protectedInstance.register(registerOrdersRoutes);
   });
 
   // Add global error handler with Sentry integration
@@ -177,11 +177,11 @@ export async function buildTestApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { registerContactsRoutes } = await import('./modules/contacts/index.js');
     const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
+    const { registerOrdersRoutes } = await import('./modules/orders/index.js');
 
-    await protectedInstance.register(registerContactsRoutes);
     await protectedInstance.register(registerInvoicesRoutes);
+    await protectedInstance.register(registerOrdersRoutes);
   });
 
   // Add global error handler (same as production)

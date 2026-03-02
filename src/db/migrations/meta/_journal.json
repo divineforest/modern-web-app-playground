@@ -113,6 +113,20 @@
       "when": 1768491189287,
       "tag": "0015_light_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1772469441749,
+      "tag": "0016_cold_mojo",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1772470330488,
+      "tag": "0017_brown_eddie_brock",
+      "breakpoints": true
     }
   ]
 }
