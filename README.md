@@ -2,6 +2,8 @@
 
 NodeJS backend e-commerce system with TypeScript, Docker, and PostgreSQL.
 
+**Monorepo Structure**: This project uses a pnpm workspace monorepo. The backend application lives in `apps/backend/`. Run commands from the root using `pnpm <command>` (which delegates to the backend package via `--filter @mercado/backend`).
+
 ## ✨ AI Assistant Setup Prompt
 
 _Use this README to set up the complete development and test environment. Execute the setup commands, install dependencies, configure databases, run all tests and code quality checks to ensure everything passes and the project is ready for development._

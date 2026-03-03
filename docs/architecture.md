@@ -11,35 +11,35 @@ For testing strategy, see [Testing Architecture](./testing-architecture.md).
 ## Project Structure
 
 ```
-src/
-├── lib/                    # Core utilities (env.ts, logger.ts, http.ts)
-├── config/                 # Derived configurations (database.ts, server.ts)
-├── db/                     # Database layer
-│   ├── schema.ts           # Drizzle schema (single source of truth)
-│   ├── connection.ts       # Database connection factory
-│   └── migrations/         # SQL migration files
-├── infra/                  # Infrastructure/operational endpoints
-│   ├── auth/               # Bearer token authentication plugin
-│   └── health/             # Health check routes (/healthz, /ready)
-├── modules/                # Domain-driven feature modules
-│   ├── orders/             # Order management (CRUD, status tracking)
-│   └── payment-webhooks/   # Stripe webhook processing (Temporal workflows)
-├── shared/                 # Cross-module infrastructure
-│   ├── data-access/        # External system clients
-│   │   └── core/           # Core microservice (SDK + repository)
-│   └── workflows/          # Temporal infrastructure (client, worker, registry)
-├── scripts/                # CLI scripts
-└── server.ts               # Fastify server entry point
-
-tests/
-├── factories/              # Test data factories
-├── setup/                  # Test environment setup
-└── smoke/                  # Smoke tests
+apps/backend/
+├── src/
+│   ├── lib/                    # Core utilities (env.ts, logger.ts, http.ts)
+│   ├── config/                 # Derived configurations (database.ts, server.ts)
+│   ├── db/                     # Database layer
+│   │   ├── schema.ts           # Drizzle schema (single source of truth)
+│   │   ├── connection.ts       # Database connection factory
+│   │   └── migrations/         # SQL migration files
+│   ├── infra/                  # Infrastructure/operational endpoints
+│   │   ├── auth/               # Bearer token authentication plugin
+│   │   └── health/             # Health check routes (/healthz, /ready)
+│   ├── modules/                # Domain-driven feature modules
+│   │   ├── orders/             # Order management (CRUD, status tracking)
+│   │   └── payment-webhooks/   # Stripe webhook processing (Temporal workflows)
+│   ├── shared/                 # Cross-module infrastructure
+│   │   ├── data-access/        # External system clients
+│   │   │   └── core/           # Core microservice (SDK + repository)
+│   │   └── workflows/          # Temporal infrastructure (client, worker, registry)
+│   ├── scripts/                # CLI scripts
+│   └── server.ts               # Fastify server entry point
+└── tests/
+    ├── factories/              # Test data factories
+    ├── setup/                  # Test environment setup
+    └── smoke/                  # Smoke tests
 ```
 
 ## Architecture Layers
 
-### Modules (`src/modules/`)
+### Modules (`apps/backend/src/modules/`)
 
 Self-contained domain features. Each module may contain:
 
@@ -57,13 +57,13 @@ Self-contained domain features. Each module may contain:
 - Tests: Colocated (`service.ts` + `service.test.ts`)
 - Dependencies: Import other modules via their `index.ts`
 
-### Shared (`src/shared/`)
+### Shared (`apps/backend/src/shared/`)
 
 Cross-module infrastructure:
 - **data-access/**: External system clients grouped by system (core)
 - **workflows/**: Temporal client factory, worker setup, workflow registry
 
-### Infrastructure (`src/infra/`)
+### Infrastructure (`apps/backend/src/infra/`)
 
 Operational endpoints (health checks, metrics) separate from business logic.
 
@@ -71,7 +71,7 @@ Operational endpoints (health checks, metrics) separate from business logic.
 
 ### Schema
 
-All tables defined in `src/db/schema.ts`. See actual file for current schema.
+All tables defined in `apps/backend/src/db/schema.ts`. See actual file for current schema.
 
 ### Timestamps
 
@@ -87,7 +87,7 @@ PostgreSQL stores in UTC, converts on retrieval.
 
 - Generate: `pnpm db:generate`
 - Apply: `pnpm db:migrate`
-- Files: `src/db/migrations/`
+- Files: `apps/backend/src/db/migrations/`
 
 ## API Conventions
 
@@ -102,7 +102,7 @@ API contracts defined via ts-rest in `api/*.contracts.ts`. OpenAPI generated aut
 
 ## Environment
 
-Single source of truth: `src/lib/env.ts` (uses @t3-oss/env-core + Zod).
+Single source of truth: `apps/backend/src/lib/env.ts` (uses @t3-oss/env-core + Zod).
 
 Template: `.env.example`
 

@@ -179,7 +179,7 @@ describe('FeatureName', () => {
 | **Test app** | `await buildTestApp()` | Fastify instance without logging |
 | **DB factory** | `await createTestGlobalContact()` | Inserts to DB, returns record with ID |
 | **Data factory** | `buildTestGlobalContactData()` | Plain object for payloads (no DB hit) |
-| **External API mock** | Add to `src/mocks/handlers.ts` | MSW auto-started, reset after each test |
+| **External API mock** | Add to `apps/backend/src/mocks/handlers.ts` | MSW auto-started, reset after each test |
 | **One-off mock** | `server.use(http.get(...))` in test | Override or add mock for single test |
 | **Database** | Use real PostgreSQL test DB | Route tests = integration tests |
 
@@ -189,10 +189,10 @@ describe('FeatureName', () => {
 |--------------|-------------|--------|-----|
 | Test a route | `createTest*()` factory | `buildTest*Data()` | Routes need real DB records with IDs |
 | Test validation | `buildTest*Data()` | `createTest*()` | Faster, validation doesn't need DB |
-| Mock external API | Add to `src/mocks/handlers.ts` | Mock in test | Reused across many tests |
+| Mock external API | Add to `apps/backend/src/mocks/handlers.ts` | Mock in test | Reused across many tests |
 | Mock once | `server.use(...)` in test | Edit handlers.ts | Test-specific scenario |
 
-**Example**: `src/modules/contacts/api/contacts.routes.test.ts`
+**Example**: `apps/backend/src/modules/contacts/api/contacts.routes.test.ts`
 
 ---
 
@@ -200,7 +200,7 @@ describe('FeatureName', () => {
 
 ### Setup Pattern
 
-Standard structure for all route tests (see `src/modules/contacts/api/contacts.routes.test.ts`):
+Standard structure for all route tests (see `apps/backend/src/modules/contacts/api/contacts.routes.test.ts`):
 
 ```typescript
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

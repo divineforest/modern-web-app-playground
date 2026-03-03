@@ -17,11 +17,12 @@ files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 [ -n "$files" ] && pnpm biome format --write --no-errors-on-unmatched --files-ignore-unknown=true $files
 git update-index --again
 
-# ESLint check for staged TypeScript files
+# ESLint check for staged TypeScript files (backend package)
 echo "Checking ESLint..."
-ts_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' || true)
+ts_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^apps/backend/.*\.(ts|tsx)$' || true)
 if [ -n "$ts_files" ]; then
-  echo "$ts_files" | xargs pnpm eslint || {
+  backend_ts_files=$(printf '%s\n' "$ts_files" | sed 's|^apps/backend/||')
+  printf '%s\n' "$backend_ts_files" | xargs pnpm --filter @mercado/backend exec eslint || {
     echo "❌ ESLint check failed. Fix the errors or run 'pnpm lint:eslint:fix' to auto-fix."
     exit 1
   }

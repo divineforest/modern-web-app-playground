@@ -108,7 +108,7 @@ This feature provides CRUD operations for managing the product catalog. Products
 
 ### TR-2: Module Organization
 
-- The system SHALL place all products code in `src/modules/products/`
+- The system SHALL place all products code in `apps/backend/src/modules/products/`
 - The system SHALL colocate tests with source files
 
 ### TR-3: API Endpoints

@@ -1,13 +1,13 @@
 ---
 description: Shared layer must be domain-agnostic
 globs:
-  - "src/shared/**"
+  - "apps/backend/src/shared/**"
 alwaysApply: false
 ---
 
 # Shared Layer Rules
 
-Code in `src/shared/` must be **domain-agnostic** and reusable across modules.
+Code in `apps/backend/src/shared/` must be **domain-agnostic** and reusable across modules.
 
 ## What belongs here
 
@@ -23,7 +23,7 @@ Code in `src/shared/` must be **domain-agnostic** and reusable across modules.
 
 ## Rule of thumb
 
-If your method name contains a domain term, it belongs in `src/modules/<domain>/`.
+If your method name contains a domain term, it belongs in `apps/backend/src/modules/<domain>/`.
 
 Examples:
 - `uploadJson(key, payload)` → shared ✓

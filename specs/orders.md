@@ -103,7 +103,7 @@ This feature provides basic CRUD operations for managing orders. The feature is 
 
 ### TR-2: Module Organization
 
-- The system SHALL place all orders code in `src/modules/orders/`
+- The system SHALL place all orders code in `apps/backend/src/modules/orders/`
 - The system SHALL colocate tests with source files
 
 ### TR-3: API Endpoints

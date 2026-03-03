@@ -533,7 +533,7 @@ const response2 = await fastify.inject({
 ### File Organization
 
 ```
-src/
+apps/backend/src/
 ├── infra/
 │   └── auth/
 │       ├── auth.plugin.ts                  # Authentication Fastify plugin
@@ -550,7 +550,7 @@ src/
 ### Integration Points
 
 - **Fastify**: Use plugin encapsulation to separate protected and unprotected routes
-- **Environment**: Add API_BEARER_TOKENS configuration to `src/lib/env.ts`
+- **Environment**: Add API_BEARER_TOKENS configuration to `apps/backend/src/lib/env.ts`
 - **Types**: Extend Fastify request types with authentication context
 - **Logging**: Include user email in all structured logs when provided
 - **Routes**: Infrastructure routes registered before plugin, business routes within plugin scope

@@ -2,7 +2,7 @@
 description: Database migration conventions
 globs:
   - "*.sql"
-  - "src/db/migrations/*.sql"
+  - "apps/backend/src/db/migrations/*.sql"
 alwaysApply: false
 ---
 

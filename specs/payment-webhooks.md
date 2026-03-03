@@ -71,7 +71,7 @@ This feature handles incoming payment provider webhook events to automatically m
 
 ### TR-1: Module Organization
 
-- The system SHALL place all payment webhook code in `src/modules/payment-webhooks/`
+- The system SHALL place all payment webhook code in `apps/backend/src/modules/payment-webhooks/`
 - The system SHALL colocate tests with source files
 
 ### TR-2: Configuration

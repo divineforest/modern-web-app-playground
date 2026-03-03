@@ -148,7 +148,7 @@ Include diagrams, schema changes, dependencies, configuration, and error handlin
 - ❌ "The system SHALL use Zod for validation"
 - ❌ "The system SHALL use Drizzle ORM for database operations"
 - ❌ "The system SHALL follow modular architecture"
-- ❌ Implementation file paths: `Implementation: src/modules/foo/bar.ts`
+- ❌ Implementation file paths: `Implementation: apps/backend/src/modules/foo/bar.ts`
 - ❌ Function/class names: `(archiveInboundEmailPayload)`
 
 **Why no implementation references?** Specs define requirements, not code locations. Implementation paths create maintenance burden (specs become stale when code moves) and blur the line between "what to build" and "what was built." Let the code be discoverable through search and architecture docs.

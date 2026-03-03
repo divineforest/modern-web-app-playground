@@ -1,18 +1,19 @@
 ---
 description: Infrastructure changes require smoke test verification
 globs:
-  - src/lib/env.ts
-  - src/config/**
-  - src/db/connection.ts
-  - src/db/schema.ts
-  - src/server.ts
-  - src/app.ts
-  - src/infra/**
+  - apps/backend/src/lib/env.ts
+  - apps/backend/src/config/**
+  - apps/backend/src/db/connection.ts
+  - apps/backend/src/db/schema.ts
+  - apps/backend/src/server.ts
+  - apps/backend/src/app.ts
+  - apps/backend/src/infra/**
+  - apps/backend/package.json
   - package.json
   - docker-compose.yml
-  - drizzle.config.ts
+  - apps/backend/drizzle.config.ts
   - render.yaml
-  - tsconfig.json
+  - apps/backend/tsconfig.json
   - .github/workflows/**
 alwaysApply: false
 ---
@@ -41,13 +42,13 @@ Files that affect server startup, configuration, or connectivity:
 
 | Category | Files |
 |----------|-------|
-| **Environment** | `src/lib/env.ts` |
-| **Server Config** | `src/config/**`, `src/server.ts`, `src/app.ts` |
-| **Database** | `src/db/connection.ts`, `src/db/schema.ts`, `drizzle.config.ts` |
-| **Infrastructure** | `src/infra/**` |
-| **Dependencies** | `package.json` |
+| **Environment** | `apps/backend/src/lib/env.ts` |
+| **Server Config** | `apps/backend/src/config/**`, `apps/backend/src/server.ts`, `apps/backend/src/app.ts` |
+| **Database** | `apps/backend/src/db/connection.ts`, `apps/backend/src/db/schema.ts`, `apps/backend/drizzle.config.ts` |
+| **Infrastructure** | `apps/backend/src/infra/**` |
+| **Dependencies** | `apps/backend/package.json`, root `package.json` |
 | **Deployment** | `docker-compose.yml`, `render.yaml`, `.github/workflows/**` |
-| **TypeScript** | `tsconfig.json` |
+| **TypeScript** | `apps/backend/tsconfig.json` |
 
 ## CI Integration
 

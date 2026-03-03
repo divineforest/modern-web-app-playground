@@ -2,6 +2,14 @@
 
 Backend e-commerce system (Mercado). Integrates with Core microservice.
 
+## Monorepo Structure
+
+This project uses a **pnpm workspace monorepo**:
+- Backend application: `apps/backend/` (package name: `@mercado/backend`)
+- Workspace root: manages shared tooling (biome, cspell, husky) and delegates backend commands via `--filter`
+- All backend code, tests, and configs live in `apps/backend/`
+- Run commands from root: `pnpm <command>` automatically targets the backend package
+
 ## Project Stack
 
 Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest.
@@ -13,7 +21,7 @@ Prefer sensible defaults over explicit configuration. Don't ask for or require v
 - **Local URLs**: Use `http://localhost:3000` for the web server unless told otherwise
 - **Database**: Assume standard local dev connection (see docker-compose or .env.example)
 - **Test environments**: Smoke tests run against local dev server by default
-- **File paths**: Use project-standard locations (e.g., `src/`, `tests/`, `scripts/`)
+- **File paths**: Use project-standard locations (e.g., `apps/backend/src/`, `apps/backend/tests/`, `scripts/`)
 
 When in doubt, use the most common/standard value and proceed. Only ask when the default genuinely won't work.
 
@@ -55,7 +63,7 @@ Use a two-phase approach to avoid timeouts on large codebases:
 - Run TypeScript check on changed files only: `npx tsc --noEmit path/to/file1.ts path/to/file2.ts`
 - Include direct importers of modified files
 - This catches 95% of issues in <5 seconds
-- Example: If you modified `src/modules/foo/bar.ts`, also check `src/modules/foo/index.ts` and any files that import from it
+- Example: If you modified `apps/backend/src/modules/foo/bar.ts`, also check `apps/backend/src/modules/foo/index.ts` and any files that import from it
 
 **Phase 2: Run full project checks**
 - Only after Phase 1 passes, run full checks:

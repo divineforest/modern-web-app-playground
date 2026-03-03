@@ -1,8 +1,8 @@
 ---
 description: Drizzle ORM migration conventions
 globs:
-  - src/db/migrations/**
-  - src/db/schema*.ts
+  - apps/backend/src/db/migrations/**
+  - apps/backend/src/db/schema*.ts
 ---
 
 # Drizzle Migration Rules
@@ -13,15 +13,15 @@ globs:
 
 The following files must ONLY be modified via `drizzle-kit` commands:
 
-- `src/db/migrations/*.sql` - Migration SQL files
-- `src/db/migrations/meta/_journal.json` - Migration journal
-- `src/db/migrations/meta/*_snapshot.json` - Schema snapshots
+- `apps/backend/src/db/migrations/*.sql` - Migration SQL files
+- `apps/backend/src/db/migrations/meta/_journal.json` - Migration journal
+- `apps/backend/src/db/migrations/meta/*_snapshot.json` - Schema snapshots
 
 ## Correct workflow for schema changes
 
-1. **Modify the schema** in `src/db/schema-local.ts` (for tables managed by this service)
+1. **Modify the schema** in `apps/backend/src/db/schema-local.ts` (for tables managed by this service)
 2. **Generate migration** using `pnpm db:generate`
-3. **Review** the generated SQL in `src/db/migrations/`
+3. **Review** the generated SQL in `apps/backend/src/db/migrations/`
 4. **Apply migration** using `pnpm db:migrate` (dev) or `pnpm db:migrate:test` (test)
 
 ## Available commands

@@ -30,16 +30,16 @@ jobs:
       - name: Lint
         run: |
           pnpm run lint:biome
-          pnpm run lint:eslint
+          pnpm --filter @mercado/backend lint:eslint
 
       - name: Type check
-        run: pnpm run typecheck
+        run: pnpm --filter @mercado/backend typecheck
 
       - name: Type coverage
-        run: pnpm run type-coverage
+        run: pnpm --filter @mercado/backend type-coverage
 
       - name: Build
-        run: pnpm run build
+        run: pnpm --filter @mercado/backend build
 
       - name: Security audit
         run: pnpm audit --audit-level moderate
@@ -48,7 +48,7 @@ jobs:
         run: pnpm run spell
 
       - name: Dead code detection
-        run: pnpm run knip
+        run: pnpm --filter @mercado/backend knip
 
   secret-scanning:
     name: Secret Scanning
@@ -118,12 +118,12 @@ jobs:
           EOF
 
       - name: Run database migrations
-        run: pnpm db:migrate
+        run: pnpm --filter @mercado/backend db:migrate
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
 
       - name: Tests
-        run: pnpm run test:coverage
+        run: pnpm --filter @mercado/backend test:coverage
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
@@ -176,15 +176,15 @@ jobs:
           EOF
 
       - name: Run database migrations
-        run: pnpm db:migrate
+        run: pnpm --filter @mercado/backend db:migrate
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
 
       - name: Build application
-        run: pnpm run build
+        run: pnpm --filter @mercado/backend build
 
       - name: Run smoke test (built server)
-        run: pnpm run test:smoke:build
+        run: pnpm --filter @mercado/backend test:smoke:build
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
