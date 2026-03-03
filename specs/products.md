@@ -70,7 +70,8 @@ This feature provides CRUD operations for managing the product catalog. Products
 - Each product card SHALL display: name, price, image, and short description
 - If a product has no imageUrl, the card SHALL display a generic placeholder image from `apps/web/src/assets/no-photo.svg`
 - If a product has a compareAtPrice, the card SHALL display it as a crossed-out original price next to the current price
-- Products SHALL be displayed in a responsive grid layout that adapts to screen size
+- Products SHALL be displayed in a responsive grid of equal-size cards (equal width and height)
+- Product name and short description SHALL be truncated with ellipsis if they exceed available space
 - While products are loading, the page SHALL display a loading indicator
 - If no active products exist, the page SHALL display an empty state message
 

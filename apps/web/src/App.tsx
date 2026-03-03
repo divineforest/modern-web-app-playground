@@ -6,7 +6,6 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 
@@ -83,47 +82,83 @@ function App() {
           No products available at the moment.
         </Typography>
       ) : (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+              lg: 'repeat(4, 1fr)',
+            },
+            gap: 3,
+          }}
+        >
           {products.map((product) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={product.imageUrl ?? noPhoto}
-                  alt={product.name}
-                  sx={{ objectFit: product.imageUrl ? 'cover' : 'none', bgcolor: '#F3F4F6' }}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" component="h2" gutterBottom>
-                    {product.name}
-                  </Typography>
+            <Card key={product.id} sx={{ display: 'flex', flexDirection: 'column', height: 360 }}>
+              <CardMedia
+                component="img"
+                image={product.imageUrl ?? noPhoto}
+                alt={product.name}
+                sx={{
+                  height: 200,
+                  flexShrink: 0,
+                  objectFit: product.imageUrl ? 'cover' : 'none',
+                  bgcolor: '#F3F4F6',
+                }}
+              />
+              <CardContent
+                sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+              >
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  sx={{
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    lineHeight: 1.3,
+                    mb: 0.5,
+                  }}
+                >
+                  {product.name}
+                </Typography>
 
-                  {product.shortDescription && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {product.shortDescription}
+                {product.shortDescription && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      mb: 1,
+                    }}
+                  >
+                    {product.shortDescription}
+                  </Typography>
+                )}
+
+                <Box sx={{ mt: 'auto' }}>
+                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    {formatPrice(product.price, product.currency)}
+                  </Typography>
+                  {product.compareAtPrice && (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ textDecoration: 'line-through' }}
+                    >
+                      {formatPrice(product.compareAtPrice, product.currency)}
                     </Typography>
                   )}
-
-                  <Box sx={{ mt: 'auto' }}>
-                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                      {formatPrice(product.price, product.currency)}
-                    </Typography>
-                    {product.compareAtPrice && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ textDecoration: 'line-through' }}
-                      >
-                        {formatPrice(product.compareAtPrice, product.currency)}
-                      </Typography>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       )}
     </Container>
   );
