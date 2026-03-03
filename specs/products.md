@@ -17,7 +17,7 @@ This feature provides CRUD operations for managing the product catalog. Products
 
 - Inventory management (stock tracking, warehouses, stock movements)
 - Product variants (e.g. size, color) — future enhancement
-- Media/image management
+- Full media/image management (galleries, multiple images per product)
 - Product bundles or kits
 - Product reviews and ratings
 - Search with full-text or faceted filtering
@@ -67,7 +67,7 @@ This feature provides CRUD operations for managing the product catalog. Products
 ### FR-6: Product Catalog (Home Page)
 
 - The home page SHALL fetch and display all products with status "active"
-- Each product card SHALL display: name, price, and short description
+- Each product card SHALL display: name, price, image (if available), and short description
 - If a product has a compareAtPrice, the card SHALL display it as a crossed-out original price next to the current price
 - Products SHALL be displayed in a responsive grid layout that adapts to screen size
 - While products are loading, the page SHALL display a loading indicator
@@ -90,6 +90,7 @@ This feature provides CRUD operations for managing the product catalog. Products
   shortDescription: string | null; // Brief summary for listings
   category: string | null; // Product category (free-text)
   tags: string[] | null; // Tags for organization/filtering
+  imageUrl: string | null; // URL to the product image
   currency: string; // ISO 4217 currency code (required)
   price: number; // Selling price (decimal, 2 places, required)
   compareAtPrice: number | null; // Original/list price for showing discounts (decimal, 2 places)
@@ -148,6 +149,7 @@ CREATE TABLE products (
   short_description TEXT,
   category TEXT,
   tags JSONB,
+  image_url TEXT,
   currency VARCHAR(3) NOT NULL,
   price NUMERIC(15,2) NOT NULL,
   compare_at_price NUMERIC(15,2),
@@ -187,6 +189,7 @@ POST /api/products
   "shortDescription": "ANC wireless headphones",
   "category": "Electronics",
   "tags": ["audio", "wireless", "headphones"],
+  "imageUrl": "https://example.com/images/wbh-pro-100.jpg",
   "currency": "EUR",
   "price": 149.99,
   "compareAtPrice": 199.99,
@@ -271,7 +274,7 @@ GET /api/products
 ## Future Enhancements
 
 - 🚧 Product variants (size, color, material)
-- 🚧 Media/image attachments
+- 🚧 Multiple images per product (gallery)
 - 🚧 Pagination for list endpoint
 - 🚧 Additional filters (price range, tags)
 - 🚧 Full-text search

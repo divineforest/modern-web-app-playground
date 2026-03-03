@@ -141,6 +141,7 @@ export const products = pgTable(
     shortDescription: text('short_description'),
     category: text('category'),
     tags: jsonb('tags').$type<string[] | null>(),
+    imageUrl: text('image_url'),
     currency: varchar('currency', { length: 3 }).notNull(),
     price: numeric('price', { precision: 15, scale: 2 }).notNull(),
     compareAtPrice: numeric('compare_at_price', { precision: 15, scale: 2 }),

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
@@ -12,6 +13,7 @@ interface Product {
   id: string;
   name: string;
   shortDescription: string | null;
+  imageUrl: string | null;
   price: string;
   compareAtPrice: string | null;
   currency: string;
@@ -84,6 +86,15 @@ function App() {
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {product.imageUrl && (
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={product.imageUrl}
+                    alt={product.name}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                )}
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" component="h2" gutterBottom>
                     {product.name}

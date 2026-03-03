@@ -19,6 +19,7 @@ const productResponseSchema = z.object({
   shortDescription: z.string().nullable(),
   category: z.string().nullable(),
   tags: z.array(z.string()).nullable(),
+  imageUrl: z.string().nullable(),
   currency: z.string(),
   price: z.string(),
   compareAtPrice: z.string().nullable(),
