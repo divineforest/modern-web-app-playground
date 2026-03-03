@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import noPhoto from './assets/no-photo.svg';
+import noPhoto from '../assets/no-photo.svg';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -29,7 +29,7 @@ interface PaginationMeta {
   totalPages: number;
 }
 
-function App() {
+export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
@@ -93,10 +93,6 @@ function App() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom sx={{ mb: 4 }}>
-        Mercado
-      </Typography>
-
       {products.length === 0 ? (
         <Typography variant="body1" color="text.secondary">
           No products available at the moment.
@@ -205,5 +201,3 @@ function App() {
     </Container>
   );
 }
-
-export default App;

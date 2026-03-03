@@ -2,8 +2,9 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { RouterProvider } from 'react-router-dom';
 import './index.css';
-import App from './App.tsx';
+import { router } from './router';
 import { theme } from './theme';
 
 const rootElement = document.getElementById('root');
@@ -15,7 +16,7 @@ createRoot(rootElement).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <RouterProvider router={router} />
     </ThemeProvider>
   </StrictMode>
 );
