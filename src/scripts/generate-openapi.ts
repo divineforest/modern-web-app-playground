@@ -36,9 +36,9 @@ type ContractName = keyof typeof AVAILABLE_CONTRACTS;
  * API metadata configuration
  */
 const API_INFO = {
-  title: 'EasyBiz Backend Accounting API',
+  title: 'Mercado E-commerce API',
   description: `
-REST API for the EasyBiz Backend Accounting System.
+REST API for the Mercado E-commerce System.
 
 ## Authentication
 
@@ -68,12 +68,12 @@ API requests are rate-limited to 100 requests per minute per client.
 `.trim(),
   version: '1.0.0',
   contact: {
-    name: 'EasyBiz API Support',
-    email: 'api-support@easybiz.io',
+    name: 'Mercado API Support',
+    email: 'api-support@mercado.io',
   },
   license: {
     name: 'Proprietary',
-    url: 'https://easybiz.io/terms',
+    url: 'https://mercado.io/terms',
   },
 };
 
@@ -82,7 +82,7 @@ API requests are rate-limited to 100 requests per minute per client.
  */
 const SERVERS = [
   {
-    url: 'https://api.easybiz.io',
+    url: 'https://api.mercado.io',
     description: 'Production server',
   },
   {

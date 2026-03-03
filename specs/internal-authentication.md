@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature provides simple API token-based authentication for internal APIs, enabling secure service-to-service communication within the EasyBiz microservices ecosystem. The authentication system validates API tokens passed in request headers, optionally extracts user identity information (email) from custom headers, and makes it available to downstream business logic. This ensures that only authorized services can access internal endpoints while maintaining full traceability of which user initiated each request.
+This feature provides simple API token-based authentication for internal APIs, enabling secure service-to-service communication within the Mercado microservices ecosystem. The authentication system validates API tokens passed in request headers, optionally extracts user identity information (email) from custom headers, and makes it available to downstream business logic. This ensures that only authorized services can access internal endpoints while maintaining full traceability of which user initiated each request.
 
 The system is designed for internal service-to-service communication where each calling service is provisioned with an API token (stored in environment variables or secret management). User context can be passed via additional headers when requests are made on behalf of specific users. This approach maintains security boundaries while enabling seamless integration between microservices with minimal overhead.
 

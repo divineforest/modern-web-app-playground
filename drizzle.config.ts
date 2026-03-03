@@ -8,10 +8,10 @@ config();
 const getDefaultDatabaseUrl = () => {
   const nodeEnv = process.env.NODE_ENV;
   if (nodeEnv === 'test') {
-    return 'postgresql://user:password@localhost:5432/accounting_test';
+    return 'postgresql://user:password@localhost:5432/mercado_test';
   }
   if (!nodeEnv || nodeEnv === 'development') {
-    return 'postgresql://user:password@localhost:5432/accounting_dev';
+    return 'postgresql://user:password@localhost:5432/mercado_dev';
   }
   return ''; // Production/staging requires explicit DATABASE_URL
 };

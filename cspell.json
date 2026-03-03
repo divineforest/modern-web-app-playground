@@ -3,7 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
-    "easybiz",
+    "mercado",
     "pnpm",
     "corepack",
     "vitest",
@@ -93,7 +93,10 @@
     "sarl",
     "localstack",
     "awslocal",
-    "reavers"
+    "reavers",
+    "awscli",
+    "whsec",
+    "odoo"
   ],
   "ignorePaths": [
     "node_modules/**",

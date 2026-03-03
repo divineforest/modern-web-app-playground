@@ -1,4 +1,4 @@
-const DEFAULT_TEST_DATABASE_URL = 'postgresql://user:password@localhost:5432/accounting_test';
+const DEFAULT_TEST_DATABASE_URL = 'postgresql://user:password@localhost:5432/mercado_test';
 
 // Ensure the test runner always uses the dedicated test database connection.
 // Priority: DATABASE_URL > default

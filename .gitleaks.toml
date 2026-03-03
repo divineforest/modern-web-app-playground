@@ -7,15 +7,15 @@ useDefault = true
 
 # Additional custom rules for this project
 [[rules]]
-id = "easybiz-api-key"
-description = "EasyBiz API Key"
-regex = '''(?i)easybiz[_-]?api[_-]?key[_-]?[:=]\s*['""]?([a-zA-Z0-9]{32,})['""]?'''
+id = "mercado-api-key"
+description = "Mercado API Key"
+regex = '''(?i)mercado[_-]?api[_-]?key[_-]?[:=]\s*['""]?([a-zA-Z0-9]{32,})['""]?'''
 secretGroup = 1
 
 [[rules]]
-id = "accounting-secret"
-description = "Accounting system secret"
-regex = '''(?i)accounting[_-]?secret[_-]?[:=]\s*['""]?([a-zA-Z0-9]{16,})['""]?'''
+id = "mercado-secret"
+description = "Mercado system secret"
+regex = '''(?i)mercado[_-]?secret[_-]?[:=]\s*['""]?([a-zA-Z0-9]{16,})['""]?'''
 secretGroup = 1
 
 [[rules]]

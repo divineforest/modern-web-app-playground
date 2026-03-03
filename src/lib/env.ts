@@ -35,7 +35,7 @@ export const env = createEnv({
     // Dev: Uses local PostgreSQL. Production: REQUIRED
     DATABASE_URL: devDefault(
       z.string().url().min(1),
-      'postgresql://user:password@localhost:5432/accounting_dev'
+      'postgresql://user:password@localhost:5432/mercado_dev'
     ),
 
     PORT: z.coerce.number().positive().default(3000),

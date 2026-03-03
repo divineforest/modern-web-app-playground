@@ -1,8 +1,8 @@
 services:
   - type: web
-    name: accounting-api-staging
+    name: mercado-api-staging
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: staging
@@ -14,9 +14,9 @@ services:
     autoDeployTrigger: "commit"
 
   - type: worker
-    name: accounting-worker-staging
+    name: mercado-worker-staging
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: staging
@@ -26,9 +26,9 @@ services:
     autoDeployTrigger: "commit"
 
   - type: cron
-    name: accounting-job-generation-daily-staging
+    name: mercado-job-generation-daily-staging
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: staging
@@ -39,9 +39,9 @@ services:
     schedule: "0 2 * * *" # Runs daily at 2:00 AM UTC
 
   - type: web
-    name: accounting-api-prod
+    name: mercado-api-prod
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: prod
@@ -53,9 +53,9 @@ services:
     autoDeployTrigger: "off"
 
   - type: worker
-    name: accounting-worker-prod
+    name: mercado-worker-prod
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: prod
@@ -65,9 +65,9 @@ services:
     autoDeployTrigger: "off"
 
   - type: cron
-    name: accounting-job-generation-daily-prod
+    name: mercado-job-generation-daily-prod
     runtime: node
-    repo: https://github.com/EasyBizIO/backend-accounting
+    repo: https://github.com/mercado/mercado
     plan: starter
     envVars:
       - fromGroup: prod

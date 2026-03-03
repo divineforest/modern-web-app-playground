@@ -82,9 +82,7 @@
         "companies_billing_inbound_token_unique": {
           "name": "companies_billing_inbound_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "billing_inbound_token"
-          ]
+          "columns": ["billing_inbound_token"]
         }
       },
       "policies": {},
@@ -273,12 +271,8 @@
           "name": "invoices_company_id_companies_id_fk",
           "tableFrom": "invoices",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -541,9 +535,7 @@
         "service_types_code_unique": {
           "name": "service_types_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -686,9 +678,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},

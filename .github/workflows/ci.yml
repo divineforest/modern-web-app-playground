@@ -80,7 +80,7 @@ jobs:
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: accounting_test
+          POSTGRES_DB: mercado_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -112,7 +112,7 @@ jobs:
           sudo apt-get install -y postgresql-client
 
           # Create required PostgreSQL extensions
-          PGPASSWORD=password psql -h localhost -U user -d accounting_test << 'EOF'
+          PGPASSWORD=password psql -h localhost -U user -d mercado_test << 'EOF'
           CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
           CREATE EXTENSION IF NOT EXISTS "pg_trgm";
           EOF
@@ -120,13 +120,13 @@ jobs:
       - name: Run database migrations
         run: pnpm db:migrate
         env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
 
       - name: Tests
         run: pnpm run test:coverage
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
 
   smoke-test:
     name: Smoke Test
@@ -139,7 +139,7 @@ jobs:
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: accounting_test
+          POSTGRES_DB: mercado_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -170,7 +170,7 @@ jobs:
       - name: Setup database extensions
         run: |
           sudo apt-get install -y postgresql-client
-          PGPASSWORD=password psql -h localhost -U user -d accounting_test << 'EOF'
+          PGPASSWORD=password psql -h localhost -U user -d mercado_test << 'EOF'
           CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
           CREATE EXTENSION IF NOT EXISTS "pg_trgm";
           EOF
@@ -178,7 +178,7 @@ jobs:
       - name: Run database migrations
         run: pnpm db:migrate
         env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
 
       - name: Build application
         run: pnpm run build
@@ -187,7 +187,7 @@ jobs:
         run: pnpm run test:smoke:build
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://user:password@localhost:5432/accounting_test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
           PORT: 3000
           HOST: localhost
           LOG_LEVEL: error

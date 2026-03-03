@@ -15,7 +15,7 @@ export default defineConfig({
     // Smoke test environment - real server, not mocks
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'postgresql://user:password@localhost:5432/accounting_test',
+      DATABASE_URL: 'postgresql://user:password@localhost:5432/mercado_test',
       LOG_LEVEL: 'error', // Reduce log noise in smoke tests
       PORT: process.env['SMOKE_PORT'] || '3001', // Use different port to avoid conflicts
       HOST: 'localhost',

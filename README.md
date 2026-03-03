@@ -1,6 +1,6 @@
-# Backend Accounting System
+# Mercado
 
-NodeJS backend accounting system for EasyBiz with TypeScript, Docker, and PostgreSQL.
+NodeJS backend e-commerce system with TypeScript, Docker, and PostgreSQL.
 
 ## ✨ AI Assistant Setup Prompt
 
@@ -42,7 +42,7 @@ This project uses centralized version management:
 docker-compose up -d
 
 # Services:
-# - PostgreSQL: accounting_dev (development), accounting_test (testing)
+# - PostgreSQL: mercado_dev (development), mercado_test (testing)
 # - LocalStack: S3 emulation at http://localhost:4566
 # Credentials: see POSTGRES_USER/POSTGRES_PASSWORD in docker-compose.yml
 ```
@@ -72,7 +72,7 @@ corepack enable
 pnpm install
 
 # Set DATABASE_URL (use credentials from docker-compose.yml: POSTGRES_USER/POSTGRES_PASSWORD)
-export DATABASE_URL="postgresql://<user>:<password>@localhost:5432/accounting_dev"
+export DATABASE_URL="postgresql://<user>:<password>@localhost:5432/mercado_dev"
 
 # Test LocalStack S3 connectivity
 pnpm test:s3

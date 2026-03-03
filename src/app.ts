@@ -55,8 +55,8 @@ export async function buildApp() {
     openapi: {
       openapi: '3.0.0',
       info: {
-        title: 'Backend Accounting API',
-        description: 'EasyBiz Backend Accounting System API',
+        title: 'Mercado E-commerce API',
+        description: 'Mercado E-commerce System API',
         version: '1.0.0',
       },
       servers: [

@@ -9,7 +9,7 @@ export default defineConfig({
     exclude: ['node_modules', 'dist', 'build'],
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'postgresql://user:password@localhost:5432/accounting_test',
+      DATABASE_URL: 'postgresql://user:password@localhost:5432/mercado_test',
       PORT: '3000',
       LOG_LEVEL: 'error', // Reduce log noise in tests
       CORE_API_URL: 'http://localhost:4000',

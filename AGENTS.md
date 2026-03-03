@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Backend accounting system for practice management. Integrates with Core microservice.
+Backend e-commerce system (Mercado). Integrates with Core microservice.
 
 ## Project Stack
 

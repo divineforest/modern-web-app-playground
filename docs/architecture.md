@@ -1,8 +1,8 @@
-# Backend Accounting System Architecture
+# Mercado Architecture
 
 ## Overview
 
-Backend accounting system for practice management. Integrates with Core microservice.
+Backend e-commerce system (Mercado). Integrates with Core microservice.
 
 **Stack**: Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal, ts-rest, Drizzle ORM, Vitest.
 
@@ -19,10 +19,11 @@ src/
 │   ├── connection.ts       # Database connection factory
 │   └── migrations/         # SQL migration files
 ├── infra/                  # Infrastructure/operational endpoints
+│   ├── auth/               # Bearer token authentication plugin
 │   └── health/             # Health check routes (/healthz, /ready)
 ├── modules/                # Domain-driven feature modules
-│   ├── contacts/           # Contact management
-│   └── contacts-sync/      # Contact synchronization
+│   ├── orders/             # Order management (CRUD, status tracking)
+│   └── payment-webhooks/   # Stripe webhook processing (Temporal workflows)
 ├── shared/                 # Cross-module infrastructure
 │   ├── data-access/        # External system clients
 │   │   └── core/           # Core microservice (SDK + repository)
@@ -52,7 +53,7 @@ Self-contained domain features. Each module may contain:
 | `index.ts` | Public exports |
 
 **Conventions**:
-- Naming: dashed-lowercase (`contacts-sync`, `payment-webhooks`)
+- Naming: dashed-lowercase (`orders`, `payment-webhooks`)
 - Tests: Colocated (`service.ts` + `service.test.ts`)
 - Dependencies: Import other modules via their `index.ts`
 

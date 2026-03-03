@@ -1,7 +1,7 @@
 {
-  "name": "backend-accounting",
+  "name": "mercado",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend e-commerce system built with Node.js, TypeScript, and PostgreSQL",
   "type": "module",
   "main": "dist/src/server.js",
   "scripts": {
