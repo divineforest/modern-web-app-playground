@@ -6,22 +6,24 @@ Backend e-commerce system (Mercado). Integrates with Core microservice.
 
 This project uses a **pnpm workspace monorepo**:
 - Backend application: `apps/backend/` (package name: `@mercado/backend`)
+- Web application: `apps/web/` (package name: `@mercado/web`)
 - Workspace root: manages shared tooling (biome, cspell, husky) and delegates backend commands via `--filter`
 - All backend code, tests, and configs live in `apps/backend/`
 - Run commands from root: `pnpm <command>` automatically targets the backend package
 
 ## Project Stack
 
-Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest.
+Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal workflows, ts-rest (type-safe APIs), Drizzle ORM, Vitest, Vite, React.
 
 ## Convention Over Configuration
 
 Prefer sensible defaults over explicit configuration. Don't ask for or require values that can be reasonably inferred:
 
-- **Local URLs**: Use `http://localhost:3000` for the web server unless told otherwise
+- **Local URLs**: Use `http://localhost:3000` for the backend server unless told otherwise
+- **Web dev server**: Use `http://localhost:5173` for the Vite dev server unless told otherwise
 - **Database**: Assume standard local dev connection (see docker-compose or .env.example)
 - **Test environments**: Smoke tests run against local dev server by default
-- **File paths**: Use project-standard locations (e.g., `apps/backend/src/`, `apps/backend/tests/`, `scripts/`)
+- **File paths**: Use project-standard locations (e.g., `apps/backend/src/`, `apps/web/src/`, `apps/backend/tests/`, `scripts/`)
 
 When in doubt, use the most common/standard value and proceed. Only ask when the default genuinely won't work.
 

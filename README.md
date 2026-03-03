@@ -1,8 +1,8 @@
 # Mercado
 
-NodeJS backend e-commerce system with TypeScript, Docker, and PostgreSQL.
+E-commerce system with Node.js backend and React frontend, using TypeScript, Docker, and PostgreSQL.
 
-**Monorepo Structure**: This project uses a pnpm workspace monorepo. The backend application lives in `apps/backend/`. Run commands from the root using `pnpm <command>` (which delegates to the backend package via `--filter @mercado/backend`).
+**Monorepo Structure**: This project uses a pnpm workspace monorepo. The backend application lives in `apps/backend/` and the web frontend in `apps/web/`. Run commands from the root using `pnpm <command>` (which delegates to workspace packages via `--filter`).
 
 ## ✨ AI Assistant Setup Prompt
 
@@ -12,6 +12,7 @@ _Use this README to set up the complete development and test environment. Execut
 
 - Node.js 22+ with TypeScript
 - Fastify web framework with ts-rest (type-safe APIs)
+- React with Vite (frontend)
 - PostgreSQL with Drizzle ORM
 - Temporal (workflow orchestration)
 - Docker & Docker Compose
@@ -109,6 +110,14 @@ pnpm temporal:hello-world  # Run example workflow
 ```bash
 pnpm start                 # Start Fastify server
 pnpm dev                   # Watch mode (with hot reload)
+```
+
+**Web Frontend**:
+
+```bash
+pnpm dev:web               # Vite dev server (http://localhost:5173)
+pnpm build:web             # Production build
+pnpm preview:web           # Preview production build
 ```
 
 ## Database
