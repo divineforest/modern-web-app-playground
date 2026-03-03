@@ -7,7 +7,8 @@ import type { NewOrder, Order } from '../../src/modules/orders/domain/order.enti
  */
 export function buildTestOrderData(overrides: Partial<NewOrder> = {}): NewOrder {
   const now = new Date();
-  const orderNumber = overrides.orderNumber || `ORD-${now.getTime()}`;
+  const orderNumber =
+    overrides.orderNumber || `ORD-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`;
 
   return {
     status: overrides.status || 'draft',
@@ -63,7 +64,7 @@ export async function createTestOrders(
 
   for (let index = 0; index < count; index++) {
     const orderData = buildTestOrderData({
-      orderNumber: `ORD-TEST-${Date.now()}-${index}`,
+      orderNumber: `ORD-TEST-${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${index}`,
       ...overrides,
     });
     const results = await database.insert(orders).values(orderData).returning();

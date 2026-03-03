@@ -23,7 +23,7 @@ describe('Mark Order Paid Activity', () => {
   });
 
   it('should mark order as paid when order exists', async () => {
-    const orderNumber = `ORD-${Date.now()}`;
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const order = await createTestOrder({ orderNumber, status: 'confirmed' }, db);
 
     const input: PaymentWebhookInput = {
@@ -55,7 +55,7 @@ describe('Mark Order Paid Activity', () => {
   });
 
   it('should skip processing if order already paid', async () => {
-    const orderNumber = `ORD-${Date.now()}`;
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const firstPaymentId = 'pi_test_first';
     const order = await createTestOrder(
       {
