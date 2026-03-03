@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature handles incoming payment provider webhook events to automatically mark orders as paid. The initial implementation supports Stripe. When a Stripe Checkout session completes with a successful payment, the system receives a webhook, verifies its authenticity using Stripe's signature mechanism, and updates the corresponding order. Events are processed reliably in the background to ensure no webhook delivery is lost.
+When a customer completes a Stripe Checkout payment, Stripe sends a webhook event to the system. The system verifies the event's authenticity, identifies the corresponding order, and marks it as paid — all processed reliably in the background so no webhook delivery is lost. The initial implementation supports Stripe only.
 
 ## Goals and Non-Goals
 
@@ -22,37 +22,42 @@ This feature handles incoming payment provider webhook events to automatically m
 - Payment reconciliation or reporting
 - Retry logic for failed payments (handled by Stripe)
 
-## Functional Requirements
+## Webhook Reception
 
-### FR-1: Receive Webhook
+Incoming webhooks are verified for authenticity before any processing:
 
-- The system SHALL expose a webhook endpoint at `POST /api/v2/webhooks/payments`
-- The system SHALL verify the Stripe signature using the `stripe-signature` header and the configured webhook secret
-- The system SHALL provide access to the raw request body, as Stripe signature verification requires it
-- The system SHALL reject requests with invalid or missing signatures (400)
-- The system SHALL return 200 immediately after queuing the event for background processing
-- The system SHALL return 500 on internal errors so Stripe retries the delivery
+- Stripe signs each webhook with the `stripe-signature` header
+- The system verifies this signature against the configured webhook secret, using the raw request body
+- Invalid or missing signatures are rejected immediately (400)
+- Valid webhooks return 200 right away, after queuing the event for background processing
+- Internal errors return 500 so Stripe retries the delivery
 
-### FR-2: Process Payment Event
+## Event Processing
 
-- The system SHALL handle `checkout.session.completed` events where `payment_status` is `paid`
-- The system SHALL extract the order reference from the Checkout Session's `client_reference_id` field
-- The system SHALL ignore events that don't match the handled type (return 200, no processing)
-- The system SHALL process qualifying events via a Temporal workflow for reliable execution and automatic retries
+Not all Stripe events trigger order updates:
 
-### FR-3: Update Order Status
+- Only `checkout.session.completed` events where `payment_status` is `paid` are processed
+- The order reference is extracted from the Checkout Session's `client_reference_id` field
+- Unhandled event types are acknowledged (200) but not processed
+- Qualifying events are processed via a Temporal workflow for reliable execution and automatic retries
 
-- The system SHALL look up the order by `orderNumber` matching the `client_reference_id`
-- The system SHALL update the order status to `paid`
-- The system SHALL record `paidAt` timestamp when marking as paid
-- The system SHALL store the Stripe Payment Intent ID in `paymentTransactionId`
-- The system SHALL skip processing if the order is already in `paid` status (idempotent)
-- The system SHALL log a warning and skip if no matching order is found
+## Order Update
 
-### FR-4: Idempotency
+When a qualifying payment event is processed:
 
-- The system SHALL use the Stripe event ID as the Temporal workflow ID to deduplicate webhook deliveries
-- The system SHALL handle duplicate webhook deliveries gracefully (no side effects on replay)
+- The order is looked up by `orderNumber` matching the `client_reference_id`
+- The order status is updated to `paid`
+- The `paidAt` timestamp is recorded
+- The Stripe Payment Intent ID is stored in `paymentTransactionId`
+- If the order is already `paid`, the update is skipped (idempotent)
+- If no matching order is found, a warning is logged and processing completes without error
+
+## Reliability and Idempotency
+
+Webhook deliveries can arrive more than once. The system handles this gracefully:
+
+- The Stripe event ID is used as the Temporal workflow ID, deduplicating repeated deliveries at the infrastructure level
+- Even without deduplication, the order update itself is idempotent — re-processing a paid order has no side effects
 
 ## Data Model
 
@@ -71,16 +76,14 @@ This feature handles incoming payment provider webhook events to automatically m
 
 ### TR-1: Module Organization
 
-- The system SHALL place all payment webhook code in `apps/backend/src/modules/payment-webhooks/`
-- The system SHALL colocate tests with source files
+- All payment webhook code lives in `apps/backend/src/modules/payment-webhooks/`
+- Tests are colocated with source files
 
 ### TR-2: Configuration
 
-- The system SHALL require `STRIPE_WEBHOOK_SECRET` environment variable
+- Requires `STRIPE_WEBHOOK_SECRET` environment variable
 
-## API Specification
-
-### Receive Payment Event
+### TR-3: API Endpoint
 
 ```
 POST /api/v2/webhooks/payments
@@ -120,7 +123,7 @@ POST /api/v2/webhooks/payments
 }
 ```
 
-## Error Handling
+### Error Handling
 
 | Scenario | Behavior |
 |---|---|
