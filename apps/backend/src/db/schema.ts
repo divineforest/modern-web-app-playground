@@ -5,6 +5,7 @@ import {
   date,
   index,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -117,3 +118,49 @@ export const orders = pgTable(
 
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
+
+// =============================================================================
+// Product Tables
+// =============================================================================
+
+/**
+ * Products table schema
+ * Stores product catalog for the e-commerce system
+ */
+export const products = pgTable(
+  'products',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    status: varchar('status', { length: 32 }).notNull().default('draft'),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    sku: text('sku').notNull(),
+    description: text('description'),
+    shortDescription: text('short_description'),
+    category: text('category'),
+    tags: jsonb('tags'),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    price: numeric('price', { precision: 15, scale: 2 }).notNull(),
+    compareAtPrice: numeric('compare_at_price', { precision: 15, scale: 2 }),
+    costPrice: numeric('cost_price', { precision: 15, scale: 2 }),
+    weight: numeric('weight', { precision: 15, scale: 2 }),
+    width: numeric('width', { precision: 15, scale: 2 }),
+    height: numeric('height', { precision: 15, scale: 2 }),
+    length: numeric('length', { precision: 15, scale: 2 }),
+  },
+  (table) => [
+    check(
+      'products_status_check',
+      sql`${table.status} IN ('draft', 'active', 'archived')`
+    ),
+    uniqueIndex('idx_products_sku').on(table.sku),
+    uniqueIndex('idx_products_slug').on(table.slug),
+    index('idx_products_status').on(table.status),
+    index('idx_products_category').on(table.category),
+  ]
+);
+
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;

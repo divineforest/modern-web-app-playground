@@ -53,6 +53,7 @@
     "db:studio": "pnpm --filter @mercado/backend db:studio",
     "db:introspect": "pnpm --filter @mercado/backend db:introspect",
     "db:check": "pnpm --filter @mercado/backend db:check",
+    "db:seed:products": "pnpm --filter @mercado/backend db:seed:products",
     "knip": "pnpm --filter @mercado/backend knip",
     "openapi:generate": "pnpm --filter @mercado/backend openapi:generate",
     "openapi:generate:lint": "pnpm --filter @mercado/backend openapi:generate:lint",

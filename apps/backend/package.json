@@ -40,6 +40,7 @@
     "db:studio": "drizzle-kit studio",
     "db:introspect": "drizzle-kit introspect",
     "db:check": "drizzle-kit check",
+    "db:seed:products": "tsx src/scripts/seed-products.ts",
     "knip": "knip",
     "openapi:generate": "tsx src/scripts/generate-openapi.ts",
     "openapi:generate:lint": "tsx src/scripts/generate-openapi.ts && sh -c \"redocly lint \\${npm_config_file:-generated/openapi/openapi.json}\"",

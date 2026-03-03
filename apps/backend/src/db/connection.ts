@@ -59,7 +59,7 @@ function createDrizzle(
   });
 }
 
-function createDatabaseContext(options: CreateDatabaseOptions = {}): DatabaseContext {
+export function createDatabaseContext(options: CreateDatabaseOptions = {}): DatabaseContext {
   const pool = resolvePool(options.pool);
   const ssl = options.ssl ?? databaseConfig.ssl;
   const url = options.url ?? getDatabaseUrl();
