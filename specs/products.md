@@ -11,6 +11,7 @@ This feature provides CRUD operations for managing the product catalog. Products
 - Provide CRUD operations for product management
 - Support product lifecycle through statuses (draft, active, archived)
 - Support pricing with compare-at price for sales/promotions
+- Display all available products on the home page
 
 ### Non-Goals
 
@@ -63,6 +64,15 @@ This feature provides CRUD operations for managing the product catalog. Products
   - category (exact match)
 - The system SHALL return products ordered by creation date (newest first)
 
+### FR-6: Product Catalog (Home Page)
+
+- The home page SHALL fetch and display all products with status "active"
+- Each product card SHALL display: name, price, and short description
+- If a product has a compareAtPrice, the card SHALL display it as a crossed-out original price next to the current price
+- Products SHALL be displayed in a responsive grid layout that adapts to screen size
+- While products are loading, the page SHALL display a loading indicator
+- If no active products exist, the page SHALL display an empty state message
+
 ## Data Model
 
 ### Product Entity
@@ -111,7 +121,12 @@ This feature provides CRUD operations for managing the product catalog. Products
 - The system SHALL place all products code in `apps/backend/src/modules/products/`
 - The system SHALL colocate tests with source files
 
-### TR-3: API Endpoints
+### TR-3: Web Application
+
+- The product catalog SHALL be implemented in `apps/web/`
+- The web app SHALL fetch products from the backend API
+
+### TR-4: API Endpoints
 
 - All endpoints SHALL be prefixed with `/api/products`
 - The system SHALL implement five operations: Create (POST), Read (GET), Update (PATCH), Delete (DELETE), List (GET)
