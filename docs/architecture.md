@@ -23,12 +23,10 @@ src/
 ├── modules/                # Domain-driven feature modules
 │   ├── contacts/           # Contact management
 │   ├── contacts-sync/      # Contact synchronization
-│   ├── inbound-email/      # Postmark webhook + Temporal workflows
 │   └── invoices/           # Invoice management
 ├── shared/                 # Cross-module infrastructure
 │   ├── data-access/        # External system clients
-│   │   ├── core/           # Core microservice (SDK + repository)
-│   │   └── s3/             # S3 storage client
+│   │   └── core/           # Core microservice (SDK + repository)
 │   └── workflows/          # Temporal infrastructure (client, worker, registry)
 ├── scripts/                # CLI scripts
 └── server.ts               # Fastify server entry point
@@ -55,14 +53,14 @@ Self-contained domain features. Each module may contain:
 | `index.ts` | Public exports |
 
 **Conventions**:
-- Naming: dashed-lowercase (`contacts-sync`, `inbound-email`)
+- Naming: dashed-lowercase (`contacts-sync`, `payment-webhooks`)
 - Tests: Colocated (`service.ts` + `service.test.ts`)
 - Dependencies: Import other modules via their `index.ts`
 
 ### Shared (`src/shared/`)
 
 Cross-module infrastructure:
-- **data-access/**: External system clients grouped by system (core, s3)
+- **data-access/**: External system clients grouped by system (core)
 - **workflows/**: Temporal client factory, worker setup, workflow registry
 
 ### Infrastructure (`src/infra/`)
@@ -111,9 +109,7 @@ Template: `.env.example`
 ## Local Development
 
 ```bash
-docker-compose up -d     # PostgreSQL + LocalStack
+docker-compose up -d     # PostgreSQL
 pnpm dev                 # Start server
 pnpm temporal:worker     # Start Temporal worker (separate terminal)
 ```
-
-LocalStack emulates S3 at `http://localhost:4566`.

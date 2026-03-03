@@ -59,10 +59,6 @@ export const env = createEnv({
     TEMPORAL_TASK_QUEUE: z.string().default('default'),
     TEMPORAL_API_KEY: z.string().default('FAKE_TEMPORAL_API_KEY'),
 
-    // Postmark Email Processing Limits
-    POSTMARK_MAX_ATTACHMENT_SIZE: z.coerce.number().positive().default(10485760), // 10MB
-    POSTMARK_MAX_TOTAL_ATTACHMENT_SIZE: z.coerce.number().positive().default(52428800), // 50MB
-
     // API Bearer Token Authentication
     // Dev: Uses dummy token. Production: REQUIRED (comma-separated list)
     API_BEARER_TOKENS: devDefault(z.string().min(1), 'dev-bearer-token-12345'),
@@ -79,15 +75,6 @@ export const env = createEnv({
     VIES_API_TIMEOUT: z.coerce.number().positive().default(30000),
     VIES_API_RETRY_ATTEMPTS: z.coerce.number().nonnegative().default(2),
     VIES_API_RETRY_DELAY_MS: z.coerce.number().positive().default(1000),
-
-    // AWS S3 Configuration
-    // Dev: Configured for LocalStack. Production: Use real AWS credentials
-    AWS_REGION: z.string().default('us-east-1'),
-    AWS_ACCESS_KEY_ID: z.string().default('test'),
-    AWS_SECRET_ACCESS_KEY: z.string().default('test'),
-    S3_ENDPOINT: z.string().url().optional(), // Only needed for LocalStack
-    S3_BUCKET_NAME: z.string().default('backend-accounting-documents'),
-    S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
 
     // Stripe Payment Configuration
     // Dev: Uses dummy secret. Production: REQUIRED
@@ -127,9 +114,6 @@ export const env = createEnv({
     TEMPORAL_TASK_QUEUE: process.env['TEMPORAL_TASK_QUEUE'],
     TEMPORAL_API_KEY: process.env['TEMPORAL_API_KEY'],
 
-    POSTMARK_MAX_ATTACHMENT_SIZE: process.env['POSTMARK_MAX_ATTACHMENT_SIZE'],
-    POSTMARK_MAX_TOTAL_ATTACHMENT_SIZE: process.env['POSTMARK_MAX_TOTAL_ATTACHMENT_SIZE'],
-
     API_BEARER_TOKENS: process.env['API_BEARER_TOKENS'],
 
     // Job Generation Configuration
@@ -143,14 +127,6 @@ export const env = createEnv({
     VIES_API_TIMEOUT: process.env['VIES_API_TIMEOUT'],
     VIES_API_RETRY_ATTEMPTS: process.env['VIES_API_RETRY_ATTEMPTS'],
     VIES_API_RETRY_DELAY_MS: process.env['VIES_API_RETRY_DELAY_MS'],
-
-    // AWS / S3 Configuration
-    AWS_REGION: process.env['AWS_REGION'],
-    AWS_ACCESS_KEY_ID: process.env['AWS_ACCESS_KEY_ID'],
-    AWS_SECRET_ACCESS_KEY: process.env['AWS_SECRET_ACCESS_KEY'],
-    S3_ENDPOINT: process.env['S3_ENDPOINT'],
-    S3_BUCKET_NAME: process.env['S3_BUCKET_NAME'],
-    S3_FORCE_PATH_STYLE: process.env['S3_FORCE_PATH_STYLE'],
 
     // Stripe Configuration
     STRIPE_WEBHOOK_SECRET: process.env['STRIPE_WEBHOOK_SECRET'],

@@ -85,12 +85,6 @@ export async function buildApp() {
   // Register infrastructure routes (health, metrics, etc.) - UNPROTECTED
   await fastify.register(registerInfrastructureRoutes);
 
-  // Register webhook routes (external, unprotected)
-  await fastify.register(async (webhookInstance) => {
-    const { postmarkWebhookRoutes } = await import('./modules/inbound-email/index.js');
-    await webhookInstance.register(postmarkWebhookRoutes);
-  });
-
   // Register protected business API routes with authentication
   // All routes registered through this plugin will require API Bearer token authentication
   await fastify.register(async (protectedInstance) => {
@@ -203,9 +197,7 @@ export async function buildTestApp() {
 
   // Register webhook routes (external, unprotected)
   await fastify.register(async (webhookInstance) => {
-    const { postmarkWebhookRoutes } = await import('./modules/inbound-email/index.js');
     const { paymentWebhookRoutes } = await import('./modules/payment-webhooks/index.js');
-    await webhookInstance.register(postmarkWebhookRoutes);
     await webhookInstance.register(paymentWebhookRoutes);
   });
 

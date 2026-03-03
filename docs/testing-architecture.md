@@ -15,14 +15,14 @@
 
 ## Smoke Tests
 
-Smoke tests validate real infrastructure (PostgreSQL, LocalStack S3, Temporal) against a running server.
+Smoke tests validate real infrastructure (PostgreSQL, Temporal) against a running server.
 
 **Key differences from unit tests:**
 - Extended timeouts (60s+) for server startup and workflow completion
-- Use native Node SDKs (`@aws-sdk/client-s3`, Drizzle) instead of CLI tools
+- Use native Node SDKs (Drizzle) instead of CLI tools
 - Separate config: `tests/smoke/vitest.config.smoke.ts`
 
-**Helpers**: `tests/smoke/helpers/` contains utilities for server lifecycle, S3 verification, Temporal client, and database operations.
+**Helpers**: `tests/smoke/helpers/` contains utilities for server lifecycle, Temporal client, and database operations.
 
 ## MSW Mocking
 

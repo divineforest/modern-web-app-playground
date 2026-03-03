@@ -190,11 +190,11 @@ Example:
 
 ### Webhook Reception and Workflow Processing
 
-1. Postmark receives inbound email.
-2. Postmark sends webhook notification.
+1. Stripe processes a payment event.
+2. Stripe sends webhook notification.
 3. **Webhook Handler** validates payload and authenticity.
 4. **Handler** starts a Temporal workflow and returns HTTP 200.
-5. **Workflow** executes activities: parse, upload, store.
+5. **Workflow** executes activities: parse, update order status, notify.
 6. Temporal retries failed activities automatically.
 ```
 
