@@ -10,6 +10,7 @@ When invoked:
 
 - Identify what was claimed to be completed
 - Check that the implementation exists and is functional
+- If a spec exists in `specs/` for the affected feature, verify the implementation matches it — and that the spec itself was updated to reflect any new behavior
 - Run relevant tests or verification steps
 - Look for edge cases that may have been missed
 
