@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import noPhoto from './assets/no-photo.svg';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -86,15 +87,13 @@ function App() {
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {product.imageUrl && (
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={product.imageUrl}
-                    alt={product.name}
-                    sx={{ objectFit: 'cover' }}
-                  />
-                )}
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.imageUrl ?? noPhoto}
+                  alt={product.name}
+                  sx={{ objectFit: product.imageUrl ? 'cover' : 'none', bgcolor: '#F3F4F6' }}
+                />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" component="h2" gutterBottom>
                     {product.name}

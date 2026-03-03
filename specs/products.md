@@ -67,7 +67,8 @@ This feature provides CRUD operations for managing the product catalog. Products
 ### FR-6: Product Catalog (Home Page)
 
 - The home page SHALL fetch and display all products with status "active"
-- Each product card SHALL display: name, price, image (if available), and short description
+- Each product card SHALL display: name, price, image, and short description
+- If a product has no imageUrl, the card SHALL display a generic placeholder image from `apps/web/src/assets/no-photo.svg`
 - If a product has a compareAtPrice, the card SHALL display it as a crossed-out original price next to the current price
 - Products SHALL be displayed in a responsive grid layout that adapts to screen size
 - While products are loading, the page SHALL display a loading indicator
