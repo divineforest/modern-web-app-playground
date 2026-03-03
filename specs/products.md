@@ -2,15 +2,15 @@
 
 ## Overview
 
-This feature provides CRUD operations for managing the product catalog. Products represent the goods available for sale and include pricing, inventory, categorization, and physical attributes. The feature is exposed as an API for use by other microservices and tools.
+Products are the goods available for sale in the Mercado catalog. This feature covers the full product lifecycle — from creation as a draft, through activation for customer visibility, to archival. It includes pricing (with promotional compare-at prices), categorization, physical attributes, and a storefront catalog for browsing. The feature is exposed as an API for use by other microservices and tools.
 
 ## Goals and Non-Goals
 
 ### Goals
 
-- Provide CRUD operations for product management
+- Manage the product catalog with full create, read, update, and delete capabilities
 - Support product lifecycle through statuses (draft, active, archived)
-- Support pricing with compare-at price for sales/promotions
+- Support pricing with compare-at price for sales and promotions
 - Display all available products on the home page
 
 ### Non-Goals
@@ -22,58 +22,66 @@ This feature provides CRUD operations for managing the product catalog. Products
 - Product reviews and ratings
 - Search with full-text or faceted filtering
 
-## Functional Requirements
+## Product Lifecycle
 
-### FR-1: Create Product
+Products move through three statuses:
 
-- The system SHALL accept product creation requests via API
-- The system SHALL validate required fields (name, sku, price, currency)
-- The system SHALL validate status field against allowed values (draft, active, archived)
-- The system SHALL set default status to "draft" if not provided
-- The system SHALL validate that SKU is globally unique
-- The system SHALL generate a unique identifier for each product
-- The system SHALL store products with timestamps (createdAt, updatedAt)
-- The system SHALL return the created product including generated fields
+- **Draft** — the default state for newly created products. Not visible to customers.
+- **Active** — visible in the storefront catalog and available for purchase.
+- **Archived** — removed from the storefront but retained in the system.
 
-### FR-2: Read Product
+## Product Catalog (Storefront)
 
-- The system SHALL retrieve a single product by its unique identifier
-- The system SHALL return complete product data including all fields
-- The system SHALL return appropriate error when product is not found
+The home page displays all active products as a browsable catalog:
 
-### FR-3: Update Product
+- Only products with status "active" are shown
+- Each product card displays: name, price, image, and short description
+- If a product has no image, a generic placeholder is shown from `apps/web/src/assets/no-photo.svg`
+- If a product has a compare-at price, it is displayed as a crossed-out original price next to the current price
+- Products are displayed in a responsive grid of equal-size cards (equal width and height)
+- Product name and short description are truncated with ellipsis if they exceed available space
+- While products are loading, a loading indicator is displayed
+- If no active products exist, an empty state message is displayed
 
-- The system SHALL accept partial updates to existing products
-- The system SHALL validate updated fields before persisting changes
-- The system SHALL update the updatedAt timestamp on successful update
-- The system SHALL preserve fields not included in the update request
-- The system SHALL return the updated product with all current values
-- The system SHALL return appropriate error when product is not found
+## Product Management
 
-### FR-4: Delete Product
+### Creating Products
 
-- The system SHALL delete products permanently from the database
-- The system SHALL return success response after successful deletion
-- The system SHALL return appropriate error when product is not found
+- Required fields: name, SKU, price, currency
+- Status defaults to "draft" if not provided
+- A URL-friendly slug is auto-generated from the product name
+- SKU and slug must be globally unique
+- A unique identifier (UUID) is generated automatically
+- Timestamps (createdAt, updatedAt) are set automatically
+- The created product is returned including all generated fields
 
-### FR-5: List Products
+### Editing Products
 
-- The system SHALL retrieve multiple products
-- The system SHALL support filtering by:
-  - status (exact match)
-  - category (exact match)
-- The system SHALL return products ordered by creation date (newest first)
+- Products support partial updates — only provided fields are changed
+- Fields not included in the update are preserved
+- The updatedAt timestamp is refreshed on each update
+- Updated fields are validated before persisting
+- The updated product is returned with all current values
 
-### FR-6: Product Catalog (Home Page)
+### Deleting Products
 
-- The home page SHALL fetch and display all products with status "active"
-- Each product card SHALL display: name, price, image, and short description
-- If a product has no imageUrl, the card SHALL display a generic placeholder image from `apps/web/src/assets/no-photo.svg`
-- If a product has a compareAtPrice, the card SHALL display it as a crossed-out original price next to the current price
-- Products SHALL be displayed in a responsive grid of equal-size cards (equal width and height)
-- Product name and short description SHALL be truncated with ellipsis if they exceed available space
-- While products are loading, the page SHALL display a loading indicator
-- If no active products exist, the page SHALL display an empty state message
+- Products are permanently removed from the database
+- A success response is returned after deletion
+- No soft-delete (see Future Enhancements)
+
+### Listing and Filtering
+
+- Products can be filtered by status (exact match) and category (exact match)
+- Results are ordered by creation date, newest first
+
+### Validation Rules
+
+- Status must be one of: draft, active, archived
+- SKU must be globally unique
+- Slug must be globally unique
+- Name, SKU, price, and currency are required
+- Product not found returns an appropriate error
+- Duplicate SKU or slug returns a conflict error
 
 ## Data Model
 
@@ -81,26 +89,26 @@ This feature provides CRUD operations for managing the product catalog. Products
 
 ```typescript
 {
-  id: string; // UUID, primary key
-  createdAt: Date; // Creation timestamp
-  updatedAt: Date; // Last update timestamp
+  id: string;               // UUID, primary key
+  createdAt: Date;          // Creation timestamp
+  updatedAt: Date;          // Last update timestamp
   status: "draft" | "active" | "archived"; // default "draft"
-  name: string; // Product name (required)
-  slug: string; // URL-friendly identifier, auto-generated from name, globally unique
-  sku: string; // Stock Keeping Unit, globally unique (required)
-  description: string | null; // Full product description
-  shortDescription: string | null; // Brief summary for listings
-  category: string | null; // Product category (free-text)
-  tags: string[] | null; // Tags for organization/filtering
-  imageUrl: string | null; // URL to the product image
-  currency: string; // ISO 4217 currency code (required)
-  price: number; // Selling price (decimal, 2 places, required)
-  compareAtPrice: number | null; // Original/list price for showing discounts (decimal, 2 places)
-  costPrice: number | null; // Cost to acquire/produce (decimal, 2 places), not exposed publicly
-  weight: number | null; // Weight in grams (decimal, 2 places)
-  width: number | null; // Width in cm (decimal, 2 places)
-  height: number | null; // Height in cm (decimal, 2 places)
-  length: number | null; // Length in cm (decimal, 2 places)
+  name: string;             // Product name (required)
+  slug: string;             // URL-friendly identifier, auto-generated from name, globally unique
+  sku: string;              // Stock Keeping Unit, globally unique (required)
+  description: string | null;       // Full product description
+  shortDescription: string | null;  // Brief summary for listings
+  category: string | null;          // Product category (free-text)
+  tags: string[] | null;            // Tags for organization/filtering
+  imageUrl: string | null;          // URL to the product image
+  currency: string;         // ISO 4217 currency code (required)
+  price: number;            // Selling price (decimal, 2 places, required)
+  compareAtPrice: number | null;    // Original/list price for showing discounts (decimal, 2 places)
+  costPrice: number | null;         // Cost to acquire/produce (decimal, 2 places), not exposed publicly
+  weight: number | null;            // Weight in grams (decimal, 2 places)
+  width: number | null;             // Width in cm (decimal, 2 places)
+  height: number | null;            // Height in cm (decimal, 2 places)
+  length: number | null;            // Length in cm (decimal, 2 places)
 }
 ```
 
@@ -108,72 +116,28 @@ This feature provides CRUD operations for managing the product catalog. Products
 
 ### TR-1: Database Schema
 
-- The system SHALL store products in a `products` table
-- The system SHALL use UUID for primary key
-- The system SHALL enforce NOT NULL constraint on name, slug, sku, currency, price
-- The system SHALL set default value for status to "draft"
-- The system SHALL use NUMERIC(15,2) for price, compareAtPrice, costPrice, weight, width, height, length
-- The system SHALL store tags as a JSON array
-- The system SHALL enforce status values using CHECK constraint
-- The system SHALL create unique index on sku
-- The system SHALL create unique index on slug
-- The system SHALL create indexes on: status, category
+- Products are stored in a `products` table with UUID primary key
+- NOT NULL constraint on: name, slug, sku, currency, price
+- Default value for status: "draft"
+- NUMERIC(15,2) for: price, compareAtPrice, costPrice, weight, width, height, length
+- Tags stored as a JSON array
+- Status enforced via CHECK constraint
+- Unique indexes on: sku, slug
+- Indexes on: status, category
 
 ### TR-2: Module Organization
 
-- The system SHALL place all products code in `apps/backend/src/modules/products/`
-- The system SHALL colocate tests with source files
+- All products code lives in `apps/backend/src/modules/products/`
+- Tests are colocated with source files
 
 ### TR-3: Web Application
 
-- The product catalog SHALL be implemented in `apps/web/`
-- The web app SHALL fetch products from the backend API
+- The product catalog is implemented in `apps/web/`
+- The web app fetches products from the backend API
 
 ### TR-4: API Endpoints
 
-- All endpoints SHALL be prefixed with `/api/products`
-- The system SHALL implement five operations: Create (POST), Read (GET), Update (PATCH), Delete (DELETE), List (GET)
-- The system SHALL support filtering on list endpoint by: status, category
-- The system SHALL order list results by creation date (newest first)
-
-## Database Schema
-
-```sql
-CREATE TABLE products (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  status VARCHAR(32) NOT NULL DEFAULT 'draft',
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL,
-  sku TEXT NOT NULL,
-  description TEXT,
-  short_description TEXT,
-  category TEXT,
-  tags JSONB,
-  image_url TEXT,
-  currency VARCHAR(3) NOT NULL,
-  price NUMERIC(15,2) NOT NULL,
-  compare_at_price NUMERIC(15,2),
-  cost_price NUMERIC(15,2),
-  weight NUMERIC(15,2),
-  width NUMERIC(15,2),
-  height NUMERIC(15,2),
-  length NUMERIC(15,2),
-  CONSTRAINT products_status_check CHECK (status IN ('draft', 'active', 'archived'))
-);
-
-CREATE UNIQUE INDEX idx_products_sku ON products(sku);
-CREATE UNIQUE INDEX idx_products_slug ON products(slug);
-CREATE INDEX idx_products_status ON products(status);
-CREATE INDEX idx_products_category ON products(category);
-```
-
-## API Specification
-
-### API Endpoints
-
-All endpoints are prefixed with `/api/products`
+All endpoints are prefixed with `/api/products`.
 
 #### Create Product
 
@@ -257,7 +221,7 @@ GET /api/products
 }
 ```
 
-## Error Responses
+#### Error Responses
 
 - **400 Bad Request**: Validation failed
 - **404 Not Found**: Product not found
