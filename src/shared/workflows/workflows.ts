@@ -8,3 +8,4 @@
 
 // Export all workflows from modules
 export { postmarkInboundEmailWorkflow } from '../../modules/inbound-email/index.js';
+export { paymentWebhookWorkflow } from '../../modules/payment-webhooks/index.js';

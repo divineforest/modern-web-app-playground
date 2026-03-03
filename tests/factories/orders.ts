@@ -27,6 +27,9 @@ export function buildTestOrderData(overrides: Partial<NewOrder> = {}): NewOrder 
     paymentTerms: overrides.paymentTerms !== undefined ? overrides.paymentTerms : null,
     notes: overrides.notes !== undefined ? overrides.notes : null,
     customerNotes: overrides.customerNotes !== undefined ? overrides.customerNotes : null,
+    paidAt: overrides.paidAt !== undefined ? overrides.paidAt : null,
+    paymentTransactionId:
+      overrides.paymentTransactionId !== undefined ? overrides.paymentTransactionId : null,
   };
 }
 

@@ -14,3 +14,6 @@ process.env['VIES_API_BASE_URL'] = 'https://api.vatcheckapi.com/v2';
 process.env['VIES_API_TIMEOUT'] = '5000';
 process.env['VIES_API_RETRY_ATTEMPTS'] = '0';
 process.env['VIES_API_RETRY_DELAY_MS'] = '100';
+
+// Stripe configuration for tests
+process.env['STRIPE_WEBHOOK_SECRET'] = 'whsec_test_secret';

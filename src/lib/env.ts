@@ -88,6 +88,10 @@ export const env = createEnv({
     S3_ENDPOINT: z.string().url().optional(), // Only needed for LocalStack
     S3_BUCKET_NAME: z.string().default('backend-accounting-documents'),
     S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
+
+    // Stripe Payment Configuration
+    // Dev: Uses dummy secret. Production: REQUIRED
+    STRIPE_WEBHOOK_SECRET: devDefault(z.string().min(1), 'whsec_test_secret'),
   },
 
   /*
@@ -147,6 +151,9 @@ export const env = createEnv({
     S3_ENDPOINT: process.env['S3_ENDPOINT'],
     S3_BUCKET_NAME: process.env['S3_BUCKET_NAME'],
     S3_FORCE_PATH_STYLE: process.env['S3_FORCE_PATH_STYLE'],
+
+    // Stripe Configuration
+    STRIPE_WEBHOOK_SECRET: process.env['STRIPE_WEBHOOK_SECRET'],
   },
 
   /*

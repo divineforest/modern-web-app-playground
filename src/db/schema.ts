@@ -174,15 +174,18 @@ export const orders = pgTable(
     paymentTerms: varchar('payment_terms', { length: 64 }),
     notes: text('notes'),
     customerNotes: text('customer_notes'),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    paymentTransactionId: text('payment_transaction_id'),
   },
   (table) => [
     check(
       'orders_status_check',
-      sql`${table.status} IN ('draft', 'confirmed', 'processing', 'shipped', 'fulfilled', 'cancelled')`
+      sql`${table.status} IN ('draft', 'confirmed', 'processing', 'shipped', 'fulfilled', 'paid', 'cancelled')`
     ),
     uniqueIndex('idx_orders_order_number').on(table.orderNumber),
     index('idx_orders_status').on(table.status),
     index('idx_orders_order_date').on(table.orderDate),
+    index('idx_orders_payment_transaction_id').on(table.paymentTransactionId),
   ]
 );
 

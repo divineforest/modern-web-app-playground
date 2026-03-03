@@ -9,6 +9,7 @@ const orderStatusEnum = [
   'processing',
   'shipped',
   'fulfilled',
+  'paid',
   'cancelled',
 ] as const;
 export type OrderStatus = (typeof orderStatusEnum)[number];

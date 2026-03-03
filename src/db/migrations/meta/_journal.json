@@ -127,6 +127,13 @@
       "when": 1772470330488,
       "tag": "0017_brown_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1772529454192,
+      "tag": "0018_warm_blade",
+      "breakpoints": true
     }
   ]
 }

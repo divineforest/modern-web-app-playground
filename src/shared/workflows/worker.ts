@@ -15,6 +15,7 @@ import type {
 import { NativeConnection, Worker } from '@temporalio/worker';
 import { env } from '../../lib/env.js';
 import * as postmarkActivities from '../../modules/inbound-email/workflows/process-inbound-email/index.js';
+import * as paymentActivities from '../../modules/payment-webhooks/workflows/process-payment/index.js';
 
 /**
  * Sentry Activity Interceptor
@@ -77,7 +78,10 @@ async function run() {
       taskQueue: env.TEMPORAL_TASK_QUEUE,
       // Workflows are registered using a path as they run in a separate JS context.
       workflowsPath: new URL('./workflows.ts', import.meta.url).pathname,
-      activities: postmarkActivities,
+      activities: {
+        ...postmarkActivities,
+        ...paymentActivities,
+      },
       // Register the Sentry interceptor for automatic error capture
       interceptors: {
         activityInbound: [() => new SentryActivityInterceptor()],

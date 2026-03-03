@@ -32,6 +32,24 @@ export async function buildApp() {
     timeWindow: '1 minute',
   });
 
+  // Register raw body plugin for webhook signature verification
+  fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    (req as typeof req & { rawBody?: Buffer }).rawBody = body as Buffer;
+    done(null, body);
+  });
+
+  fastify.addHook('preHandler', (request, _reply, done) => {
+    const rawBody = (request as typeof request & { rawBody?: Buffer }).rawBody;
+    if (rawBody && request.body) {
+      try {
+        request.body = JSON.parse(rawBody.toString('utf8'));
+      } catch {
+        // If JSON parsing fails, leave body as is
+      }
+    }
+    done();
+  });
+
   // Register Swagger for API documentation
   await fastify.register(import('@fastify/swagger'), {
     openapi: {
@@ -162,13 +180,33 @@ export async function buildTestApp() {
     credentials: true,
   });
 
+  // Register raw body plugin for webhook signature verification
+  fastify.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    (req as typeof req & { rawBody?: Buffer }).rawBody = body as Buffer;
+    done(null, body);
+  });
+
+  fastify.addHook('preHandler', (request, _reply, done) => {
+    const rawBody = (request as typeof request & { rawBody?: Buffer }).rawBody;
+    if (rawBody && request.body) {
+      try {
+        request.body = JSON.parse(rawBody.toString('utf8'));
+      } catch {
+        // If JSON parsing fails, leave body as is
+      }
+    }
+    done();
+  });
+
   // Register infrastructure routes - UNPROTECTED
   await fastify.register(registerInfrastructureRoutes);
 
   // Register webhook routes (external, unprotected)
   await fastify.register(async (webhookInstance) => {
     const { postmarkWebhookRoutes } = await import('./modules/inbound-email/index.js');
+    const { paymentWebhookRoutes } = await import('./modules/payment-webhooks/index.js');
     await webhookInstance.register(postmarkWebhookRoutes);
+    await webhookInstance.register(paymentWebhookRoutes);
   });
 
   // Register protected business API routes with authentication
