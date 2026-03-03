@@ -36,58 +36,6 @@ export class ValidationError extends Error {
  * Constraint-to-message mapping for user-friendly error messages
  */
 const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }> = {
-  [CONSTRAINTS.JOBS_COMPANY_FK]: {
-    message: 'Invalid company reference',
-    details: 'The specified company does not exist',
-  },
-  [CONSTRAINTS.JOBS_SERVICE_TYPE_FK]: {
-    message: 'Invalid service type reference',
-    details: 'The specified service type does not exist',
-  },
-  [CONSTRAINTS.JOB_TEMPLATES_SERVICE_TYPE_FK]: {
-    message: 'Invalid service type reference',
-    details: 'The specified service type does not exist',
-  },
-  [CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE]: {
-    message: 'Service type code already exists',
-    details: 'A service type with this code is already registered',
-  },
-  [CONSTRAINTS.JOB_TEMPLATES_CODE_UNIQUE]: {
-    message: 'Job template code already exists',
-    details: 'A job template with this code is already registered',
-  },
-  [CONSTRAINTS.JOBS_STATUS_CHECK]: {
-    message: 'Invalid job status',
-    details: 'Status must be one of: planned, in_progress, completed, canceled',
-  },
-  [CONSTRAINTS.SERVICE_TYPES_STATUS_CHECK]: {
-    message: 'Invalid service type status',
-    details: 'Status must be one of: active, deprecated',
-  },
-  [CONSTRAINTS.SERVICE_TYPES_CODE_CHECK]: {
-    message: 'Invalid service type code format',
-    details: 'Code must contain only uppercase letters and underscores',
-  },
-  [CONSTRAINTS.JOB_TEMPLATES_CODE_CHECK]: {
-    message: 'Invalid job template code format',
-    details: 'Code must contain only uppercase letters, numbers, and underscores',
-  },
-  [CONSTRAINTS.INVOICES_COMPANY_FK]: {
-    message: 'Invalid company reference',
-    details: 'The specified company does not exist',
-  },
-  [CONSTRAINTS.INVOICES_COMPANY_INVOICE_NUMBER_UNIQUE]: {
-    message: 'Duplicate invoice number',
-    details: 'An invoice with this number already exists for this company',
-  },
-  [CONSTRAINTS.INVOICES_TYPE_CHECK]: {
-    message: 'Invalid invoice type',
-    details: 'Type must be one of: sales, purchase',
-  },
-  [CONSTRAINTS.INVOICES_STATUS_CHECK]: {
-    message: 'Invalid invoice status',
-    details: 'Status must be one of: new, draft, sent, paid, overdue, cancelled',
-  },
   [CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE]: {
     message: 'Duplicate order number',
     details: 'An order with this number already exists',

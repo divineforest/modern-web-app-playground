@@ -71,82 +71,8 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
 // =============================================================================
-// Service Configuration Tables
-// =============================================================================
-
-/**
- * Service Types table schema
- * Reference table for categorizing types of accounting and financial services
- */
-export const serviceTypes = pgTable(
-  'service_types',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    code: text('code').notNull().unique(),
-    name: text('name').notNull(),
-    description: text('description'),
-    status: text('status').notNull().default('active'),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => [
-    check('service_types_code_check', sql`${table.code} ~ '^[A-Z_]+$'`),
-    check('service_types_status_check', sql`${table.status} IN ('active', 'deprecated')`),
-  ]
-);
-
-export type ServiceType = typeof serviceTypes.$inferSelect;
-export type NewServiceType = typeof serviceTypes.$inferInsert;
-
-// =============================================================================
 // Billing Tables
 // =============================================================================
-
-/**
- * Invoices table schema
- * Stores billing documents linked to companies and contacts
- */
-export const invoices = pgTable(
-  'invoices',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id, {
-        onDelete: 'cascade',
-        onUpdate: 'cascade',
-      }),
-    contactId: uuid('contact_id'),
-    type: varchar('type', { length: 32 }).notNull(),
-    status: varchar('status', { length: 32 }).notNull().default('draft'),
-    invoiceNumber: text('invoice_number'),
-    issueDate: date('issue_date'),
-    dueDate: date('due_date'),
-    paidAt: timestamp('paid_at', { withTimezone: true }),
-    currency: varchar('currency', { length: 3 }),
-    totalAmount: text('total_amount'), // NUMERIC(15,2) stored as text for precision
-    description: text('description'),
-  },
-  (table) => [
-    check('invoices_type_check', sql`${table.type} IN ('sales', 'purchase')`),
-    check(
-      'invoices_status_check',
-      sql`${table.status} IN ('new', 'draft', 'sent', 'paid', 'overdue', 'cancelled')`
-    ),
-    uniqueIndex('idx_invoices_company_invoice_number')
-      .on(table.companyId, table.invoiceNumber)
-      .where(sql`${table.invoiceNumber} IS NOT NULL`),
-    index('idx_invoices_company_id').on(table.companyId),
-    index('idx_invoices_status').on(table.status),
-    index('idx_invoices_type').on(table.type),
-    index('idx_invoices_issue_date').on(table.issueDate),
-  ]
-);
-
-export type Invoice = typeof invoices.$inferSelect;
-export type NewInvoice = typeof invoices.$inferInsert;
 
 /**
  * Orders table schema

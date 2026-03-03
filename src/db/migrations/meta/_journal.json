@@ -134,6 +134,13 @@
       "when": 1772529454192,
       "tag": "0018_warm_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1772531424669,
+      "tag": "0019_short_punisher",
+      "breakpoints": true
     }
   ]
 }

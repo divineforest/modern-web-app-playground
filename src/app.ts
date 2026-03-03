@@ -92,10 +92,8 @@ export async function buildApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
     const { registerOrdersRoutes } = await import('./modules/orders/index.js');
 
-    await protectedInstance.register(registerInvoicesRoutes);
     await protectedInstance.register(registerOrdersRoutes);
   });
 
@@ -207,10 +205,8 @@ export async function buildTestApp() {
     await protectedInstance.register(authPlugin);
 
     // Register business API routes (all protected)
-    const { registerInvoicesRoutes } = await import('./modules/invoices/index.js');
     const { registerOrdersRoutes } = await import('./modules/orders/index.js');
 
-    await protectedInstance.register(registerInvoicesRoutes);
     await protectedInstance.register(registerOrdersRoutes);
   });
 

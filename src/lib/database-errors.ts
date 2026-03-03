@@ -14,25 +14,10 @@ export const PostgresErrorCode = {
  * Centralized constants for type-safe constraint handling
  */
 export const CONSTRAINTS = {
-  // Foreign key constraints
-  JOBS_COMPANY_FK: 'jobs_company_id_companies_id_fk',
-  JOBS_SERVICE_TYPE_FK: 'jobs_service_type_id_service_types_id_fk',
-  JOB_TEMPLATES_SERVICE_TYPE_FK: 'job_templates_service_type_id_service_types_id_fk',
-  INVOICES_COMPANY_FK: 'invoices_company_id_companies_id_fk',
-
   // Unique constraints
-  SERVICE_TYPES_CODE_UNIQUE: 'service_types_code_unique',
-  JOB_TEMPLATES_CODE_UNIQUE: 'job_templates_code_unique',
-  INVOICES_COMPANY_INVOICE_NUMBER_UNIQUE: 'idx_invoices_company_invoice_number',
   ORDERS_ORDER_NUMBER_UNIQUE: 'idx_orders_order_number',
 
   // Check constraints
-  JOBS_STATUS_CHECK: 'jobs_status_check',
-  SERVICE_TYPES_STATUS_CHECK: 'service_types_status_check',
-  SERVICE_TYPES_CODE_CHECK: 'service_types_code_check',
-  JOB_TEMPLATES_CODE_CHECK: 'code_check',
-  INVOICES_TYPE_CHECK: 'invoices_type_check',
-  INVOICES_STATUS_CHECK: 'invoices_status_check',
   ORDERS_STATUS_CHECK: 'orders_status_check',
 } as const;
 

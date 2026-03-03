@@ -16,7 +16,6 @@ This feature provides basic CRUD operations for managing orders. The feature is 
 - Line items management (future enhancement)
 - Order fulfillment / shipping workflows
 - Inventory management
-- Order-to-invoice conversion
 - Approval workflows
 
 ## Functional Requirements

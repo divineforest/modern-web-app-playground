@@ -22,8 +22,7 @@ src/
 │   └── health/             # Health check routes (/healthz, /ready)
 ├── modules/                # Domain-driven feature modules
 │   ├── contacts/           # Contact management
-│   ├── contacts-sync/      # Contact synchronization
-│   └── invoices/           # Invoice management
+│   └── contacts-sync/      # Contact synchronization
 ├── shared/                 # Cross-module infrastructure
 │   ├── data-access/        # External system clients
 │   │   └── core/           # Core microservice (SDK + repository)

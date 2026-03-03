@@ -37,9 +37,9 @@ describe('database-errors', () => {
       // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
-        message: 'foreign key violation',
-        code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        message: 'unique constraint violation',
+        code: PostgresErrorCode.UNIQUE_VIOLATION,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       const wrappedError = new Error('Database operation failed');
@@ -55,7 +55,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'check constraint violation',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       const level1 = new Error('Level 1');
@@ -113,7 +113,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'insert or update violates foreign key constraint',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        constraint_name: 'some_fk_constraint',
         detail: 'Key (company_id)=(invalid-uuid) is not present in table "companies".',
       };
 
@@ -127,7 +127,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'foreign key violation',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_SERVICE_TYPE_FK,
+        constraint_name: 'some_fk_constraint',
       };
 
       const drizzleError = new Error('Failed to insert');
@@ -143,7 +143,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'unique violation',
         code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: 'users_email_unique',
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT & ASSERT
@@ -158,7 +158,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'duplicate key value violates unique constraint',
         code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT & ASSERT
@@ -169,9 +169,9 @@ describe('database-errors', () => {
       // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
-        message: 'foreign key violation',
-        code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        message: 'check violation',
+        code: PostgresErrorCode.CHECK_VIOLATION,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       // ACT & ASSERT
@@ -200,7 +200,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'check violation',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       // ACT & ASSERT
@@ -215,7 +215,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'new row violates check constraint',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       // ACT & ASSERT
@@ -228,7 +228,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'unique violation',
         code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT & ASSERT
@@ -242,28 +242,28 @@ describe('database-errors', () => {
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'constraint violation',
-        code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        code: PostgresErrorCode.UNIQUE_VIOLATION,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT & ASSERT
-      expect(getConstraintName(error)).toBe(CONSTRAINTS.JOBS_COMPANY_FK);
+      expect(getConstraintName(error)).toBe(CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE);
     });
 
     it('should extract constraint name from wrapped error', () => {
       // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
-        message: 'unique violation',
-        code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: CONSTRAINTS.JOB_TEMPLATES_CODE_UNIQUE,
+        message: 'check violation',
+        code: PostgresErrorCode.CHECK_VIOLATION,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       const wrappedError = new Error('Database error');
       Object.assign(wrappedError, { cause: pgError });
 
       // ACT & ASSERT
-      expect(getConstraintName(wrappedError)).toBe(CONSTRAINTS.JOB_TEMPLATES_CODE_UNIQUE);
+      expect(getConstraintName(wrappedError)).toBe(CONSTRAINTS.ORDERS_STATUS_CHECK);
     });
 
     it('should return undefined for errors without constraint name', () => {
@@ -292,14 +292,14 @@ describe('database-errors', () => {
       // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
-        message: 'foreign key violation',
-        code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        message: 'unique violation',
+        code: PostgresErrorCode.UNIQUE_VIOLATION,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT & ASSERT
-      expect(isConstraintViolation(error, CONSTRAINTS.JOBS_COMPANY_FK)).toBe(true);
-      expect(isConstraintViolation(error, CONSTRAINTS.JOBS_SERVICE_TYPE_FK)).toBe(false);
+      expect(isConstraintViolation(error, CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE)).toBe(true);
+      expect(isConstraintViolation(error, CONSTRAINTS.ORDERS_STATUS_CHECK)).toBe(false);
     });
 
     it('should work with wrapped errors', () => {
@@ -308,14 +308,14 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'check violation',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       const wrappedError = new Error('Database error');
       Object.assign(wrappedError, { cause: pgError });
 
       // ACT & ASSERT
-      expect(isConstraintViolation(wrappedError, CONSTRAINTS.JOBS_STATUS_CHECK)).toBe(true);
+      expect(isConstraintViolation(wrappedError, CONSTRAINTS.ORDERS_STATUS_CHECK)).toBe(true);
     });
   });
 
@@ -374,7 +374,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'FK violation',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        constraint_name: 'test_fk_constraint',
         detail: 'Key not found',
       };
 
@@ -385,8 +385,8 @@ describe('database-errors', () => {
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(ForeignKeyViolationError);
       expect(error.name).toBe('ForeignKeyViolationError');
-      expect(error.message).toContain(CONSTRAINTS.JOBS_COMPANY_FK);
-      expect(error.constraint).toBe(CONSTRAINTS.JOBS_COMPANY_FK);
+      expect(error.message).toContain('test_fk_constraint');
+      expect(error.constraint).toBe('test_fk_constraint');
     });
 
     it('should handle missing constraint name', () => {
@@ -412,7 +412,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'unique violation',
         code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT
@@ -422,7 +422,7 @@ describe('database-errors', () => {
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(UniqueConstraintError);
       expect(error.name).toBe('UniqueConstraintError');
-      expect(error.message).toContain(CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE);
+      expect(error.message).toContain(CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE);
     });
   });
 
@@ -471,7 +471,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'check violation',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       // ACT
@@ -481,7 +481,7 @@ describe('database-errors', () => {
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(CheckViolationError);
       expect(error.name).toBe('CheckViolationError');
-      expect(error.message).toContain(CONSTRAINTS.JOBS_STATUS_CHECK);
+      expect(error.message).toContain(CONSTRAINTS.ORDERS_STATUS_CHECK);
     });
   });
 
@@ -492,7 +492,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'FK violation',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_COMPANY_FK,
+        constraint_name: 'test_fk_constraint',
       };
 
       // ACT
@@ -509,7 +509,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'unique violation',
         code: PostgresErrorCode.UNIQUE_VIOLATION,
-        constraint_name: CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE,
+        constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
       // ACT
@@ -543,7 +543,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'check violation',
         code: PostgresErrorCode.CHECK_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_STATUS_CHECK,
+        constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
       // ACT
@@ -577,7 +577,7 @@ describe('database-errors', () => {
         name: 'PostgresError',
         message: 'FK violation',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
-        constraint_name: CONSTRAINTS.JOBS_SERVICE_TYPE_FK,
+        constraint_name: 'test_fk_constraint',
       };
 
       const wrappedError = new Error('Drizzle error');
@@ -611,17 +611,8 @@ describe('database-errors', () => {
   describe('CONSTRAINTS constants', () => {
     it('should have all expected constraint names', () => {
       // ACT & ASSERT
-      expect(CONSTRAINTS.JOBS_COMPANY_FK).toBe('jobs_company_id_companies_id_fk');
-      expect(CONSTRAINTS.JOBS_SERVICE_TYPE_FK).toBe('jobs_service_type_id_service_types_id_fk');
-      expect(CONSTRAINTS.JOB_TEMPLATES_SERVICE_TYPE_FK).toBe(
-        'job_templates_service_type_id_service_types_id_fk'
-      );
-      expect(CONSTRAINTS.SERVICE_TYPES_CODE_UNIQUE).toBe('service_types_code_unique');
-      expect(CONSTRAINTS.JOB_TEMPLATES_CODE_UNIQUE).toBe('job_templates_code_unique');
-      expect(CONSTRAINTS.JOBS_STATUS_CHECK).toBe('jobs_status_check');
-      expect(CONSTRAINTS.SERVICE_TYPES_STATUS_CHECK).toBe('service_types_status_check');
-      expect(CONSTRAINTS.SERVICE_TYPES_CODE_CHECK).toBe('service_types_code_check');
-      expect(CONSTRAINTS.JOB_TEMPLATES_CODE_CHECK).toBe('code_check');
+      expect(CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE).toBe('idx_orders_order_number');
+      expect(CONSTRAINTS.ORDERS_STATUS_CHECK).toBe('orders_status_check');
     });
   });
 });

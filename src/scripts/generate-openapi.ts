@@ -6,16 +6,14 @@
  *
  * Usage:
  *   pnpm openapi:generate                          # Generate all APIs
- *   pnpm openapi:generate --contract=invoices      # Generate only invoices API
  *   pnpm openapi:generate --contract=orders        # Generate only orders API
  *   pnpm openapi:generate --yaml                   # Also generate YAML format
  *
- * Available contracts: invoices, orders
+ * Available contracts: orders
  *
  * Output directory: generated/openapi/
  *   - openapi.json                    (all contracts)
- *   - openapi-invoices.json           (single contract filter)
- *   - openapi-invoices-orders.json    (multiple contracts filter)
+ *   - openapi-orders.json             (single contract filter)
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -23,14 +21,12 @@ import { initContract } from '@ts-rest/core';
 import { generateOpenApi } from '@ts-rest/open-api';
 import type { OpenAPIObject, SecurityRequirementObject } from 'openapi3-ts/oas30';
 import { stringify as yamlStringify } from 'yaml';
-import { invoicesContract } from '../modules/invoices/api/invoices.contracts.js';
 import { ordersContract } from '../modules/orders/api/orders.contracts.js';
 
 /**
  * Available contracts that can be filtered
  */
 const AVAILABLE_CONTRACTS = {
-  invoices: invoicesContract,
   orders: ordersContract,
 } as const;
 
@@ -117,10 +113,6 @@ const DEFAULT_SECURITY: SecurityRequirementObject[] = [{ BearerAuth: [] }];
  */
 const TAGS = [
   {
-    name: 'Invoices',
-    description: 'Invoice management endpoints for creating, listing, and managing invoices',
-  },
-  {
     name: 'Orders',
     description: 'Order management endpoints for creating, listing, and managing orders',
   },
@@ -130,9 +122,6 @@ const TAGS = [
  * Map contract paths to their corresponding tags
  */
 function getTagsForPath(path: string): string[] {
-  if (path.includes('/invoices')) {
-    return ['Invoices'];
-  }
   if (path.includes('/orders')) {
     return ['Orders'];
   }
