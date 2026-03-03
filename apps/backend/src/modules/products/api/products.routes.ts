@@ -18,13 +18,11 @@ const router = s.router(productsContract, {
    */
   list: async ({ query }) => {
     try {
-      const products = await productsService.list(query);
+      const result = await productsService.list(query);
 
       return {
         status: 200 as const,
-        body: {
-          products,
-        },
+        body: result,
       };
     } catch (error) {
       logger.error({ error, query }, 'Unexpected error in list products route');

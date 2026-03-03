@@ -32,7 +32,7 @@ Products move through three statuses:
 
 ## Product Catalog (Storefront)
 
-The home page displays all active products as a browsable catalog:
+The home page displays active products as a paginated catalog:
 
 - Only products with status "active" are shown
 - Each product card displays: name, price, image, and short description
@@ -42,6 +42,8 @@ The home page displays all active products as a browsable catalog:
 - Product name and short description are truncated with ellipsis if they exceed available space
 - While products are loading, a loading indicator is displayed
 - If no active products exist, an empty state message is displayed
+- Pagination controls are displayed below the product grid when there are multiple pages
+- The current page number and total pages are visible to the user
 
 ## Product Management
 
@@ -73,6 +75,8 @@ The home page displays all active products as a browsable catalog:
 
 - Products can be filtered by status (exact match) and category (exact match)
 - Results are ordered by creation date, newest first
+- Results are paginated with a default page size of 20 and a maximum page size of 100
+- The response includes the total count of matching products and pagination metadata
 
 ### Validation Rules
 
@@ -212,12 +216,20 @@ GET /api/products
 
 - `status` (optional): Filter by status
 - `category` (optional): Filter by category
+- `page` (optional): Page number, starting from 1 (default: 1)
+- `limit` (optional): Number of items per page, 1–100 (default: 20)
 
 **Response (200 OK):**
 
 ```json
 {
-  "products": [{ /* Product entity */ }]
+  "products": [{ /* Product entity */ }],
+  "pagination": {
+    "total": 85,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 5
+  }
 }
 ```
 
@@ -236,12 +248,12 @@ GET /api/products
 - Unique SKU constraint must be tested
 - Unique slug constraint must be tested
 - Slug auto-generation from name must be tested
+- Pagination defaults, boundaries, and metadata must be tested
 
 ## Future Enhancements
 
 - 🚧 Product variants (size, color, material)
 - 🚧 Multiple images per product (gallery)
-- 🚧 Pagination for list endpoint
 - 🚧 Additional filters (price range, tags)
 - 🚧 Full-text search
 - 🚧 Soft delete for audit compliance

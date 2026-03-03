@@ -17,9 +17,21 @@ export const productStatusSchema = z.enum(productStatusEnum);
 export const listProductsQuerySchema = z.object({
   status: productStatusSchema.optional(),
   category: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 /**
  * Type for list products query
  */
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
+
+/**
+ * Pagination metadata returned alongside paginated results
+ */
+export interface PaginationResult {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

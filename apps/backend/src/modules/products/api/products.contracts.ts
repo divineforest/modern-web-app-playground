@@ -44,10 +44,21 @@ const internalErrorSchema = z.object({
 });
 
 /**
+ * Pagination metadata schema
+ */
+const paginationSchema = z.object({
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+});
+
+/**
  * List response schema
  */
 const listResponseSchema = z.object({
   products: z.array(productResponseSchema),
+  pagination: paginationSchema,
 });
 
 /**
