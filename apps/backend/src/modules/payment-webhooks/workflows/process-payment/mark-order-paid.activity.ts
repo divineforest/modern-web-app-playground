@@ -5,11 +5,11 @@
  */
 import { Context } from '@temporalio/activity';
 import { createModuleLogger } from '../../../../lib/logger.js';
-import type { PaymentWebhookInput } from './payment-webhook.workflow.js';
 import {
   findOrderByOrderNumber,
   markOrderAsPaid,
 } from '../../repositories/orders-payment.repository.js';
+import type { PaymentWebhookInput } from './payment-webhook.workflow.js';
 
 const logger = createModuleLogger('payment-webhook-activity');
 

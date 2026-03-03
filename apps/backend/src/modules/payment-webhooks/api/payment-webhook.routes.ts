@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import Stripe from 'stripe';
-import { createModuleLogger } from '../../../lib/logger.js';
 import { env } from '../../../lib/env.js';
+import { createModuleLogger } from '../../../lib/logger.js';
 import { createTemporalClient, TASK_QUEUE } from '../../../shared/workflows/index.js';
 import { paymentWebhookWorkflow } from '../index.js';
 

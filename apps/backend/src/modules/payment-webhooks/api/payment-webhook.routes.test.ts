@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { buildTestApp } from '../../../app.js';
 import type Stripe from 'stripe';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildTestApp } from '../../../app.js';
 
 vi.mock('../../../shared/workflows/index.js', async () => {
   const actual = await vi.importActual<typeof import('../../../shared/workflows/index.js')>(
