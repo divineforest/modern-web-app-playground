@@ -43,6 +43,10 @@ const internalErrorSchema = z.object({
   error: z.string(),
 });
 
+const notFoundErrorSchema = z.object({
+  error: z.string(),
+});
+
 /**
  * Pagination metadata schema
  */
@@ -80,5 +84,23 @@ export const productsContract = c.router({
     query: listProductsQuerySchema,
     summary: 'List all products',
     description: 'Retrieves all products with optional filtering by status and category',
+  },
+
+  /**
+   * Get a product by slug
+   */
+  getBySlug: {
+    method: 'GET',
+    path: '/api/products/by-slug/:slug',
+    responses: {
+      200: productResponseSchema,
+      404: notFoundErrorSchema,
+      500: internalErrorSchema,
+    },
+    pathParams: z.object({
+      slug: z.string(),
+    }),
+    summary: 'Get a product by slug',
+    description: 'Retrieves a single product by its URL-friendly slug',
   },
 });

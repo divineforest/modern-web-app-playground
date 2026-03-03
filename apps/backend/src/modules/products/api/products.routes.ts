@@ -1,7 +1,7 @@
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { logger } from '../../../lib/logger.js';
-import { productsService } from '../services/products.service.js';
+import { ProductNotFoundError, productsService } from '../services/products.service.js';
 import { productsContract } from './products.contracts.js';
 
 /**
@@ -26,6 +26,37 @@ const router = s.router(productsContract, {
       };
     } catch (error) {
       logger.error({ error, query }, 'Unexpected error in list products route');
+      return {
+        status: 500 as const,
+        body: {
+          error: 'Internal server error',
+        },
+      };
+    }
+  },
+
+  /**
+   * Get a product by slug
+   */
+  getBySlug: async ({ params }) => {
+    try {
+      const product = await productsService.getBySlug(params.slug);
+
+      return {
+        status: 200 as const,
+        body: product,
+      };
+    } catch (error) {
+      if (error instanceof ProductNotFoundError) {
+        return {
+          status: 404 as const,
+          body: {
+            error: error.message,
+          },
+        };
+      }
+
+      logger.error({ error, slug: params.slug }, 'Unexpected error in get product by slug route');
       return {
         status: 500 as const,
         body: {

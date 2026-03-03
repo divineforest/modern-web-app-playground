@@ -40,10 +40,34 @@ The home page displays active products as a paginated catalog:
 - If a product has a compare-at price, it is displayed as a crossed-out original price next to the current price
 - Products are displayed in a responsive grid of equal-size cards (equal width and height)
 - Product name and short description are truncated with ellipsis if they exceed available space
+- Clicking a product card navigates to the product detail page
 - While products are loading, a loading indicator is displayed
 - If no active products exist, an empty state message is displayed
 - Pagination controls are displayed below the product grid when there are multiple pages
 - The current page number and total pages are visible to the user
+
+## Product Detail Page
+
+A dedicated page for viewing a single product's full information. Accessed by clicking a product card in the catalog.
+
+- The page URL uses the product slug: `/products/:slug`
+- The product is fetched from the backend API by slug
+- While the product is loading, a loading indicator is displayed
+- If the product is not found, an error message is displayed
+
+### Displayed Information
+
+- Product image (full-width, or placeholder if no image)
+- Product name
+- Full description (not truncated)
+- Price, with compare-at price shown as crossed-out if present
+- Category, if present
+- Tags, if present
+
+### Navigation
+
+- A back button is displayed at the top of the page to return to the catalog
+- The back button navigates to the previous page (browser history back)
 
 ## Product Management
 
@@ -180,6 +204,14 @@ GET /api/products/:id
 ```
 
 **Response (200 OK):** Returns the complete Product entity.
+
+#### Get Product by Slug
+
+```
+GET /api/products/by-slug/:slug
+```
+
+**Response (200 OK):** Returns the complete Product entity matching the given slug.
 
 #### Update Product
 

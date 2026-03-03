@@ -21,6 +21,14 @@
       },
       "complexity": {
         "useLiteralKeys": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": {
+          "level": "error",
+          "options": {
+            "ignoreRestSiblings": true
+          }
+        }
       }
     }
   },

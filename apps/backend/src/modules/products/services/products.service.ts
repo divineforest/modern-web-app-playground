@@ -6,8 +6,19 @@ import type { ListProductsQuery, PaginationResult } from '../domain/product.type
 import {
   countProducts,
   findAllProducts,
+  findProductBySlug,
   type ProductFilters,
 } from '../repositories/products.repository.js';
+
+/**
+ * Custom error for product not found
+ */
+export class ProductNotFoundError extends Error {
+  constructor(slug: string) {
+    super(`Product with slug ${slug} not found`);
+    this.name = 'ProductNotFoundError';
+  }
+}
 
 export interface ListProductsResult {
   products: Omit<Product, 'costPrice'>[];
@@ -52,12 +63,38 @@ export async function listProductsService(
 }
 
 /**
+ * Get a product by slug
+ * @param slug Product slug
+ * @param database Database instance (for dependency injection)
+ * @returns Product with costPrice excluded
+ * @throws ProductNotFoundError if product not found
+ */
+export async function getBySlugService(
+  slug: string,
+  database: Database = db
+): Promise<Omit<Product, 'costPrice'>> {
+  const product = await findProductBySlug(slug, database);
+
+  if (!product) {
+    throw new ProductNotFoundError(slug);
+  }
+
+  logger.info({ slug, productId: product.id }, 'Retrieved product by slug');
+
+  // Exclude costPrice from public response
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { costPrice, ...productWithoutCost } = product;
+  return productWithoutCost;
+}
+
+/**
  * Products service factory function for dependency injection
  * Returns an object with all product operations bound to a specific database
  */
 function createProductsService(database: Database = db) {
   return {
     list: (query?: ListProductsQuery) => listProductsService(query, database),
+    getBySlug: (slug: string) => getBySlugService(slug, database),
   };
 }
 

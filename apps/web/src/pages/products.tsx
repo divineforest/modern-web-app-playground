@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -15,6 +17,7 @@ const PAGE_SIZE = 20;
 interface Product {
   id: string;
   name: string;
+  slug: string;
   shortDescription: string | null;
   imageUrl: string | null;
   price: string;
@@ -113,71 +116,82 @@ export function ProductsPage() {
           >
             {products.map((product) => (
               <Card key={product.id} sx={{ display: 'flex', flexDirection: 'column', height: 360 }}>
-                <CardMedia
-                  component="img"
-                  image={product.imageUrl ?? noPhoto}
-                  alt={product.name}
+                <CardActionArea
+                  component={Link}
+                  to={`/products/${product.slug}`}
                   sx={{
-                    height: 200,
-                    flexShrink: 0,
-                    objectFit: product.imageUrl ? 'cover' : 'none',
-                    bgcolor: '#F3F4F6',
-                  }}
-                />
-                <CardContent
-                  sx={{
-                    flexGrow: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    overflow: 'hidden',
+                    height: '100%',
+                    alignItems: 'stretch',
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    component="h2"
+                  <CardMedia
+                    component="img"
+                    image={product.imageUrl ?? noPhoto}
+                    alt={product.name}
                     sx={{
+                      height: 200,
+                      flexShrink: 0,
+                      objectFit: product.imageUrl ? 'cover' : 'none',
+                      bgcolor: '#F3F4F6',
+                    }}
+                  />
+                  <CardContent
+                    sx={{
+                      flexGrow: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
                       overflow: 'hidden',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.3,
-                      mb: 0.5,
                     }}
                   >
-                    {product.name}
-                  </Typography>
-
-                  {product.shortDescription && (
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant="h6"
+                      component="h2"
                       sx={{
                         overflow: 'hidden',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
-                        mb: 1,
+                        lineHeight: 1.3,
+                        mb: 0.5,
                       }}
                     >
-                      {product.shortDescription}
+                      {product.name}
                     </Typography>
-                  )}
 
-                  <Box sx={{ mt: 'auto' }}>
-                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                      {formatPrice(product.price, product.currency)}
-                    </Typography>
-                    {product.compareAtPrice && (
+                    {product.shortDescription && (
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ textDecoration: 'line-through' }}
+                        sx={{
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          mb: 1,
+                        }}
                       >
-                        {formatPrice(product.compareAtPrice, product.currency)}
+                        {product.shortDescription}
                       </Typography>
                     )}
-                  </Box>
-                </CardContent>
+
+                    <Box sx={{ mt: 'auto' }}>
+                      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                        {formatPrice(product.price, product.currency)}
+                      </Typography>
+                      {product.compareAtPrice && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ textDecoration: 'line-through' }}
+                        >
+                          {formatPrice(product.compareAtPrice, product.currency)}
+                        </Typography>
+                      )}
+                    </Box>
+                  </CardContent>
+                </CardActionArea>
               </Card>
             ))}
           </Box>
