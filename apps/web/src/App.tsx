@@ -1,49 +1,121 @@
-import { useState } from 'react';
-import viteLogo from '/vite.svg';
-import reactLogo from './assets/react.svg';
-import './App.css';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
+import { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+
+interface Product {
+  id: string;
+  name: string;
+  shortDescription: string | null;
+  price: string;
+  compareAtPrice: string | null;
+  currency: string;
+}
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products?status=active');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch products: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setProducts(data.products);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchProducts();
+  }, []);
+
+  const formatPrice = (price: string, currency: string) => {
+    const numericPrice = Number.parseFloat(price);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(numericPrice);
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg">
+        <Box sx={{ mt: 4 }}>
+          <Alert severity="error">{error}</Alert>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank" rel="noopener">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React + MUI</h1>
-      <div className="card">
-        <Stack spacing={2} direction="row" sx={{ mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCount((count) => count + 1)}
-          >
-            Increment
-          </Button>
-          <Button variant="outlined" startIcon={<DeleteIcon />} onClick={() => setCount(0)}>
-            Reset
-          </Button>
-        </Stack>
-        <Typography variant="h6" component="p">
-          Count is {count}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ mb: 4 }}>
+        Mercado
+      </Typography>
+
+      {products.length === 0 ? (
+        <Typography variant="body1" color="text.secondary">
+          No products available at the moment.
         </Typography>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </>
+      ) : (
+        <Grid container spacing={3}>
+          {products.map((product) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" component="h2" gutterBottom>
+                    {product.name}
+                  </Typography>
+
+                  {product.shortDescription && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {product.shortDescription}
+                    </Typography>
+                  )}
+
+                  <Box sx={{ mt: 'auto' }}>
+                    <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                      {formatPrice(product.price, product.currency)}
+                    </Typography>
+                    {product.compareAtPrice && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ textDecoration: 'line-through' }}
+                      >
+                        {formatPrice(product.compareAtPrice, product.currency)}
+                      </Typography>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Container>
   );
 }
 

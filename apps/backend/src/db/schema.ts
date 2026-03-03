@@ -140,7 +140,7 @@ export const products = pgTable(
     description: text('description'),
     shortDescription: text('short_description'),
     category: text('category'),
-    tags: jsonb('tags'),
+    tags: jsonb('tags').$type<string[] | null>(),
     currency: varchar('currency', { length: 3 }).notNull(),
     price: numeric('price', { precision: 15, scale: 2 }).notNull(),
     compareAtPrice: numeric('compare_at_price', { precision: 15, scale: 2 }),
@@ -151,10 +151,7 @@ export const products = pgTable(
     length: numeric('length', { precision: 15, scale: 2 }),
   },
   (table) => [
-    check(
-      'products_status_check',
-      sql`${table.status} IN ('draft', 'active', 'archived')`
-    ),
+    check('products_status_check', sql`${table.status} IN ('draft', 'active', 'archived')`),
     uniqueIndex('idx_products_sku').on(table.sku),
     uniqueIndex('idx_products_slug').on(table.slug),
     index('idx_products_status').on(table.status),
