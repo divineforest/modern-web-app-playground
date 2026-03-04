@@ -75,6 +75,14 @@ Use a two-phase approach to avoid timeouts on large codebases:
 - `pnpm type-coverage`
 - If implementing from `docs/specs/`: Remove 🚧 from completed items
 
+**Phase 3: Browser QA (for UI changes)**
+- If the task touched `apps/web/` or added/modified user-facing features:
+  1. Start dev servers if not running (backend and web)
+  2. Use the browser tool to walk through the primary user flow end-to-end
+  3. Verify: page loads, interactive elements work, data persists across navigation
+  4. Check edge cases: empty states, error states, loading states
+- Skip this phase for backend-only changes with no UI impact
+
 ## AI Feedback Loop
 
 After completing a task, briefly evaluate:
