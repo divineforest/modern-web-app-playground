@@ -78,6 +78,7 @@ export type NewUser = typeof users.$inferInsert;
 /**
  * Orders table schema
  * Stores orders without foreign key dependencies (standalone entity)
+ * Also used for carts (status='cart') with userId or cartToken for identification
  */
 export const orders = pgTable(
   'orders',
@@ -103,16 +104,22 @@ export const orders = pgTable(
     customerNotes: text('customer_notes'),
     paidAt: timestamp('paid_at', { withTimezone: true }),
     paymentTransactionId: text('payment_transaction_id'),
+    userId: uuid('user_id'),
+    cartToken: uuid('cart_token'),
   },
   (table) => [
     check(
       'orders_status_check',
-      sql`${table.status} IN ('draft', 'confirmed', 'processing', 'shipped', 'fulfilled', 'paid', 'cancelled')`
+      sql`${table.status} IN ('draft', 'confirmed', 'processing', 'shipped', 'fulfilled', 'paid', 'cancelled', 'cart')`
     ),
     uniqueIndex('idx_orders_order_number').on(table.orderNumber),
+    uniqueIndex('idx_orders_cart_token')
+      .on(table.cartToken)
+      .where(sql`${table.cartToken} IS NOT NULL`),
     index('idx_orders_status').on(table.status),
     index('idx_orders_order_date').on(table.orderDate),
     index('idx_orders_payment_transaction_id').on(table.paymentTransactionId),
+    index('idx_orders_user_id').on(table.userId),
   ]
 );
 
@@ -162,3 +169,37 @@ export const products = pgTable(
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+/**
+ * Order items table schema
+ * Stores individual line items for orders and carts
+ * Snapshots product details at the time of addition for historical accuracy
+ */
+export const orderItems = pgTable(
+  'order_items',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id),
+    quantity: numeric('quantity', { precision: 10, scale: 0 }).notNull(),
+    unitPrice: numeric('unit_price', { precision: 15, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    productName: text('product_name').notNull(),
+    productSku: text('product_sku').notNull(),
+    productImageUrl: text('product_image_url'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('order_items_quantity_check', sql`${table.quantity}::int > 0`),
+    uniqueIndex('idx_order_items_order_product').on(table.orderId, table.productId),
+    index('idx_order_items_order_id').on(table.orderId),
+  ]
+);
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type NewOrderItem = typeof orderItems.$inferInsert;

@@ -89,6 +89,10 @@ export async function buildApp() {
   const { registerProductsRoutes } = await import('./modules/products/index.js');
   await fastify.register(registerProductsRoutes);
 
+  // Register cart routes - UNPROTECTED but with optional auth context
+  const { registerCartRoutes } = await import('./modules/cart/index.js');
+  await fastify.register(registerCartRoutes);
+
   // Register protected business API routes with authentication
   // All routes registered through this plugin will require API Bearer token authentication
   await fastify.register(async (protectedInstance) => {
@@ -200,6 +204,10 @@ export async function buildTestApp() {
   // Register public API routes - UNPROTECTED
   const { registerProductsRoutes } = await import('./modules/products/index.js');
   await fastify.register(registerProductsRoutes);
+
+  // Register cart routes - UNPROTECTED but with optional auth context
+  const { registerCartRoutes } = await import('./modules/cart/index.js');
+  await fastify.register(registerCartRoutes);
 
   // Register webhook routes (external, unprotected)
   await fastify.register(async (webhookInstance) => {

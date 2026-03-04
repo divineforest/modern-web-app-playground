@@ -11,6 +11,7 @@ const orderStatusEnum = [
   'fulfilled',
   'paid',
   'cancelled',
+  'cart',
 ] as const;
 export type OrderStatus = (typeof orderStatusEnum)[number];
 

@@ -91,3 +91,17 @@ export async function findProductBySlug(
   const results = await database.select().from(products).where(eq(products.slug, slug));
   return (results[0] as Product | undefined) || null;
 }
+
+/**
+ * Find a product by ID
+ * @param id Product ID
+ * @param database Database instance (for dependency injection)
+ * @returns Product or null if not found
+ */
+export async function findProductById(
+  id: string,
+  database: Database = db
+): Promise<Product | null> {
+  const results = await database.select().from(products).where(eq(products.id, id));
+  return (results[0] as Product | undefined) || null;
+}

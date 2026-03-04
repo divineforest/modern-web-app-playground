@@ -31,6 +31,8 @@ export function buildTestOrderData(overrides: Partial<NewOrder> = {}): NewOrder 
     paidAt: overrides.paidAt !== undefined ? overrides.paidAt : null,
     paymentTransactionId:
       overrides.paymentTransactionId !== undefined ? overrides.paymentTransactionId : null,
+    userId: overrides.userId !== undefined ? overrides.userId : null,
+    cartToken: overrides.cartToken !== undefined ? overrides.cartToken : null,
   };
 }
 

@@ -42,7 +42,8 @@ const CONSTRAINT_MESSAGES: Record<string, { message: string; details?: string }>
   },
   [CONSTRAINTS.ORDERS_STATUS_CHECK]: {
     message: 'Invalid order status',
-    details: 'Status must be one of: draft, confirmed, processing, shipped, fulfilled, cancelled',
+    details:
+      'Status must be one of: draft, confirmed, processing, shipped, fulfilled, paid, cancelled, cart',
   },
 };
 

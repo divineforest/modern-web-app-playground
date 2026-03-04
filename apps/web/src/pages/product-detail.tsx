@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
+import Add from '@mui/icons-material/Add';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import Remove from '@mui/icons-material/Remove';
+import ShoppingCart from '@mui/icons-material/ShoppingCart';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 
 interface Product {
@@ -24,12 +29,30 @@ interface Product {
   currency: string;
 }
 
+const CART_TOKEN_KEY = 'cartToken';
+
+function getCartToken(): string | null {
+  return localStorage.getItem(CART_TOKEN_KEY);
+}
+
+function setCartToken(token: string): void {
+  localStorage.setItem(CART_TOKEN_KEY, token);
+}
+
+function getCartHeaders(): HeadersInit {
+  const cartToken = getCartToken();
+  return cartToken ? { 'x-cart-token': cartToken } : {};
+}
+
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -67,6 +90,42 @@ export function ProductDetailPage() {
       style: 'currency',
       currency: currency,
     }).format(numericPrice);
+  };
+
+  const addToCart = async () => {
+    if (!product) return;
+
+    setAddingToCart(true);
+
+    try {
+      const response = await fetch('/api/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCartHeaders(),
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add item to cart');
+      }
+
+      const data = await response.json();
+      if (data.newCartToken) {
+        setCartToken(data.newCartToken);
+      }
+
+      setShowSuccess(true);
+      setQuantity(1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   if (loading) {
@@ -160,6 +219,42 @@ export function ProductDetailPage() {
             )}
           </Box>
 
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Quantity
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <IconButton
+                onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                disabled={quantity <= 1 || addingToCart}
+                size="small"
+              >
+                <Remove />
+              </IconButton>
+              <Typography variant="body1" sx={{ minWidth: 40, textAlign: 'center' }}>
+                {quantity}
+              </Typography>
+              <IconButton
+                onClick={() => setQuantity((prev) => prev + 1)}
+                disabled={addingToCart}
+                size="small"
+              >
+                <Add />
+              </IconButton>
+            </Box>
+
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<ShoppingCart />}
+              onClick={() => void addToCart()}
+              disabled={addingToCart}
+              fullWidth
+            >
+              {addingToCart ? 'Adding...' : 'Add to Cart'}
+            </Button>
+          </Box>
+
           {product.description && (
             <Box>
               <Typography variant="h6" gutterBottom>
@@ -172,6 +267,13 @@ export function ProductDetailPage() {
           )}
         </Box>
       </Box>
+
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={3000}
+        onClose={() => setShowSuccess(false)}
+        message="Added to cart!"
+      />
     </Container>
   );
 }

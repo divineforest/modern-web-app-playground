@@ -65,7 +65,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 ### FR-5: Remove Item from Cart
 
 - The system SHALL allow removing a single item from the cart by item ID.
-- 🚧 The system SHOULD delete the cart (order record) when the last item is removed.
+- The system SHOULD delete the cart (order record) when the last item is removed.
 
 ### FR-6: Clear Cart
 
@@ -92,7 +92,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 - The Cart page SHALL provide a remove button for each item.
 - The Cart page SHALL display a cart summary section with subtotal and total item count.
 - The Cart page SHALL display an empty state with a message and a link to continue shopping when the cart has no items.
-- 🚧 The Cart page SHALL include a "Proceed to checkout" button (disabled until checkout is implemented).
+- The Cart page SHALL include a "Proceed to checkout" button (disabled until checkout is implemented).
 - The Cart page SHALL persist the cart token in `localStorage` for guest users.
 - The Cart page SHALL show optimistic updates for quantity changes and removals, reverting on failure.
 
