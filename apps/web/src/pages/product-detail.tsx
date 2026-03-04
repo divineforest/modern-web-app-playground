@@ -204,17 +204,42 @@ export function ProductDetailPage() {
             </Box>
           )}
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h5" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-              {formatPrice(product.price, product.currency)}
-            </Typography>
+          <Box sx={{ mb: 3, display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
+            {(() => {
+              const numericPrice = Number.parseFloat(product.price);
+              const parts = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: product.currency,
+              }).formatToParts(numericPrice);
+              const symbol = parts.find((p) => p.type === 'currency')?.value ?? '';
+              const integer = parts
+                .filter((p) => p.type === 'integer' || p.type === 'group')
+                .map((p) => p.value)
+                .join('');
+              const fraction = parts.find((p) => p.type === 'fraction')?.value ?? '00';
+              return (
+                <Typography
+                  component="span"
+                  sx={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'flex-start' }}
+                >
+                  <Box component="span" sx={{ fontSize: '1rem', mt: '0.15em' }}>
+                    {symbol}
+                  </Box>
+                  <Box component="span" sx={{ fontSize: '2rem', lineHeight: 1 }}>
+                    {integer}
+                  </Box>
+                  <Box component="span" sx={{ fontSize: '1rem', mt: '0.15em' }}>
+                    {fraction}
+                  </Box>
+                </Typography>
+              );
+            })()}
             {product.compareAtPrice && (
-              <Typography
-                variant="h6"
-                color="text.secondary"
-                sx={{ textDecoration: 'line-through' }}
-              >
-                {formatPrice(product.compareAtPrice, product.currency)}
+              <Typography variant="body1" color="text.secondary">
+                Recommended:{' '}
+                <Box component="span" sx={{ textDecoration: 'line-through' }}>
+                  {formatPrice(product.compareAtPrice, product.currency)}
+                </Box>
               </Typography>
             )}
           </Box>

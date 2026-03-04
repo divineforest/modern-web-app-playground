@@ -177,18 +177,51 @@ export function ProductsPage() {
                     )}
 
                     <Box sx={{ mt: 'auto' }}>
-                      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                        {formatPrice(product.price, product.currency)}
-                      </Typography>
-                      {product.compareAtPrice && (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ textDecoration: 'line-through' }}
-                        >
-                          {formatPrice(product.compareAtPrice, product.currency)}
-                        </Typography>
-                      )}
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}
+                      >
+                        {(() => {
+                          const numericPrice = Number.parseFloat(product.price);
+                          const parts = new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: product.currency,
+                          }).formatToParts(numericPrice);
+                          const symbol = parts.find((p) => p.type === 'currency')?.value ?? '';
+                          const integer = parts
+                            .filter((p) => p.type === 'integer' || p.type === 'group')
+                            .map((p) => p.value)
+                            .join('');
+                          const fraction = parts.find((p) => p.type === 'fraction')?.value ?? '00';
+                          return (
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontWeight: 'bold',
+                                display: 'inline-flex',
+                                alignItems: 'flex-start',
+                              }}
+                            >
+                              <Box component="span" sx={{ fontSize: '0.8rem', mt: '0.1em' }}>
+                                {symbol}
+                              </Box>
+                              <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>
+                                {integer}
+                              </Box>
+                              <Box component="span" sx={{ fontSize: '0.8rem', mt: '0.1em' }}>
+                                {fraction}
+                              </Box>
+                            </Typography>
+                          );
+                        })()}
+                        {product.compareAtPrice && (
+                          <Typography variant="body2" color="text.secondary">
+                            Recommended:{' '}
+                            <Box component="span" sx={{ textDecoration: 'line-through' }}>
+                              {formatPrice(product.compareAtPrice, product.currency)}
+                            </Box>
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </CardContent>
                 </CardActionArea>
