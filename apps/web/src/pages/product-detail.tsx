@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getCartHeaders, setCartToken } from '../lib/cart-token';
+import { useCart } from '../contexts/cart-context';
 import noPhoto from '../assets/no-photo.svg';
 import Add from '@mui/icons-material/Add';
 import ArrowBack from '@mui/icons-material/ArrowBack';
@@ -29,24 +31,10 @@ interface Product {
   currency: string;
 }
 
-const CART_TOKEN_KEY = 'cartToken';
-
-function getCartToken(): string | null {
-  return localStorage.getItem(CART_TOKEN_KEY);
-}
-
-function setCartToken(token: string): void {
-  localStorage.setItem(CART_TOKEN_KEY, token);
-}
-
-function getCartHeaders(): HeadersInit {
-  const cartToken = getCartToken();
-  return cartToken ? { 'x-cart-token': cartToken } : {};
-}
-
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { refreshCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +107,7 @@ export function ProductDetailPage() {
         setCartToken(data.newCartToken);
       }
 
+      refreshCart();
       setShowSuccess(true);
       setQuantity(1);
     } catch (err) {

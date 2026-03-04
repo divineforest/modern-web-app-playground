@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getCartHeaders, removeCartToken } from '../lib/cart-token';
+import { useCart } from '../contexts/cart-context';
 import noPhoto from '../assets/no-photo.svg';
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
@@ -36,22 +38,8 @@ interface Cart {
   currency: string | null;
 }
 
-const CART_TOKEN_KEY = 'cartToken';
-
-function getCartToken(): string | null {
-  return localStorage.getItem(CART_TOKEN_KEY);
-}
-
-function removeCartToken(): void {
-  localStorage.removeItem(CART_TOKEN_KEY);
-}
-
-function getCartHeaders(): HeadersInit {
-  const cartToken = getCartToken();
-  return cartToken ? { 'x-cart-token': cartToken } : {};
-}
-
 export function CartPage() {
+  const { updateItemCount } = useCart();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +113,7 @@ export function CartPage() {
 
       const data = await response.json();
       setCart(data);
+      updateItemCount(data.itemCount ?? 0);
     } catch (err) {
       setCart(previousCart);
       setError(err instanceof Error ? err.message : 'Failed to update quantity');
@@ -161,6 +150,7 @@ export function CartPage() {
 
       const data = await response.json();
       setCart(data);
+      updateItemCount(data.itemCount ?? 0);
 
       if (data.items.length === 0) {
         removeCartToken();
@@ -200,6 +190,7 @@ export function CartPage() {
       }
 
       removeCartToken();
+      updateItemCount(0);
     } catch (err) {
       setCart(previousCart);
       setError(err instanceof Error ? err.message : 'Failed to clear cart');
