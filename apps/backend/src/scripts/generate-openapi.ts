@@ -9,24 +9,26 @@
  *   pnpm openapi:generate --contract=orders        # Generate only orders API
  *   pnpm openapi:generate --yaml                   # Also generate YAML format
  *
- * Available contracts: orders
+ * Available contracts: cart, products, orders
  *
  * Output directory: generated/openapi/
  *   - openapi.json                    (all contracts)
- *   - openapi-orders.json             (single contract filter)
+ *   - openapi-{contract}.json         (single contract filter)
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { cartContract, ordersContract, productsContract } from '@mercado/api-contracts';
 import { initContract } from '@ts-rest/core';
 import { generateOpenApi } from '@ts-rest/open-api';
 import type { OpenAPIObject, SecurityRequirementObject } from 'openapi3-ts/oas30';
 import { stringify as yamlStringify } from 'yaml';
-import { ordersContract } from '../modules/orders/api/orders.contracts.js';
 
 /**
  * Available contracts that can be filtered
  */
 const AVAILABLE_CONTRACTS = {
+  cart: cartContract,
+  products: productsContract,
   orders: ordersContract,
 } as const;
 
@@ -113,6 +115,14 @@ const DEFAULT_SECURITY: SecurityRequirementObject[] = [{ BearerAuth: [] }];
  */
 const TAGS = [
   {
+    name: 'Cart',
+    description: 'Shopping cart endpoints for managing cart items and checkout',
+  },
+  {
+    name: 'Products',
+    description: 'Product catalog endpoints for browsing and retrieving product information',
+  },
+  {
     name: 'Orders',
     description: 'Order management endpoints for creating, listing, and managing orders',
   },
@@ -122,6 +132,12 @@ const TAGS = [
  * Map contract paths to their corresponding tags
  */
 function getTagsForPath(path: string): string[] {
+  if (path.includes('/cart')) {
+    return ['Cart'];
+  }
+  if (path.includes('/products')) {
+    return ['Products'];
+  }
   if (path.includes('/orders')) {
     return ['Orders'];
   }

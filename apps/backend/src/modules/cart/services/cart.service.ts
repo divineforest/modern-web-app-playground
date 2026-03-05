@@ -133,7 +133,7 @@ export async function addItemToCart(
   productId: string,
   quantity: number,
   database: Database = db
-): Promise<CartResponse & { newCartToken?: string }> {
+): Promise<CartResponse> {
   const product = await findProductById(productId, database);
 
   if (!product) {

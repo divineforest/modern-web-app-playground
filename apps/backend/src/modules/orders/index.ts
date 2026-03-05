@@ -2,7 +2,7 @@
 // API LAYER EXPORTS
 // ============================================================================
 
-export { ordersContract } from './api/orders.contracts.js';
+export { ordersContract } from '@mercado/api-contracts';
 export { registerOrdersRoutes } from './api/orders.routes.js';
 
 // ============================================================================

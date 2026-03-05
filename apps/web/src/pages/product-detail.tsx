@@ -1,5 +1,8 @@
+import type { ClientInferResponseBody } from '@ts-rest/core';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { apiContract } from '@mercado/api-contracts';
+import { api } from '../lib/api-client';
 import { getCartHeaders, setCartToken } from '../lib/cart-token';
 import { useCart } from '../contexts/cart-context';
 import noPhoto from '../assets/no-photo.svg';
@@ -17,19 +20,7 @@ import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  shortDescription: string | null;
-  category: string | null;
-  tags: string[] | null;
-  imageUrl: string | null;
-  price: string;
-  compareAtPrice: string | null;
-  currency: string;
-}
+type Product = ClientInferResponseBody<typeof apiContract.products.getBySlug, 200>;
 
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -53,15 +44,17 @@ export function ProductDetailPage() {
 
     async function fetchProduct() {
       try {
-        const response = await fetch(`/api/products/by-slug/${slug}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Product not found');
-          }
-          throw new Error(`Failed to fetch product: ${response.statusText}`);
+        const response = await api.products.getBySlug({
+          params: { slug: slug as string },
+        });
+
+        if (response.status === 200) {
+          setProduct(response.body);
+        } else if (response.status === 404) {
+          throw new Error('Product not found');
+        } else {
+          throw new Error('Failed to fetch product');
         }
-        const data = await response.json();
-        setProduct(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -86,30 +79,25 @@ export function ProductDetailPage() {
     setAddingToCart(true);
 
     try {
-      const response = await fetch('/api/cart/items', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getCartHeaders(),
-        },
-        body: JSON.stringify({
+      const response = await api.cart.addItem({
+        body: {
           productId: product.id,
           quantity,
-        }),
+        },
+        extraHeaders: getCartHeaders(),
       });
 
-      if (!response.ok) {
+      if (response.status === 200) {
+        if (response.body.newCartToken) {
+          setCartToken(response.body.newCartToken);
+        }
+
+        refreshCart();
+        setShowSuccess(true);
+        setQuantity(1);
+      } else {
         throw new Error('Failed to add item to cart');
       }
-
-      const data = await response.json();
-      if (data.newCartToken) {
-        setCartToken(data.newCartToken);
-      }
-
-      refreshCart();
-      setShowSuccess(true);
-      setQuantity(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add to cart');
     } finally {

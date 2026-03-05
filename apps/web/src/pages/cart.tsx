@@ -1,5 +1,8 @@
+import type { ClientInferResponseBody } from '@ts-rest/core';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { apiContract } from '@mercado/api-contracts';
+import { api } from '../lib/api-client';
 import { getCartHeaders, removeCartToken } from '../lib/cart-token';
 import { useCart } from '../contexts/cart-context';
 import noPhoto from '../assets/no-photo.svg';
@@ -19,24 +22,7 @@ import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 
-interface CartItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productSku: string;
-  productImageUrl: string | null;
-  unitPrice: string;
-  quantity: number;
-  lineTotal: string;
-  currency: string;
-}
-
-interface Cart {
-  items: CartItem[];
-  subtotal: string;
-  itemCount: number;
-  currency: string | null;
-}
+type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
 
 export function CartPage() {
   const { updateItemCount } = useCart();
@@ -55,17 +41,16 @@ export function CartPage() {
 
   const fetchCart = useCallback(async () => {
     try {
-      const response = await fetch('/api/cart', {
-        headers: getCartHeaders(),
+      const response = await api.cart.getCart({
+        extraHeaders: getCartHeaders(),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch cart: ${response.statusText}`);
+      if (response.status === 200) {
+        setCart(response.body);
+        setError(null);
+      } else {
+        throw new Error('Failed to fetch cart');
       }
-
-      const data = await response.json();
-      setCart(data);
-      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -98,22 +83,18 @@ export function CartPage() {
     });
 
     try {
-      const response = await fetch(`/api/cart/items/${itemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getCartHeaders(),
-        },
-        body: JSON.stringify({ quantity: newQuantity }),
+      const response = await api.cart.updateItem({
+        params: { itemId },
+        body: { quantity: newQuantity },
+        extraHeaders: getCartHeaders(),
       });
 
-      if (!response.ok) {
+      if (response.status === 200) {
+        setCart(response.body);
+        updateItemCount(response.body.itemCount);
+      } else {
         throw new Error('Failed to update quantity');
       }
-
-      const data = await response.json();
-      setCart(data);
-      updateItemCount(data.itemCount ?? 0);
     } catch (err) {
       setCart(previousCart);
       setError(err instanceof Error ? err.message : 'Failed to update quantity');
@@ -139,21 +120,20 @@ export function CartPage() {
     });
 
     try {
-      const response = await fetch(`/api/cart/items/${itemId}`, {
-        method: 'DELETE',
-        headers: getCartHeaders(),
+      const response = await api.cart.removeItem({
+        params: { itemId },
+        extraHeaders: getCartHeaders(),
       });
 
-      if (!response.ok) {
+      if (response.status === 200) {
+        setCart(response.body);
+        updateItemCount(response.body.itemCount);
+
+        if (response.body.items.length === 0) {
+          removeCartToken();
+        }
+      } else {
         throw new Error('Failed to remove item');
-      }
-
-      const data = await response.json();
-      setCart(data);
-      updateItemCount(data.itemCount ?? 0);
-
-      if (data.items.length === 0) {
-        removeCartToken();
       }
     } catch (err) {
       setCart(previousCart);
@@ -180,17 +160,16 @@ export function CartPage() {
     });
 
     try {
-      const response = await fetch('/api/cart', {
-        method: 'DELETE',
-        headers: getCartHeaders(),
+      const response = await api.cart.clearCart({
+        extraHeaders: getCartHeaders(),
       });
 
-      if (!response.ok) {
+      if (response.status === 200) {
+        removeCartToken();
+        updateItemCount(0);
+      } else {
         throw new Error('Failed to clear cart');
       }
-
-      removeCartToken();
-      updateItemCount(0);
     } catch (err) {
       setCart(previousCart);
       setError(err instanceof Error ? err.message : 'Failed to clear cart');

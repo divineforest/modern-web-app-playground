@@ -1,3 +1,4 @@
+import { ordersContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { logger } from '../../../lib/logger.js';
@@ -6,7 +7,6 @@ import {
   OrderValidationError,
   ordersService,
 } from '../services/orders.service.js';
-import { ordersContract } from './orders.contracts.js';
 
 /**
  * Initialize ts-rest server for type-safe route handling

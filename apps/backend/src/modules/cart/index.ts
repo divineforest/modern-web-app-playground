@@ -2,7 +2,7 @@
 // API LAYER EXPORTS
 // ============================================================================
 
-export { cartContract } from './api/cart.contracts.js';
+export { cartContract } from '@mercado/api-contracts';
 export { registerCartRoutes } from './api/cart.routes.js';
 
 // ============================================================================
@@ -12,8 +12,6 @@ export { registerCartRoutes } from './api/cart.routes.js';
 export type {
   AddItemInput,
   CartIdentifier,
-  CartItem,
-  CartResponse,
   MergeCartInput,
   UpdateItemInput,
 } from './domain/cart.types.js';

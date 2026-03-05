@@ -1,3 +1,4 @@
+import { cartContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import {
@@ -15,7 +16,6 @@ import {
   ProductNotAvailableError,
   ProductNotFoundError,
 } from '../services/cart.service.js';
-import { cartContract } from './cart.contracts.js';
 
 const s = initServer();
 

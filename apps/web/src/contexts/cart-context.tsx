@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { api } from '../lib/api-client';
 import { getCartHeaders, getCartToken } from '../lib/cart-token';
 
 interface CartContextValue {
@@ -20,12 +21,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const fetchCartCount = useCallback(async () => {
     if (!getCartToken()) return;
     try {
-      const response = await fetch('/api/cart', { headers: getCartHeaders() });
-      if (!response.ok) {
-        throw new Error('Failed to fetch cart');
+      const response = await api.cart.getCart({
+        extraHeaders: getCartHeaders(),
+      });
+
+      if (response.status === 200) {
+        setItemCount(response.body.itemCount);
       }
-      const data = await response.json();
-      setItemCount((data.itemCount as number | undefined) ?? 0);
     } catch {
       // silently ignore network errors for badge
     }

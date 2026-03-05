@@ -12,7 +12,7 @@ export function removeCartToken(): void {
   localStorage.removeItem(CART_TOKEN_KEY);
 }
 
-export function getCartHeaders(): HeadersInit {
+export function getCartHeaders(): Record<string, string> {
   const cartToken = getCartToken();
   return cartToken ? { 'x-cart-token': cartToken } : {};
 }

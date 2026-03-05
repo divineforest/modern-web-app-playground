@@ -1,5 +1,8 @@
+import type { ClientInferResponseBody } from '@ts-rest/core';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { apiContract } from '@mercado/api-contracts';
+import { api } from '../lib/api-client';
 import noPhoto from '../assets/no-photo.svg';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -14,23 +17,9 @@ import Typography from '@mui/material/Typography';
 
 const PAGE_SIZE = 20;
 
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  shortDescription: string | null;
-  imageUrl: string | null;
-  price: string;
-  compareAtPrice: string | null;
-  currency: string;
-}
-
-interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+type ProductsListResponse = ClientInferResponseBody<typeof apiContract.products.list, 200>;
+type Product = ProductsListResponse['products'][number];
+type PaginationMeta = ProductsListResponse['pagination'];
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,18 +33,20 @@ export function ProductsPage() {
 
     async function fetchProducts() {
       try {
-        const params = new URLSearchParams({
-          status: 'active',
-          page: String(page),
-          limit: String(PAGE_SIZE),
+        const response = await api.products.list({
+          query: {
+            status: 'active',
+            page,
+            limit: PAGE_SIZE,
+          },
         });
-        const response = await fetch(`/api/products?${params.toString()}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.statusText}`);
+
+        if (response.status === 200) {
+          setProducts(response.body.products);
+          setPagination(response.body.pagination);
+        } else {
+          throw new Error('Failed to fetch products');
         }
-        const data = await response.json();
-        setProducts(data.products);
-        setPagination(data.pagination);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {

@@ -1,8 +1,8 @@
+import { productsContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { logger } from '../../../lib/logger.js';
 import { ProductNotFoundError, productsService } from '../services/products.service.js';
-import { productsContract } from './products.contracts.js';
 
 /**
  * Initialize ts-rest server for type-safe route handling
