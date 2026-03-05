@@ -71,6 +71,32 @@ export const users = pgTable('users', {
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
+/**
+ * Sessions table schema
+ * Stores active user sessions for cookie-based authentication
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('idx_sessions_token').on(table.token),
+    index('idx_sessions_user_id').on(table.userId),
+    index('idx_sessions_expires_at').on(table.expiresAt),
+  ]
+);
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+
 // =============================================================================
 // Billing Tables
 // =============================================================================

@@ -6,7 +6,6 @@ const testDatabaseUrl = process.env['DATABASE_URL'] ?? DEFAULT_TEST_DATABASE_URL
 
 process.env['DATABASE_URL'] = testDatabaseUrl;
 process.env['NODE_ENV'] = 'test';
-process.env['API_BEARER_TOKENS'] = 'test_token_12345';
 
 // VIES API configuration for tests
 process.env['VIES_API_KEY'] = 'test_vies_api_key';

@@ -1,7 +1,6 @@
 import { checkoutContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { extractUserContext } from '../../../infra/auth/token-validator.js';
+import type { FastifyInstance } from 'fastify';
 import { logger } from '../../../lib/logger.js';
 import {
   CartNotFoundError,
@@ -14,17 +13,12 @@ import {
 
 const s = initServer();
 
-function extractUserId(request: FastifyRequest): string | null {
-  const userContext = extractUserContext(request);
-  return userContext.userId || null;
-}
+const CART_TOKEN_COOKIE_NAME = 'cart_token';
 
 const router = s.router(checkoutContract, {
   checkout: async ({ request, body }) => {
-    const userId = extractUserId(request);
-
     try {
-      if (!userId) {
+      if (!request.user) {
         return {
           status: 401 as const,
           body: {
@@ -33,8 +27,8 @@ const router = s.router(checkoutContract, {
         };
       }
 
-      const cartToken = request.headers['x-cart-token'] as string | undefined;
-      const result = await checkoutService.checkout(userId, body, cartToken);
+      const cartToken = request.cookies[CART_TOKEN_COOKIE_NAME];
+      const result = await checkoutService.checkout(request.user.id, body, cartToken);
 
       return {
         status: 200 as const,
@@ -86,7 +80,7 @@ const router = s.router(checkoutContract, {
         };
       }
 
-      logger.error({ error, body, userId }, 'Unexpected error in checkout route');
+      logger.error({ error, body, userId: request.user?.id }, 'Unexpected error in checkout route');
       return {
         status: 500 as const,
         body: {

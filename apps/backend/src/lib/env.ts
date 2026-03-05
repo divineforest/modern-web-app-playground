@@ -60,8 +60,11 @@ export const env = createEnv({
     TEMPORAL_API_KEY: z.string().default('FAKE_TEMPORAL_API_KEY'),
 
     // API Bearer Token Authentication
-    // Dev: Uses dummy token. Production: REQUIRED (comma-separated list)
-    API_BEARER_TOKENS: devDefault(z.string().min(1), 'dev-bearer-token-12345'),
+    // Dev: Uses dummy token. Production: OPTIONAL (comma-separated list, legacy support)
+    API_BEARER_TOKENS: z.string().min(1).optional(),
+
+    // Session Configuration
+    SESSION_EXPIRY_DAYS: z.coerce.number().positive().default(7),
 
     // Automatic Job Generation Configuration
     JOB_GENERATION_DUE_OFFSET_DAYS: z.coerce.number().positive().default(2),
@@ -115,6 +118,8 @@ export const env = createEnv({
     TEMPORAL_API_KEY: process.env['TEMPORAL_API_KEY'],
 
     API_BEARER_TOKENS: process.env['API_BEARER_TOKENS'],
+
+    SESSION_EXPIRY_DAYS: process.env['SESSION_EXPIRY_DAYS'],
 
     // Job Generation Configuration
     JOB_GENERATION_DUE_OFFSET_DAYS: process.env['JOB_GENERATION_DUE_OFFSET_DAYS'],

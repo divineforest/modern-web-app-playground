@@ -1,3 +1,12 @@
+export { authContract } from './auth/contract.js';
+export {
+  registerInputSchema,
+  loginInputSchema,
+  userProfileSchema,
+  type RegisterInput,
+  type LoginInput,
+  type UserProfile,
+} from './auth/schemas.js';
 export { cartContract } from './cart/contract.js';
 export * from './cart/schemas.js';
 export { checkoutContract } from './checkout/contract.js';

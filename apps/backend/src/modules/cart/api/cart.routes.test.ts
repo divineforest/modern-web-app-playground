@@ -2,11 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestProduct } from '../../../../tests/factories/products.js';
+import { createAuthenticatedUser } from '../../../../tests/helpers/auth.js';
 import { buildTestApp } from '../../../app.js';
-import { db, orderItems, orders, products } from '../../../db/index.js';
+import { db, orderItems, orders, products, sessions, users } from '../../../db/index.js';
 import type { Product } from '../../products/domain/product.entity.js';
-
-const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 describe('Cart Routes', () => {
   let fastify: FastifyInstance;
@@ -34,6 +33,8 @@ describe('Cart Routes', () => {
   afterEach(async () => {
     await db.delete(orderItems);
     await db.delete(orders);
+    await db.delete(sessions);
+    await db.delete(users);
     await db.delete(products);
     await fastify.close();
   });
@@ -65,15 +66,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
-      expect(cartToken).toBeDefined();
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      expect(cartCookie).toBeDefined();
 
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/cart',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartCookie?.value || '',
         },
       });
 
@@ -118,14 +118,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const firstBody = JSON.parse(firstResponse.payload);
-      const cartToken = firstBody.newCartToken;
+      const cartCookie = firstResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
 
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/cart/items',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           productId: testProduct2.id,
@@ -155,8 +155,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/cart/items',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           productId: testProduct.id,
@@ -228,8 +228,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/cart/items',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           productId: usdProduct.id,
@@ -268,7 +268,8 @@ describe('Cart Routes', () => {
       });
 
       const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
       const itemId = addBody.items[0]?.id;
 
       expect(itemId).toBeDefined();
@@ -276,8 +277,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/cart/items/${itemId}`,
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           quantity: 5,
@@ -300,14 +301,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
 
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/cart/items/${randomUUID()}`,
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           quantity: 5,
@@ -344,14 +345,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const addBody1 = JSON.parse(addResponse1.payload);
-      const cartToken = addBody1.newCartToken;
+      const cartCookie = addResponse1.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
 
       await fastify.inject({
         method: 'POST',
         url: '/api/cart/items',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           productId: testProduct2.id,
@@ -362,8 +363,8 @@ describe('Cart Routes', () => {
       const cartResponse = await fastify.inject({
         method: 'GET',
         url: '/api/cart',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -374,8 +375,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/cart/items/${itemToRemove}`,
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -396,7 +397,8 @@ describe('Cart Routes', () => {
       });
 
       const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
       const itemId = addBody.items[0]?.id;
 
       expect(itemId).toBeDefined();
@@ -404,8 +406,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/cart/items/${itemId}`,
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -417,8 +419,8 @@ describe('Cart Routes', () => {
       const cartResponse = await fastify.inject({
         method: 'GET',
         url: '/api/cart',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -436,14 +438,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
 
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/cart/items/${randomUUID()}`,
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -462,14 +464,14 @@ describe('Cart Routes', () => {
         },
       });
 
-      const addBody = JSON.parse(addResponse.payload);
-      const cartToken = addBody.newCartToken;
+      const cartCookie = addResponse.cookies.find((c) => c.name === 'cart_token');
+      const cartToken = cartCookie?.value || '';
 
       await fastify.inject({
         method: 'POST',
         url: '/api/cart/items',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
         payload: {
           productId: testProduct2.id,
@@ -480,8 +482,8 @@ describe('Cart Routes', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: '/api/cart',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -492,8 +494,8 @@ describe('Cart Routes', () => {
       const cartResponse = await fastify.inject({
         method: 'GET',
         url: '/api/cart',
-        headers: {
-          'x-cart-token': cartToken,
+        cookies: {
+          cart_token: cartToken,
         },
       });
 
@@ -532,14 +534,13 @@ describe('Cart Routes', () => {
     });
 
     it('should return 404 for non-existent guest cart', async () => {
-      const validToken = process.env['API_BEARER_TOKENS']?.split(',')[0] || 'test-token';
+      const auth = await createAuthenticatedUser('merge-test@example.com', 'password123', db);
 
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/cart/merge',
-        headers: {
-          Authorization: `Bearer ${validToken}`,
-          'X-User-Id': TEST_USER_ID,
+        cookies: {
+          sid: auth.sessionToken,
         },
         payload: {
           cartToken: randomUUID(),

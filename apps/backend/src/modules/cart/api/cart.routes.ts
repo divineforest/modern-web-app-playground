@@ -1,11 +1,7 @@
 import { cartContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import {
-  extractBearerToken,
-  extractUserContext,
-  validateToken,
-} from '../../../infra/auth/token-validator.js';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { authService } from '../../auth/services/auth.service.js';
 import { logger } from '../../../lib/logger.js';
 import type { CartIdentifier } from '../domain/cart.types.js';
 import {
@@ -19,27 +15,48 @@ import {
 
 const s = initServer();
 
+const CART_TOKEN_COOKIE_NAME = 'cart_token';
+
+/**
+ * Set cart token cookie on response
+ */
+function setCartTokenCookie(reply: FastifyReply, token: string): void {
+  reply.setCookie(CART_TOKEN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] !== 'development',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 90,
+  });
+}
+
 /**
  * Extract cart identifier from request
- * Checks Authorization header first (authenticated user), then x-cart-token (guest)
+ * Checks for authenticated user (session cookie) first, then cart_token cookie (guest)
  */
-function extractCartIdentifier(request: FastifyRequest): CartIdentifier {
-  const authHeader = request.headers.authorization;
+async function extractCartIdentifier(request: FastifyRequest): Promise<CartIdentifier> {
+  // Check if user is already authenticated via session plugin
+  if (request.user) {
+    return { type: 'user', userId: request.user.id };
+  }
 
-  if (authHeader) {
-    const token = extractBearerToken(authHeader);
-    if (token && validateToken(token)) {
-      const userContext = extractUserContext(request);
-      if (userContext.userId) {
-        return { type: 'user', userId: userContext.userId };
-      }
+  // Check for session cookie to resolve user (cart routes are public, so session plugin isn't active)
+  const sessionToken = request.cookies['sid'];
+  if (sessionToken) {
+    try {
+      const user = await authService.validateSession(sessionToken);
+      return { type: 'user', userId: user.id };
+    } catch {
+      // Session invalid or expired, treat as guest
     }
   }
 
-  const cartToken = request.headers['x-cart-token'] as string | undefined;
+  // Fallback to guest cart token
+  const cartToken = request.cookies[CART_TOKEN_COOKIE_NAME];
   if (cartToken) {
     return { type: 'guest', cartToken };
   }
+
   return { type: 'guest' };
 }
 
@@ -47,14 +64,18 @@ function extractCartIdentifier(request: FastifyRequest): CartIdentifier {
  * Extract authenticated user ID from request
  * Returns null if not authenticated
  */
-function extractAuthenticatedUserId(request: FastifyRequest): string | null {
-  const authHeader = request.headers.authorization;
+async function extractAuthenticatedUserId(request: FastifyRequest): Promise<string | null> {
+  if (request.user) {
+    return request.user.id;
+  }
 
-  if (authHeader) {
-    const token = extractBearerToken(authHeader);
-    if (token && validateToken(token)) {
-      const userContext = extractUserContext(request);
-      return userContext.userId || null;
+  const sessionToken = request.cookies['sid'];
+  if (sessionToken) {
+    try {
+      const user = await authService.validateSession(sessionToken);
+      return user.id;
+    } catch {
+      // Session invalid or expired
     }
   }
 
@@ -64,7 +85,7 @@ function extractAuthenticatedUserId(request: FastifyRequest): string | null {
 const router = s.router(cartContract, {
   getCart: async ({ request }) => {
     try {
-      const identifier = extractCartIdentifier(request);
+      const identifier = await extractCartIdentifier(request);
       const cart = await cartService.getCart(identifier);
 
       return {
@@ -84,8 +105,13 @@ const router = s.router(cartContract, {
 
   addItem: async ({ request, body }) => {
     try {
-      const identifier = extractCartIdentifier(request);
+      const identifier = await extractCartIdentifier(request);
       const result = await cartService.addItem(identifier, body.productId, body.quantity);
+
+      // Store newCartToken on request for onSend hook to set cookie
+      if (result.newCartToken) {
+        (request as FastifyRequest & { newCartToken?: string }).newCartToken = result.newCartToken;
+      }
 
       return {
         status: 200 as const,
@@ -131,7 +157,7 @@ const router = s.router(cartContract, {
 
   updateItem: async ({ request, params, body }) => {
     try {
-      const identifier = extractCartIdentifier(request);
+      const identifier = await extractCartIdentifier(request);
       const cart = await cartService.updateItemQuantity(identifier, params.itemId, body.quantity);
 
       return {
@@ -169,7 +195,7 @@ const router = s.router(cartContract, {
 
   removeItem: async ({ request, params }) => {
     try {
-      const identifier = extractCartIdentifier(request);
+      const identifier = await extractCartIdentifier(request);
       const cart = await cartService.removeItem(identifier, params.itemId);
 
       return {
@@ -207,7 +233,7 @@ const router = s.router(cartContract, {
 
   clearCart: async ({ request }) => {
     try {
-      const identifier = extractCartIdentifier(request);
+      const identifier = await extractCartIdentifier(request);
       await cartService.clearCart(identifier);
 
       return {
@@ -229,7 +255,7 @@ const router = s.router(cartContract, {
 
   mergeCart: async ({ request, body }) => {
     try {
-      const userId = extractAuthenticatedUserId(request);
+      const userId = await extractAuthenticatedUserId(request);
 
       if (!userId) {
         return {
@@ -271,6 +297,15 @@ const router = s.router(cartContract, {
  * Register cart routes with Fastify instance
  */
 export function registerCartRoutes(fastify: FastifyInstance) {
+  // Add onSend hook to set cart token cookie when newCartToken is present
+  fastify.addHook('onSend', (request, reply, _payload, done) => {
+    const req = request as FastifyRequest & { newCartToken?: string };
+    if (req.newCartToken) {
+      setCartTokenCookie(reply, req.newCartToken);
+    }
+    done();
+  });
+
   return s.registerRouter(cartContract, router, fastify, {
     logInitialization: true,
   });

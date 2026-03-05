@@ -15,6 +15,9 @@ export async function buildApp() {
   // Create Fastify instance with configuration
   const fastify = Fastify(serverConfig);
 
+  // Register cookie support
+  await fastify.register(import('@fastify/cookie'));
+
   // Register CORS
   await fastify.register(import('@fastify/cors'), {
     origin: env.NODE_ENV === 'development', // Allow all origins in dev
@@ -84,6 +87,10 @@ export async function buildApp() {
 
   // Register infrastructure routes (health, metrics, etc.) - UNPROTECTED
   await fastify.register(registerInfrastructureRoutes);
+
+  // Register auth routes - UNPROTECTED (login, register, logout are public; /me requires auth)
+  const { registerAuthRoutes } = await import('./modules/auth/index.js');
+  await fastify.register(registerAuthRoutes);
 
   // Register public API routes - UNPROTECTED
   const { registerProductsRoutes } = await import('./modules/products/index.js');
@@ -176,6 +183,9 @@ export async function buildTestApp() {
     logger: false, // Disable logging in tests
   });
 
+  // Register cookie support
+  await fastify.register(import('@fastify/cookie'));
+
   // Register only essential plugins for testing
   await fastify.register(import('@fastify/cors'), {
     origin: true,
@@ -202,6 +212,10 @@ export async function buildTestApp() {
 
   // Register infrastructure routes - UNPROTECTED
   await fastify.register(registerInfrastructureRoutes);
+
+  // Register auth routes - UNPROTECTED (login, register, logout are public; /me requires auth)
+  const { registerAuthRoutes } = await import('./modules/auth/index.js');
+  await fastify.register(registerAuthRoutes);
 
   // Register public API routes - UNPROTECTED
   const { registerProductsRoutes } = await import('./modules/products/index.js');

@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import './index.css';
+import { AuthProvider } from './contexts/auth-context';
 import { CartProvider } from './contexts/cart-context';
 import { router } from './router';
 import { theme } from './theme';
@@ -18,7 +19,9 @@ createRoot(rootElement).render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <CartProvider>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </CartProvider>
     </ThemeProvider>
   </StrictMode>

@@ -204,9 +204,7 @@ const router = s.router(ordersContract, {
    */
   getByOrderNumber: async ({ request, params }) => {
     try {
-      const userContext = request.headers['x-user-id'] as string | undefined;
-
-      if (!userContext) {
+      if (!request.user) {
         return {
           status: 401 as const,
           body: {
@@ -215,7 +213,7 @@ const router = s.router(ordersContract, {
         };
       }
 
-      const order = await ordersService.getByOrderNumber(params.orderNumber, userContext);
+      const order = await ordersService.getByOrderNumber(params.orderNumber, request.user.id);
 
       return {
         status: 200 as const,

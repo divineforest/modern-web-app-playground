@@ -3,26 +3,23 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestOrderItem } from '../../../../tests/factories/order-items.js';
 import { createTestOrder } from '../../../../tests/factories/orders.js';
 import { createTestProduct } from '../../../../tests/factories/products.js';
+import { createAuthenticatedUser } from '../../../../tests/helpers/auth.js';
 import { buildTestApp } from '../../../app.js';
-import { db, orderItems, orders, products } from '../../../db/index.js';
+import { db, orderItems, orders, products, sessions, users } from '../../../db/index.js';
 import type { Product } from '../../products/domain/product.entity.js';
-
-const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
-const TEST_TOKEN = process.env['API_BEARER_TOKENS']?.split(',')[0]?.trim() || 'test_token_12345';
-
-const authHeaders = {
-  authorization: `Bearer ${TEST_TOKEN}`,
-  'x-user-id': TEST_USER_ID,
-  'x-user-email': 'test@example.com',
-  'x-user-name': 'Test User',
-};
 
 describe('Checkout Routes', () => {
   let fastify: FastifyInstance;
   let testProduct: Product;
+  let userId: string;
+  let sessionToken: string;
 
   beforeEach(async () => {
     fastify = await buildTestApp();
+
+    const auth = await createAuthenticatedUser('test@example.com', 'password123', db);
+    userId = auth.userId;
+    sessionToken = auth.sessionToken;
 
     testProduct = await createTestProduct({
       status: 'active',
@@ -35,6 +32,8 @@ describe('Checkout Routes', () => {
   afterEach(async () => {
     await db.delete(orderItems);
     await db.delete(orders);
+    await db.delete(sessions);
+    await db.delete(users);
     await db.delete(products);
     await fastify.close();
   });
@@ -43,7 +42,7 @@ describe('Checkout Routes', () => {
     it('should successfully checkout cart with valid addresses', async () => {
       const cart = await createTestOrder({
         status: 'cart',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '50.00',
         totalAmount: '50.00',
         currency: 'USD',
@@ -62,7 +61,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',
@@ -94,7 +93,7 @@ describe('Checkout Routes', () => {
     it('should use shipping address for billing when billingSameAsShipping is true', async () => {
       const cart = await createTestOrder({
         status: 'cart',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '50.00',
         totalAmount: '50.00',
         currency: 'USD',
@@ -113,7 +112,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',
@@ -153,7 +152,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',
@@ -173,7 +172,7 @@ describe('Checkout Routes', () => {
     it('should return 422 when cart is empty', async () => {
       await createTestOrder({
         status: 'cart',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '0.00',
         totalAmount: '0.00',
         currency: 'USD',
@@ -182,7 +181,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',
@@ -209,7 +208,7 @@ describe('Checkout Routes', () => {
 
       const cart = await createTestOrder({
         status: 'cart',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '30.00',
         totalAmount: '30.00',
         currency: 'USD',
@@ -228,7 +227,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',
@@ -249,7 +248,7 @@ describe('Checkout Routes', () => {
     it('should be idempotent when order is already confirmed', async () => {
       const order = await createTestOrder({
         status: 'confirmed',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '50.00',
         totalAmount: '50.00',
         currency: 'USD',
@@ -282,7 +281,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'Different Name',
@@ -303,7 +302,7 @@ describe('Checkout Routes', () => {
     it('should validate required address fields', async () => {
       const cart = await createTestOrder({
         status: 'cart',
-        userId: TEST_USER_ID,
+        userId: userId,
         subtotal: '50.00',
         totalAmount: '50.00',
         currency: 'USD',
@@ -322,7 +321,7 @@ describe('Checkout Routes', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/checkout',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           shippingAddress: {
             fullName: 'John Doe',

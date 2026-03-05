@@ -7,6 +7,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup/env.ts', './vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', 'build'],
+    fileParallelism: false,
     env: {
       NODE_ENV: 'test',
       DATABASE_URL: 'postgresql://user:password@localhost:5432/mercado_test',

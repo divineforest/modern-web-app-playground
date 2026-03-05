@@ -15,7 +15,7 @@ import type { ClientInferResponseBody } from '@ts-rest/core';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { api, getAuthHeaders } from '../lib/api-client';
+import { api } from '../lib/api-client';
 
 type OrderWithItems = ClientInferResponseBody<typeof apiContract.orders.getByOrderNumber, 200>;
 
@@ -51,7 +51,6 @@ export function OrderConfirmationPage() {
     try {
       const response = await api.orders.getByOrderNumber({
         params: { orderNumber },
-        extraHeaders: getAuthHeaders(),
       });
 
       if (response.status === 200) {

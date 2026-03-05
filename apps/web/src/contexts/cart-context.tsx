@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { api } from '../lib/api-client';
-import { getCartHeaders, getCartToken } from '../lib/cart-token';
 
 interface CartContextValue {
   itemCount: number;
@@ -21,11 +20,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [itemCount, setItemCount] = useState(0);
 
   const fetchCartCount = useCallback(async () => {
-    if (!getCartToken()) return;
     try {
-      const response = await api.cart.getCart({
-        extraHeaders: getCartHeaders(),
-      });
+      const response = await api.cart.getCart();
 
       if (response.status === 200) {
         setItemCount(response.body.itemCount);

@@ -17,8 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
 import { useCart } from '../contexts/cart-context';
-import { api, getAuthHeaders } from '../lib/api-client';
-import { getCartHeaders, removeCartToken } from '../lib/cart-token';
+import { api } from '../lib/api-client';
 
 type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
 
@@ -66,9 +65,7 @@ export function CheckoutPage() {
 
   const fetchCart = useCallback(async () => {
     try {
-      const response = await api.cart.getCart({
-        extraHeaders: getCartHeaders(),
-      });
+      const response = await api.cart.getCart();
 
       if (response.status === 200) {
         if (response.body.items.length === 0) {
@@ -88,14 +85,6 @@ export function CheckoutPage() {
   }, [navigate]);
 
   useEffect(() => {
-    const authHeaders = getAuthHeaders();
-    if (!authHeaders.Authorization) {
-      setError(
-        'Authentication required. Please note: User authentication is not yet implemented in this demo. Checkout requires a logged-in user.'
-      );
-      setLoading(false);
-      return;
-    }
     void fetchCart();
   }, [fetchCart]);
 
@@ -146,18 +135,11 @@ export function CheckoutPage() {
       return;
     }
 
-    const authHeaders = getAuthHeaders();
-    if (!authHeaders.Authorization) {
-      setError('Authentication required. User authentication is not yet implemented in this demo.');
-      return;
-    }
-
     setSubmitting(true);
     setError(null);
 
     try {
       const response = await api.checkout.checkout({
-        extraHeaders: { ...getCartHeaders(), ...authHeaders },
         body: {
           shippingAddress: {
             fullName: shippingAddress.fullName,
@@ -186,7 +168,6 @@ export function CheckoutPage() {
       });
 
       if (response.status === 200) {
-        removeCartToken();
         updateItemCount(0);
         navigate(`/orders/${response.body.orderNumber}/confirmation`);
       } else if (response.status === 400) {

@@ -20,7 +20,6 @@ import { Link } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
 import { useCart } from '../contexts/cart-context';
 import { api } from '../lib/api-client';
-import { getCartHeaders, removeCartToken } from '../lib/cart-token';
 
 type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
 
@@ -41,9 +40,7 @@ export function CartPage() {
 
   const fetchCart = useCallback(async () => {
     try {
-      const response = await api.cart.getCart({
-        extraHeaders: getCartHeaders(),
-      });
+      const response = await api.cart.getCart();
 
       if (response.status === 200) {
         setCart(response.body);
@@ -86,7 +83,6 @@ export function CartPage() {
       const response = await api.cart.updateItem({
         params: { itemId },
         body: { quantity: newQuantity },
-        extraHeaders: getCartHeaders(),
       });
 
       if (response.status === 200) {
@@ -122,16 +118,11 @@ export function CartPage() {
     try {
       const response = await api.cart.removeItem({
         params: { itemId },
-        extraHeaders: getCartHeaders(),
       });
 
       if (response.status === 200) {
         setCart(response.body);
         updateItemCount(response.body.itemCount);
-
-        if (response.body.items.length === 0) {
-          removeCartToken();
-        }
       } else {
         throw new Error('Failed to remove item');
       }
@@ -160,12 +151,9 @@ export function CartPage() {
     });
 
     try {
-      const response = await api.cart.clearCart({
-        extraHeaders: getCartHeaders(),
-      });
+      const response = await api.cart.clearCart();
 
       if (response.status === 200) {
-        removeCartToken();
         updateItemCount(0);
       } else {
         throw new Error('Failed to clear cart');

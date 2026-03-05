@@ -1,85 +1,115 @@
 import type { FastifyInstance, FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { extractBearerToken, extractUserContext, validateToken } from './token-validator.js';
+import {
+  authService,
+  SessionExpiredError,
+  SessionNotFoundError,
+} from '../../modules/auth/services/auth.service.js';
 
 /**
- * Authentication hook that validates API Bearer tokens
+ * Authentication hook that validates session cookies
  * Attaches user context to request when valid
  *
  * @param request - Fastify request
  * @param reply - Fastify reply
  */
 async function authenticationHook(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const authHeader = request.headers.authorization;
+  const sessionToken = request.cookies['sid'];
 
-  // Extract Bearer token from Authorization header
-  const token = extractBearerToken(authHeader);
-
-  if (!token) {
+  if (!sessionToken) {
     request.log.warn(
       {
         path: request.url,
         method: request.method,
         ip: request.ip,
       },
-      'Authentication failed: missing or malformed authorization header'
+      'Authentication failed: missing session cookie'
     );
 
     return reply.status(401).send({
       statusCode: 401,
       error: 'Unauthorized',
-      message: authHeader ? 'Malformed authentication token' : 'Missing authentication token',
+      message: 'Authentication required',
     });
   }
 
-  // Validate token using constant-time comparison
-  const isValid = validateToken(token);
+  try {
+    // Validate session and update sliding expiry
+    const user = await authService.validateSession(sessionToken);
 
-  if (!isValid) {
-    request.log.warn(
-      {
-        path: request.url,
-        method: request.method,
-        ip: request.ip,
-      },
-      'Authentication failed: invalid token'
-    );
+    request.user = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isAdmin: user.isAdmin,
+      authenticated: true,
+    };
 
-    return reply.status(401).send({
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Invalid authentication token',
-    });
-  }
-
-  // Extract optional user context from custom headers
-  const userContext = extractUserContext(request);
-  request.user = userContext;
-
-  // Log successful authentication with user context if available
-  if (userContext.email) {
     request.log.info(
       {
         path: request.url,
         method: request.method,
-        user: userContext.email,
-        userId: userContext.userId,
+        userId: user.id,
+        email: user.email,
       },
       'Authentication successful'
     );
-  } else {
-    request.log.info(
+  } catch (error) {
+    if (error instanceof SessionNotFoundError) {
+      request.log.warn(
+        {
+          path: request.url,
+          method: request.method,
+          ip: request.ip,
+        },
+        'Authentication failed: session not found'
+      );
+
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Authentication required',
+      });
+    }
+
+    if (error instanceof SessionExpiredError) {
+      request.log.warn(
+        {
+          path: request.url,
+          method: request.method,
+          ip: request.ip,
+        },
+        'Authentication failed: session expired'
+      );
+
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Session expired',
+      });
+    }
+
+    request.log.error(
       {
         path: request.url,
         method: request.method,
+        ip: request.ip,
+        error,
       },
-      'Authentication successful (service-to-service)'
+      'Authentication failed: unexpected error'
     );
+
+    return reply.status(401).send({
+      statusCode: 401,
+      error: 'Unauthorized',
+      message: 'Authentication required',
+    });
   }
 }
 
 /**
- * Fastify plugin that adds API Bearer token authentication
+ * Fastify plugin that adds session-cookie authentication
  * All routes registered after this plugin will require authentication
  *
  * Usage:
@@ -98,13 +128,13 @@ const authPluginImplementation: FastifyPluginCallback = (fastify: FastifyInstanc
   // Register authentication hook for all routes in this plugin scope
   fastify.addHook('onRequest', authenticationHook);
 
-  fastify.log.info('API Bearer token authentication plugin registered');
+  fastify.log.info('Session-cookie authentication plugin registered');
 };
 
 /**
  * Export as Fastify plugin with encapsulation
  */
 export const authPlugin = fp(authPluginImplementation, {
-  name: 'api-bearer-auth',
+  name: 'session-cookie-auth',
   fastify: '5.x',
 });

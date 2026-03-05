@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestOrder } from '../../../../tests/factories/orders.js';
+import { createAuthenticatedUser } from '../../../../tests/helpers/auth.js';
 import { buildTestApp } from '../../../app.js';
-import { db } from '../../../db/index.js';
+import { db, sessions, users } from '../../../db/index.js';
 
 // Type definitions for API responses
 type OrderResponse = {
@@ -44,17 +45,18 @@ type ErrorResponse = {
 
 describe('Orders Routes - Integration Tests', () => {
   let fastify: FastifyInstance;
-
-  // Test authentication token matching the configuration
-  const authHeaders = {
-    authorization: 'Bearer test_token_12345',
-  };
+  let sessionToken: string;
 
   beforeEach(async () => {
     fastify = await buildTestApp();
+
+    const auth = await createAuthenticatedUser('test@example.com', 'password123', db);
+    sessionToken = auth.sessionToken;
   });
 
   afterEach(async () => {
+    await db.delete(sessions);
+    await db.delete(users);
     if (fastify) {
       await fastify.close();
     }
@@ -85,7 +87,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: requestBody,
       });
 
@@ -113,7 +115,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: requestBody,
       });
 
@@ -138,7 +140,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: requestBody,
       });
 
@@ -193,7 +195,7 @@ describe('Orders Routes - Integration Tests', () => {
         // ASSERT
         expect(response.statusCode).toBe(401);
         const body = JSON.parse(response.payload) as ErrorResponse;
-        expect(body.message).toBe('Invalid authentication token');
+        expect(body.message).toBe('Authentication required');
       });
     });
   });
@@ -207,7 +209,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: `/api/orders/${created.id}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -227,7 +229,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: `/api/orders/${nonExistentId}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -242,7 +244,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/invalid-uuid',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -276,7 +278,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -298,7 +300,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders?status=draft',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -318,7 +320,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -354,7 +356,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${created.id}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           status: 'confirmed',
           notes: 'Updated notes',
@@ -379,7 +381,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${nonExistentId}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           status: 'confirmed',
         },
@@ -400,7 +402,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${created.id}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
         payload: {
           status: 'invalid_status',
         },
@@ -439,7 +441,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/orders/${created.id}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -454,7 +456,7 @@ describe('Orders Routes - Integration Tests', () => {
       const getResponse = await fastify.inject({
         method: 'GET',
         url: `/api/orders/${created.id}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       expect(getResponse.statusCode).toBe(404);
@@ -468,7 +470,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/orders/${nonExistentId}`,
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT
@@ -483,7 +485,7 @@ describe('Orders Routes - Integration Tests', () => {
       const response = await fastify.inject({
         method: 'DELETE',
         url: '/api/orders/invalid-uuid',
-        headers: authHeaders,
+        cookies: { sid: sessionToken },
       });
 
       // ASSERT

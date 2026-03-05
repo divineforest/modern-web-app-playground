@@ -1,305 +1,172 @@
-import Fastify, { type FastifyInstance } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../../lib/env.js';
-import { authPlugin } from './auth.plugin.js';
-import { resetTokenCache } from './token-validator.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { buildTestApp } from '../../app.js';
+import { db, sessions, users } from '../../db/index.js';
+import { createTestSession } from '../../../tests/factories/sessions.js';
+import { createTestUser } from '../../../tests/factories/users.js';
+import argon2 from 'argon2';
 
-describe('Authentication Plugin - Integration Tests', () => {
-  let fastify: FastifyInstance;
-  const originalTokens = env.API_BEARER_TOKENS;
+describe('Session Auth Plugin', () => {
+  let app: Awaited<ReturnType<typeof buildTestApp>>;
 
   beforeEach(async () => {
-    // Reset token cache
-    resetTokenCache();
-
-    // Set up test tokens
-    vi.stubEnv('API_BEARER_TOKENS', 'test_token_12345,another_valid_token');
-
-    // Create fresh Fastify instance
-    fastify = Fastify({
-      logger: false, // Disable logging in tests
-    });
-
-    // Register auth plugin
-    await fastify.register(authPlugin);
-
-    // Register test route (protected by auth)
-    fastify.get('/test', () => {
-      return { message: 'success' };
-    });
-
-    // Register route that accesses user context
-    fastify.get('/test/user', (request) => {
-      return {
-        message: 'success',
-        user: request.user,
-      };
-    });
-
-    await fastify.ready();
+    app = await buildTestApp();
   });
 
   afterEach(async () => {
-    if (fastify) {
-      await fastify.close();
-    }
-    vi.stubEnv('API_BEARER_TOKENS', originalTokens);
-    resetTokenCache();
+    await db.delete(sessions);
+    await db.delete(users);
+    await app.close();
   });
 
-  describe('Valid Authentication', () => {
-    it('should allow request with valid token', async () => {
-      // ACT
-      const response = await fastify.inject({
+  describe('Protected routes', () => {
+    it('should reject request with missing session cookie', async () => {
+      const response = await app.inject({
         method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer test_token_12345',
-        },
+        url: '/api/orders',
       });
 
-      // ASSERT
-      expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload)).toEqual({ message: 'success' });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({
+        error: 'Unauthorized',
+        message: 'Authentication required',
+      });
     });
 
-    it('should allow request with any valid token from list', async () => {
-      // ACT
-      const response = await fastify.inject({
+    it('should reject request with invalid session token', async () => {
+      const response = await app.inject({
         method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer another_valid_token',
+        url: '/api/orders',
+        cookies: {
+          sid: 'invalid-token-12345',
         },
       });
 
-      // ASSERT
-      expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload)).toEqual({ message: 'success' });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({
+        error: 'Unauthorized',
+      });
     });
 
-    it('should attach user context when headers provided', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test/user',
-        headers: {
-          authorization: 'Bearer test_token_12345',
-          'x-user-id': 'user-123',
-          'x-user-email': 'test@example.com',
-          'x-user-name': 'Test User',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.payload);
-      expect(body.user).toEqual({
-        userId: 'user-123',
+    it('should reject request with expired session', async () => {
+      const passwordHash = await argon2.hash('password123', { type: argon2.argon2id });
+      const testUser = await createTestUser({
         email: 'test@example.com',
-        name: 'Test User',
-        authenticated: true,
+        password: passwordHash,
+        salt: '',
       });
-    });
 
-    it('should handle service-to-service calls without user headers', async () => {
-      // ACT
-      const response = await fastify.inject({
+      const expiredDate = new Date();
+      expiredDate.setDate(expiredDate.getDate() - 1);
+
+      const session = await createTestSession({
+        userId: testUser.id,
+        expiresAt: expiredDate,
+      });
+
+      const response = await app.inject({
         method: 'GET',
-        url: '/test/user',
-        headers: {
-          authorization: 'Bearer test_token_12345',
+        url: '/api/orders',
+        cookies: {
+          sid: session.token,
         },
       });
 
-      // ASSERT
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.payload);
-      expect(body.user).toEqual({
-        userId: undefined,
-        email: undefined,
-        name: undefined,
-        authenticated: true,
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({
+        error: 'Unauthorized',
+        message: 'Session expired',
       });
+
+      const sessionsInDb = await db.select().from(sessions);
+      expect(sessionsInDb).toHaveLength(0);
     });
 
-    it('should handle partial user headers', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test/user',
-        headers: {
-          authorization: 'Bearer test_token_12345',
-          'x-user-email': 'test@example.com',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.payload);
-      expect(body.user).toEqual({
-        userId: undefined,
+    it('should accept request with valid session and attach user', async () => {
+      const passwordHash = await argon2.hash('password123', { type: argon2.argon2id });
+      const testUser = await createTestUser({
         email: 'test@example.com',
-        name: undefined,
-        authenticated: true,
+        firstName: 'John',
+        lastName: 'Doe',
+        password: passwordHash,
+        salt: '',
       });
+
+      const session = await createTestSession({
+        userId: testUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/orders',
+        cookies: {
+          sid: session.token,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should update sliding expiry on valid request', async () => {
+      const passwordHash = await argon2.hash('password123', { type: argon2.argon2id });
+      const testUser = await createTestUser({
+        email: 'test@example.com',
+        password: passwordHash,
+        salt: '',
+      });
+
+      const session = await createTestSession({
+        userId: testUser.id,
+      });
+
+      const sessionsBefore = await db.select().from(sessions);
+      const originalExpiresAt = sessionsBefore[0]?.expiresAt;
+      const originalLastUsedAt = sessionsBefore[0]?.lastUsedAt;
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      await app.inject({
+        method: 'GET',
+        url: '/api/orders',
+        cookies: {
+          sid: session.token,
+        },
+      });
+
+      const sessionsAfter = await db.select().from(sessions);
+      const updatedExpiresAt = sessionsAfter[0]?.expiresAt;
+      const updatedLastUsedAt = sessionsAfter[0]?.lastUsedAt;
+
+      expect(updatedExpiresAt).not.toEqual(originalExpiresAt);
+      expect(updatedLastUsedAt).not.toEqual(originalLastUsedAt);
+      expect(new Date(updatedExpiresAt || 0).getTime()).toBeGreaterThan(
+        new Date(originalExpiresAt || 0).getTime()
+      );
     });
   });
 
-  describe('Missing Authentication', () => {
-    it('should return 401 when Authorization header is missing', async () => {
-      // ACT
-      const response = await fastify.inject({
+  describe('Public routes', () => {
+    it('should allow access to public routes without authentication', async () => {
+      const response = await app.inject({
         method: 'GET',
-        url: '/test',
+        url: '/api/products',
       });
 
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body).toEqual({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Missing authentication token',
-      });
+      expect(response.statusCode).toBe(200);
     });
 
-    it('should return 401 with empty Authorization header', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: '',
+    it('should allow access to auth routes without authentication', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: {
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@example.com',
+          password: 'password123',
         },
       });
 
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body.message).toBe('Missing authentication token');
-    });
-  });
-
-  describe('Malformed Authentication', () => {
-    it('should return 401 for malformed Authorization header (no Bearer)', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'test_token_12345',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body).toEqual({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Malformed authentication token',
-      });
-    });
-
-    it('should return 401 for wrong authorization scheme', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Basic test_token_12345',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body.message).toBe('Malformed authentication token');
-    });
-
-    it('should return 401 for Bearer without token', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body.message).toBe('Malformed authentication token');
-    });
-
-    it('should return 401 for Bearer with empty token', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer ',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body.message).toBe('Malformed authentication token');
-    });
-  });
-
-  describe('Invalid Authentication', () => {
-    it('should return 401 for invalid token', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer invalid_token',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body).toEqual({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Invalid authentication token',
-      });
-    });
-
-    it('should return 401 for token not in configured list', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer some_other_token',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.payload);
-      expect(body.message).toBe('Invalid authentication token');
-    });
-
-    it('should be case-sensitive for tokens', async () => {
-      // ACT
-      const response = await fastify.inject({
-        method: 'GET',
-        url: '/test',
-        headers: {
-          authorization: 'Bearer TEST_TOKEN_12345',
-        },
-      });
-
-      // ASSERT
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(201);
     });
   });
 });

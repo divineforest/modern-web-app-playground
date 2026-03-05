@@ -18,7 +18,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
 import { useCart } from '../contexts/cart-context';
 import { api } from '../lib/api-client';
-import { getCartHeaders, setCartToken } from '../lib/cart-token';
 
 type Product = ClientInferResponseBody<typeof apiContract.products.getBySlug, 200>;
 
@@ -84,14 +83,9 @@ export function ProductDetailPage() {
           productId: product.id,
           quantity,
         },
-        extraHeaders: getCartHeaders(),
       });
 
       if (response.status === 200) {
-        if (response.body.newCartToken) {
-          setCartToken(response.body.newCartToken);
-        }
-
         refreshCart();
         setShowSuccess(true);
         setQuantity(1);
