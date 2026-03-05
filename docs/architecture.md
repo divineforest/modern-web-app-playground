@@ -2,39 +2,62 @@
 
 ## Overview
 
-Backend e-commerce system (Mercado). Integrates with Core microservice.
+E-commerce system with backend API and React frontend. Integrates with Core microservice.
 
-**Stack**: Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal, ts-rest, Drizzle ORM, Vitest.
+**Stack**: Node.js 22+, TypeScript, Fastify, PostgreSQL, Temporal, ts-rest, Drizzle ORM, Vitest, React, Vite.
 
 For testing strategy, see [Testing Architecture](./testing-architecture.md).
 
-## Project Structure
+## Monorepo Structure
+
+pnpm workspace with three packages:
 
 ```
-apps/backend/
-├── src/
-│   ├── lib/                    # Core utilities (env.ts, logger.ts, http.ts)
-│   ├── config/                 # Derived configurations (database.ts, server.ts)
-│   ├── db/                     # Database layer
-│   │   ├── schema.ts           # Drizzle schema (single source of truth)
-│   │   ├── connection.ts       # Database connection factory
-│   │   └── migrations/         # SQL migration files
-│   ├── infra/                  # Infrastructure/operational endpoints
-│   │   ├── auth/               # Bearer token authentication plugin
-│   │   └── health/             # Health check routes (/healthz, /ready)
-│   ├── modules/                # Domain-driven feature modules
-│   │   ├── orders/             # Order management (CRUD, status tracking)
-│   │   └── payment-webhooks/   # Stripe webhook processing (Temporal workflows)
-│   ├── shared/                 # Cross-module infrastructure
-│   │   ├── data-access/        # External system clients
-│   │   │   └── core/           # Core microservice (SDK + repository)
-│   │   └── workflows/          # Temporal infrastructure (client, worker, registry)
-│   ├── scripts/                # CLI scripts
-│   └── server.ts               # Fastify server entry point
-└── tests/
-    ├── factories/              # Test data factories
-    ├── setup/                  # Test environment setup
-    └── smoke/                  # Smoke tests
+packages/
+└── api-contracts/              # Shared API contracts (ts-rest + Zod)
+    ├── src/
+    │   ├── shared/             # Shared error and pagination schemas
+    │   ├── cart/               # Cart contract and schemas
+    │   ├── products/           # Products contract and schemas
+    │   ├── orders/             # Orders contract and schemas
+    │   ├── router.ts           # Combined API contract
+    │   └── index.ts            # Public API exports
+    └── package.json            # @mercado/api-contracts
+
+apps/
+├── backend/                    # Fastify backend server
+│   ├── src/
+│   │   ├── lib/                # Core utilities (env.ts, logger.ts, http.ts)
+│   │   ├── config/             # Derived configurations (database.ts, server.ts)
+│   │   ├── db/                 # Database layer
+│   │   │   ├── schema.ts       # Drizzle schema (single source of truth)
+│   │   │   ├── connection.ts   # Database connection factory
+│   │   │   └── migrations/     # SQL migration files
+│   │   ├── infra/              # Infrastructure/operational endpoints
+│   │   │   ├── auth/           # Bearer token authentication plugin
+│   │   │   └── health/         # Health check routes (/healthz, /ready)
+│   │   ├── modules/            # Domain-driven feature modules
+│   │   │   ├── cart/           # Shopping cart (add/update/remove items)
+│   │   │   ├── products/       # Product catalog (list, detail)
+│   │   │   ├── orders/         # Order management (CRUD, status tracking)
+│   │   │   └── payment-webhooks/ # Stripe webhook processing (Temporal workflows)
+│   │   ├── shared/             # Cross-module infrastructure
+│   │   │   ├── data-access/    # External system clients
+│   │   │   │   └── core/       # Core microservice (SDK + repository)
+│   │   │   └── workflows/      # Temporal infrastructure (client, worker, registry)
+│   │   ├── scripts/            # CLI scripts
+│   │   └── server.ts           # Fastify server entry point
+│   └── tests/
+│       ├── factories/          # Test data factories
+│       ├── setup/              # Test environment setup
+│       └── smoke/              # Smoke tests
+└── web/                        # React frontend (Vite + MUI)
+    └── src/
+        ├── lib/                # Shared utilities (api-client.ts, cart-token.ts)
+        ├── contexts/           # React contexts (cart state)
+        ├── pages/              # Page components (products, cart)
+        ├── layouts/            # Layout components (root-layout)
+        └── router.tsx          # React Router configuration
 ```
 
 ## Architecture Layers
@@ -96,9 +119,30 @@ PostgreSQL stores in UTC, converts on retrieval.
 - **Internal** (`/api/internal/*`): Not versioned
 - **Public** (`/api/v1/*`): Versioned for backward compatibility
 
-### Contracts
+### Contracts (ts-rest + Zod)
 
-API contracts defined via ts-rest in `api/*.contracts.ts`. OpenAPI generated automatically.
+**Single source of truth**: All API contracts live in `@mercado/api-contracts` package.
+
+**Backend**: Route handlers consume contracts via `@ts-rest/fastify`:
+
+```typescript
+import { cartContract } from '@mercado/api-contracts';
+const router = s.router(cartContract, { /* handlers */ });
+```
+
+**Frontend**: Typed client consumes contracts via `@ts-rest/core`:
+
+```typescript
+import { api } from './lib/api-client';
+const res = await api.cart.getCart();
+if (res.status === 200) {
+  // res.body is fully typed from contract
+}
+```
+
+**OpenAPI**: Generated automatically from contracts via `pnpm openapi:generate`.
+
+See [Shared API Contracts](./arch/shared-api-contracts.md) for detailed design.
 
 ## Environment
 
