@@ -1,11 +1,4 @@
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { apiContract } from '@mercado/api-contracts';
-import { api } from '../lib/api-client';
-import { getCartHeaders, removeCartToken } from '../lib/cart-token';
-import { useCart } from '../contexts/cart-context';
-import noPhoto from '../assets/no-photo.svg';
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
 import Remove from '@mui/icons-material/Remove';
@@ -21,6 +14,13 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import type { ClientInferResponseBody } from '@ts-rest/core';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import noPhoto from '../assets/no-photo.svg';
+import { useCart } from '../contexts/cart-context';
+import { api } from '../lib/api-client';
+import { getCartHeaders, removeCartToken } from '../lib/cart-token';
 
 type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
 
@@ -235,7 +235,7 @@ export function CartPage() {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         <Box sx={{ flex: 1 }}>
           {cart.items.map((item) => (
-            <Card key={item.id} sx={{ mb: 2 }}>
+            <Card key={item.id} data-testid="cart-item" sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Box
@@ -290,7 +290,11 @@ export function CartPage() {
                       >
                         <Remove />
                       </IconButton>
-                      <Typography variant="body1" sx={{ minWidth: 30, textAlign: 'center' }}>
+                      <Typography
+                        variant="body1"
+                        data-testid="cart-item-quantity"
+                        sx={{ minWidth: 30, textAlign: 'center' }}
+                      >
                         {item.quantity}
                       </Typography>
                       <IconButton
@@ -311,7 +315,12 @@ export function CartPage() {
             </Card>
           ))}
 
-          <Button onClick={() => void clearCart()} color="error" sx={{ mt: 2 }}>
+          <Button
+            onClick={() => void clearCart()}
+            color="error"
+            data-testid="clear-cart-button"
+            sx={{ mt: 2 }}
+          >
             Clear Cart
           </Button>
         </Box>

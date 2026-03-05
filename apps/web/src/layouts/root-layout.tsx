@@ -1,10 +1,10 @@
-import { Link, Outlet } from 'react-router-dom';
 import ShoppingCart from '@mui/icons-material/ShoppingCart';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import { Link, Outlet } from 'react-router-dom';
 import { useCart } from '../contexts/cart-context';
 
 export function RootLayout() {

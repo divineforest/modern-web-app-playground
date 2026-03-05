@@ -1,24 +1,24 @@
-# 001: Shared API Contracts
+# Shared API Contracts
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-03-05
 
 ## Context
 
-The frontend (`apps/web/`) consumes backend APIs via plain `fetch()` with hand-written TypeScript interfaces. These interfaces are manually maintained duplicates of the backend's ts-rest contracts and Zod schemas. There is no import chain between the two apps.
+The frontend (`apps/web/`) consumed backend APIs via plain `fetch()` with hand-written TypeScript interfaces. These interfaces were manually maintained duplicates of the backend's ts-rest contracts and Zod schemas. No import chain existed between the two apps.
 
-This causes two categories of problems:
+This caused two categories of problems:
 
-**LLM hallucinations (AI assistant friction):** When an LLM works on frontend code, it cannot follow imports to discover the actual API surface. It must search the backend, find contracts, then mentally map them to the frontend's manual types. This frequently produces hallucinated endpoint URLs, wrong HTTP methods, incorrect request bodies, and mismatched response shapes. The `Product` interface is independently defined in both `products.tsx` and `product-detail.tsx` — even human developers duplicated it within the same app.
+**LLM hallucinations:** When an LLM worked on frontend code, it could not follow imports to discover the actual API surface. It had to search the backend, find contracts, then mentally map them to the frontend's manual types. This frequently produced hallucinated endpoint URLs, wrong HTTP methods, incorrect request bodies, and mismatched response shapes. The `Product` interface was independently defined in both `products.tsx` and `product-detail.tsx` — even human developers duplicated it within the same app.
 
-**Production drift:** Nothing enforces that frontend types match backend contracts. A backend change to a response field silently breaks the frontend at runtime. TypeScript cannot catch what it cannot see across the app boundary.
+**Production drift:** Nothing enforced that frontend types matched backend contracts. A backend change to a response field silently broke the frontend at runtime. TypeScript could not catch what it could not see across the app boundary.
 
-### Current State
+### Pre-decision state
 
 ```
-apps/backend/src/modules/cart/api/cart.contracts.ts      → defines cartContract (Zod schemas + ts-rest)
-apps/backend/src/modules/products/api/products.contracts.ts → defines productsContract
-apps/backend/src/modules/orders/api/orders.contracts.ts   → defines ordersContract
+apps/backend/src/modules/cart/api/cart.contracts.ts      → cartContract (Zod + ts-rest)
+apps/backend/src/modules/products/api/products.contracts.ts → productsContract
+apps/backend/src/modules/orders/api/orders.contracts.ts   → ordersContract
 
 apps/web/src/pages/cart.tsx           → manual CartItem, Cart interfaces + fetch('/api/cart')
 apps/web/src/pages/products.tsx       → manual Product, PaginationMeta interfaces + fetch('/api/products')
@@ -26,19 +26,17 @@ apps/web/src/pages/product-detail.tsx → manual Product interface (duplicate) +
 ```
 
 Additional issues:
-- Error schemas (`validationErrorSchema`, `notFoundErrorSchema`, `internalErrorSchema`) are copy-pasted identically across all 3 contract files.
-- `paginationSchema` exists only in `products.contracts.ts` — not reusable.
-- The OpenAPI generator only includes `orders`; cart and products are missing.
+- Error schemas (`validationErrorSchema`, `notFoundErrorSchema`, `internalErrorSchema`) were copy-pasted identically across all 3 contract files.
+- `paginationSchema` existed only in `products.contracts.ts` — not reusable.
+- The OpenAPI generator only included `orders`; cart and products were missing.
 
 ## Decision
 
-Create a shared contracts package and use the ts-rest typed client on the frontend.
+Create a contracts package (`@mercado/api-contracts`) and use the ts-rest typed client on the frontend. Both apps depend on this package; neither depends on the other.
 
-### 1. New package: `packages/api-contracts`
+### 1. Package: `@mercado/api-contracts`
 
-A workspace package that owns all API contracts, shared Zod schemas, and the combined router.
-
-**Package structure:**
+A workspace package that owns all API contracts, shared Zod schemas, and the root contract.
 
 ```
 packages/api-contracts/
@@ -51,22 +49,21 @@ packages/api-contracts/
     │   └── pagination.ts     # Shared pagination schema
     ├── cart/
     │   ├── contract.ts       # cartContract
-    │   └── schemas.ts        # Cart domain schemas (addItemSchema, etc.)
+    │   └── schemas.ts        # Cart domain schemas (addItemSchema, cartResponseSchema, etc.)
     ├── products/
     │   ├── contract.ts       # productsContract
     │   └── schemas.ts        # Product domain schemas
     ├── orders/
     │   ├── contract.ts       # ordersContract
     │   └── schemas.ts        # Order domain schemas
-    └── router.ts             # Combined root contract for all modules
+    └── router.ts             # Root apiContract combining all modules
 ```
 
-**Dependencies:** `@ts-rest/core`, `zod` only. No backend or framework dependencies.
+**Dependencies:** `@ts-rest/core` and `zod` only. The contracts package SHALL NOT depend on backend or framework packages (Fastify, pg, etc.).
 
-**Shared error schemas (defined once):**
+**Shared error schemas (defined once in `packages/api-contracts/src/shared/errors.ts`):**
 
 ```typescript
-// packages/api-contracts/src/shared/errors.ts
 import { z } from 'zod';
 
 export const validationErrorSchema = z.object({
@@ -76,32 +73,36 @@ export const validationErrorSchema = z.object({
     .optional(),
 });
 
-export const notFoundErrorSchema = z.object({
-  error: z.string(),
-});
-
-export const unauthorizedErrorSchema = z.object({
-  error: z.string(),
-});
-
-export const internalErrorSchema = z.object({
-  error: z.string(),
-});
-
+export const notFoundErrorSchema = z.object({ error: z.string() });
+export const unauthorizedErrorSchema = z.object({ error: z.string() });
+export const internalErrorSchema = z.object({ error: z.string() });
+export const unprocessableEntityErrorSchema = z.object({ error: z.string() });
 export const conflictErrorSchema = z.object({
   error: z.string(),
   details: z.string().optional(),
 });
 ```
 
-**Contract file pattern (each module follows the same structure):**
+**Contract pattern (each module follows this structure):**
 
 ```typescript
 // packages/api-contracts/src/cart/contract.ts
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
-import { internalErrorSchema, notFoundErrorSchema, validationErrorSchema } from '../shared/errors.js';
-import { addItemSchema, cartResponseSchema, updateItemSchema } from './schemas.js';
+import {
+  internalErrorSchema,
+  notFoundErrorSchema,
+  unauthorizedErrorSchema,
+  unprocessableEntityErrorSchema,
+  validationErrorSchema,
+} from '../shared/errors.js';
+import {
+  addItemSchema,
+  cartResponseSchema,
+  mergeCartSchema,
+  successResponseSchema,
+  updateItemSchema,
+} from './schemas.js';
 
 const c = initContract();
 
@@ -109,10 +110,7 @@ export const cartContract = c.router({
   getCart: {
     method: 'GET',
     path: '/api/cart',
-    responses: {
-      200: cartResponseSchema,
-      500: internalErrorSchema,
-    },
+    responses: { 200: cartResponseSchema, 500: internalErrorSchema },
     summary: 'Get current cart',
   },
   addItem: {
@@ -122,19 +120,27 @@ export const cartContract = c.router({
       200: cartResponseSchema,
       400: validationErrorSchema,
       404: notFoundErrorSchema,
+      422: unprocessableEntityErrorSchema,
       500: internalErrorSchema,
     },
     body: addItemSchema,
     summary: 'Add item to cart',
   },
-  // ... remaining endpoints
+  updateItem: {
+    method: 'PATCH',
+    path: '/api/cart/items/:itemId',
+    responses: { 200: cartResponseSchema, 400: validationErrorSchema, 404: notFoundErrorSchema, 500: internalErrorSchema },
+    pathParams: z.object({ itemId: z.string().uuid() }),
+    body: updateItemSchema,
+    summary: 'Update item quantity',
+  },
+  // removeItem, clearCart, mergeCart follow the same pattern
 });
 ```
 
-**Combined router (single entry point for the full API surface):**
+**Root contract (`packages/api-contracts/src/router.ts`):**
 
 ```typescript
-// packages/api-contracts/src/router.ts
 import { initContract } from '@ts-rest/core';
 import { cartContract } from './cart/contract.js';
 import { ordersContract } from './orders/contract.js';
@@ -149,50 +155,34 @@ export const apiContract = c.router({
 });
 ```
 
-**Public API (single import for consumers):**
-
-```typescript
-// packages/api-contracts/src/index.ts
-export { apiContract } from './router.js';
-export { cartContract } from './cart/contract.js';
-export { productsContract } from './products/contract.js';
-export { ordersContract } from './orders/contract.js';
-
-export * from './shared/errors.js';
-export * from './shared/pagination.js';
-export * from './cart/schemas.js';
-export * from './products/schemas.js';
-export * from './orders/schemas.js';
-```
-
 ### 2. Backend consumes contracts from the package
 
-The backend routes import contracts from `@mercado/api-contracts` instead of co-located files:
+Backend route handlers import contracts from `@mercado/api-contracts`:
 
 ```typescript
 // apps/backend/src/modules/cart/api/cart.routes.ts
-import { initServer } from '@ts-rest/fastify';
 import { cartContract } from '@mercado/api-contracts';
+import { initServer } from '@ts-rest/fastify';
 
 const s = initServer();
 
 const router = s.router(cartContract, {
-  getCart: async ({ request }) => {
-    // ... handler unchanged
-  },
+  getCart: async ({ request }) => { /* handler unchanged */ },
+  addItem: async ({ request }) => { /* handler unchanged */ },
+  // ...
 });
 ```
 
-The backend's `domain/*.types.ts` files are removed or reduced to backend-internal types. Zod schemas that define the API surface move to the contracts package.
+Backend-internal types (entities, repository interfaces, service types) SHALL remain in each module's `domain/*.types.ts` files. Only Zod schemas that define the HTTP API surface (request bodies, response shapes, path params) SHALL live in the contracts package.
 
 ### 3. Frontend uses ts-rest typed client
 
-Replace manual `fetch()` calls with a ts-rest client instantiated from the shared contract:
+Frontend components SHALL use the `api` client for all backend calls, replacing manual `fetch()`:
 
 ```typescript
 // apps/web/src/lib/api-client.ts
-import { initClient } from '@ts-rest/core';
 import { apiContract } from '@mercado/api-contracts';
+import { initClient } from '@ts-rest/core';
 
 export const api = initClient(apiContract, {
   baseUrl: '',
@@ -200,35 +190,54 @@ export const api = initClient(apiContract, {
 });
 ```
 
-**Usage in components (replaces manual fetch + manual types):**
+**Before/after — type inference in frontend components:**
+
+Before (manual interfaces, no import chain to backend):
 
 ```typescript
-// apps/web/src/pages/products.tsx
-import { api } from '../lib/api-client.js';
+// apps/web/src/pages/products.tsx — BEFORE
+interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  price: string;
+  currency: string;
+  imageUrl: string | null;
+  // ... manually maintained, easily drifts
+}
 
-export function ProductsPage() {
-  const [products, setProducts] = useState</* inferred from contract */>([]);
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
-  useEffect(() => {
-    async function load() {
-      const res = await api.products.list({
-        query: { status: 'active', page: 1, limit: 20 },
-      });
+const response = await fetch(`/api/products?status=active&page=${page}&limit=20`);
+const data = await response.json() as { products: Product[]; pagination: PaginationMeta };
+```
 
-      if (res.status === 200) {
-        setProducts(res.body.products);
-      }
-    }
-    load();
-  }, []);
+After (types inferred from contract via `ClientInferResponseBody`):
+
+```typescript
+// apps/web/src/pages/products.tsx — AFTER
+import type { apiContract } from '@mercado/api-contracts';
+import type { ClientInferResponseBody } from '@ts-rest/core';
+import { api } from '../lib/api-client';
+
+type ProductsListResponse = ClientInferResponseBody<typeof apiContract.products.list, 200>;
+type Product = ProductsListResponse['products'][number];
+type PaginationMeta = ProductsListResponse['pagination'];
+
+const response = await api.products.list({
+  query: { status: 'active', page, limit: PAGE_SIZE },
+});
+if (response.status === 200) {
+  setProducts(response.body.products);  // fully typed
 }
 ```
 
-What this eliminates:
-- Manual `Product`, `CartItem`, `Cart`, `PaginationMeta` interfaces in web — all inferred from contracts
-- Hard-coded URL strings like `fetch('/api/products?status=active')`
-- Manual `JSON.parse()` and response type assertions
-- Any possibility of calling a non-existent endpoint or sending a wrong body shape
+The `ClientInferResponseBody` utility extracts the response body type for a given status code directly from the contract. This pattern replaces all manual interfaces across the web app.
 
 ### 4. Workspace configuration
 
@@ -240,16 +249,11 @@ packages:
 ```
 
 ```jsonc
-// apps/backend/package.json (add dependency)
+// apps/backend/package.json
 { "dependencies": { "@mercado/api-contracts": "workspace:*" } }
 
-// apps/web/package.json (add dependencies)
-{
-  "dependencies": {
-    "@mercado/api-contracts": "workspace:*",
-    "@ts-rest/core": "^3.52.1"
-  }
-}
+// apps/web/package.json
+{ "dependencies": { "@mercado/api-contracts": "workspace:*", "@ts-rest/core": "^3.52.1" } }
 ```
 
 ## Consequences
@@ -258,74 +262,87 @@ packages:
 
 - **Single source of truth**: One contract definition consumed by backend routes, frontend client, and OpenAPI generator.
 - **Compile-time safety**: TypeScript catches request/response mismatches in both apps at build time, before deployment.
-- **LLM traceability**: An AI assistant working on frontend code follows `api.products.list` → import from `@mercado/api-contracts` → reads the contract with exact path, method, query params, and response shape. Zero guessing.
+- **LLM traceability**: An LLM working on frontend code follows `api.products.list` → `@mercado/api-contracts` → contract with exact path, method, query params, and response shape. Zero guessing.
 - **Zod runtime validation**: The frontend gets access to Zod schemas for form validation and response parsing, not just static types.
-- **DRY error schemas**: Error response schemas defined once, imported everywhere.
-- **OpenAPI fix**: The combined router (`apiContract`) replaces the incomplete `AVAILABLE_CONTRACTS` in the OpenAPI generator.
+- **DRY error schemas**: Error response schemas defined once in `packages/api-contracts/src/shared/errors.ts`, imported by all contracts.
+- **Complete OpenAPI**: The root `apiContract` replaces the incomplete `AVAILABLE_CONTRACTS` array in the OpenAPI generator, covering all modules.
 
 ### Negative
 
-- **Migration effort**: Moving contracts from 3 backend modules to a new package, updating all imports, rewriting frontend fetch calls.
-- **New package to maintain**: `packages/api-contracts` needs its own `tsconfig.json` and build config. However, in a pnpm workspace with TypeScript project references, this is minimal.
-- **Domain schema location shift**: Zod schemas for request bodies (e.g., `createOrderSchema`) move from `apps/backend/src/modules/orders/domain/` to the shared package. Backend-only types (entities, repository types) stay in the backend.
+- **Migration effort**: Moved contracts from 3 backend modules to a new package, updated all imports, rewrote frontend fetch calls. One-time cost, now complete.
+- **New package to maintain**: `packages/api-contracts` requires its own `tsconfig.json`. In a pnpm workspace with TypeScript project references, this is ~20 lines of config.
+- **Domain schema location shift**: Zod schemas for request/response shapes (e.g., `addItemSchema`, `cartResponseSchema`) moved from backend module `domain/` directories to the contracts package. Backend-internal types (entities like `CartIdentifier`, repository interfaces) remain in `apps/backend/src/modules/*/domain/*.types.ts`.
 
 ### AI-Friendliness Impact
 
-- **Cohesion**: 4/5 — Contracts are inherently cohesive (they describe one API surface). Moving them to a shared package centralizes them without scattering. Backend services/repositories remain co-located in their modules.
-- **Type coverage**: 5/5 — The web app goes from 0% typed API calls to 100%. Every `api.cart.addItem()` call is fully typed from the contract.
-- **Pattern consistency**: 4/5 — Follows the existing ts-rest contract pattern exactly, just relocated. No new paradigm to learn.
-- **Discoverability**: 5/5 — An LLM searching for "cart API" finds `@mercado/api-contracts/src/cart/contract.ts` as a single hit. Both backend routes and frontend client import from it, making the full data flow traceable via imports alone.
+- **Discoverability**: 5/5 — An LLM searching for "cart API" finds `@mercado/api-contracts/src/cart/contract.ts` as a single hit. Both backend routes and frontend client import from it.
+- **Cohesion**: 4/5 — Contracts are inherently cohesive (one API surface). Centralizing them avoids scattering without pulling in unrelated code. Backend services/repositories remain co-located in their modules.
+- **Pattern consistency**: 5/5 — Every module follows the identical `contract.ts` + `schemas.ts` structure. The ts-rest contract pattern is unchanged from the original backend-only usage — just relocated.
+- **Type coverage**: 5/5 — The web app went from 0% typed API calls to 100%. Every `api.cart.addItem()` call is fully typed from the contract, including all response status codes.
+- **Traceability**: 5/5 — Full import chain: `api.cart.addItem` → `api-client.ts` → `@mercado/api-contracts` → `cartContract` → `addItemSchema` + `cartResponseSchema` → Zod field definitions. An LLM can resolve any field to its schema definition via imports alone.
 
-**Overall AI-friendliness: 5/5** — The core improvement is mechanical: import chains replace search-based discovery. When an LLM sees `api.cart.addItem({ body: { productId, quantity } })`, it can resolve the import to the contract, see the Zod schema, see every valid status code and response shape. This eliminates the class of hallucinations where the LLM invents endpoints or response fields.
+**Overall AI-friendliness: 5/5** — The core improvement is mechanical: import chains replace search-based discovery. When an LLM sees `api.cart.addItem({ body: { productId, quantity } })`, it resolves the import to the contract, reads the Zod schema, and sees every valid status code and response shape. This eliminates the class of hallucinations where the LLM invents endpoints or response fields.
 
 ## Options Considered
 
-### Option A: Shared contracts package (recommended)
+### Option A: Shared contracts package (chosen)
 
-As described above. Creates `packages/api-contracts`, both apps depend on it, frontend uses `@ts-rest/core` client.
+Dedicated `packages/api-contracts` package. Both apps depend on it via `workspace:*`. Frontend uses `@ts-rest/core` client initialized from the root `apiContract`.
 
-**Trade-offs:** Some upfront migration work, but pays back immediately in type safety and LLM accuracy.
+**Trade-offs:** One-time migration cost (move contracts, update imports, rewrite fetch calls). Ongoing: compile-time type safety across the app boundary, zero manual type maintenance.
+
+**AI-friendliness: 5/5** — Import chain connects frontend usage to backend contract definitions. LLMs resolve types without searching.
 
 ### Option B: Web imports contracts directly from backend
 
-Configure `@mercado/web` to depend on `@mercado/backend` and import contracts via deep paths like `@mercado/backend/modules/orders`.
+Configure `@mercado/web` to depend on `@mercado/backend` and import contracts via deep paths:
 
 ```typescript
-// Would require adding to apps/web/package.json:
-{ "dependencies": { "@mercado/backend": "workspace:*" } }
-
-// Usage:
 import { cartContract } from '@mercado/backend/modules/cart';
 ```
 
 **Rejected because:**
-- Exposes all backend internals to the web app (services, repositories, db schemas).
-- Backend's Node.js-specific dependencies (Fastify, pg, Temporal) would leak into the web bundle unless carefully excluded.
-- Tight coupling — any backend refactor affects web import paths.
-- AI-friendliness: 3/5 — import chain exists but is noisy; LLM must filter backend internals from contract exports.
+- Exposes all backend internals (services, repositories, db schemas) to the web app's dependency graph.
+- Backend's Node.js-specific dependencies (Fastify, pg, Temporal SDK) leak into the web bundle unless carefully excluded via package.json `exports` field.
+- Tight coupling: any backend directory restructure breaks web import paths.
+- **AI-friendliness: 3/5** — Import chain exists but is noisy. An LLM must filter backend internals from contract exports.
 
 ### Option C: Generated types from OpenAPI
 
-Extend the OpenAPI generator to include all contracts, then generate TypeScript types with `openapi-typescript`.
+Generate TypeScript types from OpenAPI spec with `openapi-typescript`:
 
 ```bash
-pnpm generate:openapi          # produces openapi.json
+pnpm openapi:generate           # produces openapi.json
 pnpm openapi-typescript openapi.json -o apps/web/src/generated/api.ts
 ```
 
 **Rejected because:**
 - Generated types are static — no Zod runtime validation on the frontend.
-- Types go stale if generation step is forgotten (CI can enforce, but adds friction).
-- Generated code is opaque to LLMs — they can read it but can't trace the *source* contract. Hallucination risk remains for anything not in the generated file.
-- The existing OpenAPI generator is incomplete (only `orders`); fixing it is a prerequisite anyway.
-- AI-friendliness: 2/5 — generated files are large, flat, and lack the semantic structure of contracts.
+- Types go stale if the generation step is skipped. CI can enforce this, but it adds a build-order dependency.
+- Generated code is opaque: an LLM can read the flat type file but cannot trace a type back to the source contract that produced it. Hallucination risk remains for anything not in the generated output.
+- The existing OpenAPI generator was incomplete (only `orders`); fixing it was a prerequisite regardless.
+- **AI-friendliness: 2/5** — Generated files are large, flat, and lack the semantic structure of contracts. No import chain from type to schema definition.
 
 ## Migration Path
 
-1. Create `packages/api-contracts` with shared error/pagination schemas.
-2. Move one contract at a time (start with `cart` — simplest).
-3. Update backend imports for that module; verify tests pass.
-4. Set up `@ts-rest/core` client in web; migrate one page at a time.
-5. Remove manual interfaces from web pages as each is migrated.
-6. Repeat for `products`, then `orders`.
-7. Fix OpenAPI generator to use `apiContract` from the shared package.
+Each step was independently shippable and testable.
+
+1. **Create contracts package skeleton.** Run `mkdir -p packages/api-contracts/src/{shared,cart,products,orders}`. Add `package.json` (`@mercado/api-contracts` with `@ts-rest/core` and `zod` dependencies) and `tsconfig.json`. Add `packages/*` to `pnpm-workspace.yaml`. Verify: `pnpm install` succeeds.
+
+2. **Extract shared schemas.** Copy `validationErrorSchema`, `notFoundErrorSchema`, `internalErrorSchema` (identical across all 3 backend contract files) into `packages/api-contracts/src/shared/errors.ts`. Move `paginationSchema` from `products.contracts.ts` into `packages/api-contracts/src/shared/pagination.ts`. Add any missing error schemas (`unauthorizedErrorSchema`, `conflictErrorSchema`, `unprocessableEntityErrorSchema`). Verify: `npx tsc --noEmit` in `packages/api-contracts/`.
+
+3. **Migrate cart contract.** Move Zod schemas (`addItemSchema`, `cartResponseSchema`, `updateItemSchema`, `mergeCartSchema`, `successResponseSchema`, `cartItemSchema`) from `apps/backend/src/modules/cart/` into `packages/api-contracts/src/cart/schemas.ts`. Move `cartContract` definition into `packages/api-contracts/src/cart/contract.ts`, updating imports to use relative paths within the package. Verify: `npx tsc --noEmit` in `packages/api-contracts/`.
+
+4. **Update backend cart imports.** Change `apps/backend/src/modules/cart/api/cart.routes.ts` to import `cartContract` from `@mercado/api-contracts` instead of the local contract file. Update `apps/backend/src/modules/cart/index.ts` re-exports. Verify: `pnpm --filter @mercado/backend test` passes.
+
+5. **Repeat steps 3–4 for products, then orders.** Same pattern: move schemas and contract, update backend imports, verify tests pass after each module.
+
+6. **Create root contract.** Add `packages/api-contracts/src/router.ts` exporting `apiContract` that combines all three module contracts. Add `packages/api-contracts/src/index.ts` as the public API re-exporting all contracts, schemas, and the root contract. Verify: `import { apiContract } from '@mercado/api-contracts'` resolves in both apps.
+
+7. **Set up frontend ts-rest client.** Run `pnpm --filter @mercado/web add @ts-rest/core @mercado/api-contracts`. Create `apps/web/src/lib/api-client.ts` with `initClient(apiContract, { baseUrl: '', baseHeaders: {} })`. Verify: `npx tsc --noEmit` in `apps/web/`.
+
+8. **Migrate frontend pages one at a time.** For each page (`cart.tsx`, `products.tsx`, `product-detail.tsx`): replace manual interfaces with `ClientInferResponseBody<typeof apiContract.*.*, 200>` type aliases, replace `fetch()` calls with `api.*.*()` calls, remove dead interface definitions. Verify after each page: `pnpm --filter @mercado/web typecheck` passes.
+
+9. **Fix OpenAPI generator.** Update `apps/backend/src/scripts/generate-openapi.ts` to import `apiContract` from `@mercado/api-contracts` instead of using the incomplete `AVAILABLE_CONTRACTS` array. Verify: `pnpm openapi:generate` produces a spec covering cart, products, and orders.
+
+10. **Clean up.** Delete the now-empty contract files from backend modules (`apps/backend/src/modules/*/api/*.contracts.ts`). Remove orphaned schema files that moved to the contracts package. Verify: `pnpm lint && pnpm test && pnpm typecheck`.

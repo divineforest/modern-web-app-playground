@@ -11,8 +11,8 @@ import type { CartIdentifier } from '../domain/cart.types.js';
 import {
   CartItemNotFoundError,
   CartNotFoundError,
-  cartService,
   CurrencyMismatchError,
+  cartService,
   ProductNotAvailableError,
   ProductNotFoundError,
 } from '../services/cart.service.js';

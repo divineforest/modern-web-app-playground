@@ -1,5 +1,5 @@
-import type { z } from 'zod';
 import type { cartItemSchema, cartResponseSchema } from '@mercado/api-contracts';
+import type { z } from 'zod';
 
 export type {
   AddItemInput,

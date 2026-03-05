@@ -1,9 +1,4 @@
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { apiContract } from '@mercado/api-contracts';
-import { api } from '../lib/api-client';
-import noPhoto from '../assets/no-photo.svg';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -14,6 +9,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
+import type { ClientInferResponseBody } from '@ts-rest/core';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import noPhoto from '../assets/no-photo.svg';
+import { api } from '../lib/api-client';
 
 const PAGE_SIZE = 20;
 
@@ -106,7 +106,11 @@ export function ProductsPage() {
             }}
           >
             {products.map((product) => (
-              <Card key={product.id} sx={{ display: 'flex', flexDirection: 'column', height: 360 }}>
+              <Card
+                key={product.id}
+                data-testid="product-card"
+                sx={{ display: 'flex', flexDirection: 'column', height: 360 }}
+              >
                 <CardActionArea
                   component={Link}
                   to={`/products/${product.slug}`}

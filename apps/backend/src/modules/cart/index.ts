@@ -23,8 +23,8 @@ export type {
 export {
   CartItemNotFoundError,
   CartNotFoundError,
-  cartService,
   CurrencyMismatchError,
+  cartService,
   ProductNotAvailableError,
   ProductNotFoundError,
 } from './services/cart.service.js';

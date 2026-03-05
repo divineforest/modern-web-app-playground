@@ -618,9 +618,15 @@ async function seedProducts() {
 
     console.log('📊 Seeding summary:');
     console.log(`   - Total products: ${insertedProducts.length}`);
-    console.log(`   - Active products: ${insertedProducts.filter((p) => p.status === 'active').length}`);
-    console.log(`   - Draft products: ${insertedProducts.filter((p) => p.status === 'draft').length}`);
-    console.log(`   - Archived products: ${insertedProducts.filter((p) => p.status === 'archived').length}`);
+    console.log(
+      `   - Active products: ${insertedProducts.filter((p) => p.status === 'active').length}`
+    );
+    console.log(
+      `   - Draft products: ${insertedProducts.filter((p) => p.status === 'draft').length}`
+    );
+    console.log(
+      `   - Archived products: ${insertedProducts.filter((p) => p.status === 'archived').length}`
+    );
 
     const categories = new Set(insertedProducts.map((p) => p.category));
     console.log(`   - Categories: ${categories.size}`);

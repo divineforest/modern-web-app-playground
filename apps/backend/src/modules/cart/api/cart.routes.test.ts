@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createTestProduct } from '../../../../tests/factories/products.js';
 import { buildTestApp } from '../../../app.js';
 import { db, orderItems, orders, products } from '../../../db/index.js';
-import { createTestProduct } from '../../../../tests/factories/products.js';
 import type { Product } from '../../products/domain/product.entity.js';
 
 const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';

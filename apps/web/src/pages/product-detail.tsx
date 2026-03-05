@@ -1,11 +1,4 @@
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import type { apiContract } from '@mercado/api-contracts';
-import { api } from '../lib/api-client';
-import { getCartHeaders, setCartToken } from '../lib/cart-token';
-import { useCart } from '../contexts/cart-context';
-import noPhoto from '../assets/no-photo.svg';
 import Add from '@mui/icons-material/Add';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import Remove from '@mui/icons-material/Remove';
@@ -19,6 +12,13 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
+import type { ClientInferResponseBody } from '@ts-rest/core';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import noPhoto from '../assets/no-photo.svg';
+import { useCart } from '../contexts/cart-context';
+import { api } from '../lib/api-client';
+import { getCartHeaders, setCartToken } from '../lib/cart-token';
 
 type Product = ClientInferResponseBody<typeof apiContract.products.getBySlug, 200>;
 
@@ -233,7 +233,11 @@ export function ProductDetailPage() {
               >
                 <Remove />
               </IconButton>
-              <Typography variant="body1" sx={{ minWidth: 40, textAlign: 'center' }}>
+              <Typography
+                variant="body1"
+                data-testid="quantity-input"
+                sx={{ minWidth: 40, textAlign: 'center' }}
+              >
                 {quantity}
               </Typography>
               <IconButton
@@ -252,6 +256,7 @@ export function ProductDetailPage() {
               onClick={() => void addToCart()}
               disabled={addingToCart}
               fullWidth
+              data-testid="add-to-cart-button"
             >
               {addingToCart ? 'Adding...' : 'Add to Cart'}
             </Button>
