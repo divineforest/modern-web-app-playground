@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cartItemSchema } from '../cart/schemas.js';
 
 const orderStatusEnum = [
   'draft',
@@ -154,8 +155,13 @@ export const ordersListResponseSchema = z.object({
   orders: z.array(orderResponseSchema),
 });
 
+export const orderWithItemsResponseSchema = orderResponseSchema.extend({
+  items: z.array(cartItemSchema),
+});
+
 export type CreateOrderInput = z.input<typeof createOrderSchema>;
 export type CreateOrderOutput = z.infer<typeof createOrderSchema>;
 export type UpdateOrderInput = z.input<typeof updateOrderSchema>;
 export type UpdateOrderOutput = z.infer<typeof updateOrderSchema>;
 export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;
+export type OrderWithItemsResponse = z.infer<typeof orderWithItemsResponseSchema>;

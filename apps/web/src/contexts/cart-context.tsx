@@ -7,12 +7,14 @@ interface CartContextValue {
   itemCount: number;
   refreshCart: () => void;
   updateItemCount: (count: number) => void;
+  clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue>({
   itemCount: 0,
   refreshCart: () => {},
   updateItemCount: () => {},
+  clearCart: () => {},
 });
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -34,6 +36,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchCartCount();
   }, [fetchCartCount]);
 
@@ -45,8 +48,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItemCount(count);
   }, []);
 
+  const clearCart = useCallback(() => {
+    setItemCount(0);
+  }, []);
+
   return (
-    <CartContext.Provider value={{ itemCount, refreshCart, updateItemCount }}>
+    <CartContext.Provider value={{ itemCount, refreshCart, updateItemCount, clearCart }}>
       {children}
     </CartContext.Provider>
   );

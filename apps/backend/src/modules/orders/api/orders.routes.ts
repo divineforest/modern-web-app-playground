@@ -198,6 +198,51 @@ const router = s.router(ordersContract, {
       };
     }
   },
+
+  /**
+   * Get an order by order number
+   */
+  getByOrderNumber: async ({ request, params }) => {
+    try {
+      const userContext = request.headers['x-user-id'] as string | undefined;
+
+      if (!userContext) {
+        return {
+          status: 401 as const,
+          body: {
+            error: 'Authentication required',
+          },
+        };
+      }
+
+      const order = await ordersService.getByOrderNumber(params.orderNumber, userContext);
+
+      return {
+        status: 200 as const,
+        body: order,
+      };
+    } catch (error) {
+      if (error instanceof OrderNotFoundError) {
+        return {
+          status: 404 as const,
+          body: {
+            error: error.message,
+          },
+        };
+      }
+
+      logger.error(
+        { error, orderNumber: params.orderNumber },
+        'Unexpected error in get order by number route'
+      );
+      return {
+        status: 500 as const,
+        body: {
+          error: 'Internal server error',
+        },
+      };
+    }
+  },
 });
 
 /**

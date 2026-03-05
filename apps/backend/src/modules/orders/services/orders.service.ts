@@ -20,6 +20,8 @@ import {
   deleteOrder,
   findAllOrders,
   findOrderById,
+  findOrderByOrderNumber,
+  findOrderItems,
   updateOrder,
 } from '../repositories/orders.repository.js';
 
@@ -205,6 +207,51 @@ export async function deleteOrderService(id: string, database: Database = db): P
 }
 
 /**
+ * Get an order by order number with items
+ * @param orderNumber Order number
+ * @param userId User ID to verify ownership
+ * @param database Database instance (for dependency injection)
+ * @returns Order with items
+ * @throws OrderNotFoundError if not found or user doesn't own the order
+ */
+export async function getOrderByOrderNumber(
+  orderNumber: string,
+  userId: string,
+  database: Database = db
+) {
+  const order = await findOrderByOrderNumber(orderNumber, database);
+
+  if (!order) {
+    logger.warn({ orderNumber }, 'Order not found');
+    throw new OrderNotFoundError(orderNumber);
+  }
+
+  if (order.userId !== userId) {
+    logger.warn({ orderNumber, userId, orderUserId: order.userId }, 'Order ownership mismatch');
+    throw new OrderNotFoundError(orderNumber);
+  }
+
+  const items = await findOrderItems(order.id, database);
+
+  const formattedItems = items.map((item) => ({
+    id: item.id,
+    productId: item.productId,
+    productName: item.productName,
+    productSku: item.productSku,
+    productImageUrl: item.productImageUrl,
+    unitPrice: item.unitPrice,
+    quantity: Math.floor(Number.parseFloat(item.quantity)),
+    lineTotal: (Number.parseFloat(item.unitPrice) * Number.parseFloat(item.quantity)).toFixed(2),
+    currency: item.currency,
+  }));
+
+  return {
+    ...order,
+    items: formattedItems,
+  };
+}
+
+/**
  * Orders service factory function for dependency injection
  * Returns an object with all order operations bound to a specific database
  */
@@ -216,6 +263,8 @@ function createOrdersService(database: Database = db) {
     update: (id: string, input: UpdateOrderInput | UpdateOrderOutput) =>
       updateOrderService(id, input, database),
     delete: (id: string) => deleteOrderService(id, database),
+    getByOrderNumber: (orderNumber: string, userId: string) =>
+      getOrderByOrderNumber(orderNumber, userId, database),
   };
 }
 

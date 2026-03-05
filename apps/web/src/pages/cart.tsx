@@ -352,7 +352,14 @@ export function CartPage() {
             </Typography>
           </Box>
 
-          <Button variant="contained" fullWidth size="large" disabled sx={{ mb: 2 }}>
+          <Button
+            component={Link}
+            to="/checkout"
+            variant="contained"
+            fullWidth
+            size="large"
+            sx={{ mb: 2 }}
+          >
             Proceed to Checkout
           </Button>
 

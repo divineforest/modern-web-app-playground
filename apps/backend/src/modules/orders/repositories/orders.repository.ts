@@ -1,6 +1,7 @@
 import { and, desc, eq, type SQL } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
-import { db, orders } from '../../../db/index.js';
+import { db, orderItems, orders } from '../../../db/index.js';
+import type { OrderItem } from '../../../db/schema.js';
 import type { NewOrder, Order, UpdateOrder } from '../domain/order.entity.js';
 
 /**
@@ -111,4 +112,34 @@ export async function deleteOrder(id: string, database: Database = db): Promise<
   const result = await database.delete(orders).where(eq(orders.id, id)).returning();
 
   return result.length > 0;
+}
+
+/**
+ * Find an order by order number
+ * @param orderNumber Order number to search for
+ * @param database Database instance (for dependency injection)
+ * @returns Order or null if not found
+ */
+export async function findOrderByOrderNumber(
+  orderNumber: string,
+  database: Database = db
+): Promise<Order | null> {
+  const results = await database.select().from(orders).where(eq(orders.orderNumber, orderNumber));
+
+  return (results[0] as Order | undefined) || null;
+}
+
+/**
+ * Find all items for an order
+ * @param orderId Order ID
+ * @param database Database instance (for dependency injection)
+ * @returns Array of order items
+ */
+export async function findOrderItems(
+  orderId: string,
+  database: Database = db
+): Promise<OrderItem[]> {
+  const results = await database.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+
+  return results;
 }

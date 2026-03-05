@@ -14,6 +14,7 @@ import {
   orderIdSchema,
   orderResponseSchema,
   ordersListResponseSchema,
+  orderWithItemsResponseSchema,
   updateOrderSchema,
 } from './schemas.js';
 
@@ -99,5 +100,22 @@ export const ordersContract = c.router({
     }),
     summary: 'Delete an order',
     description: 'Permanently deletes an order from the database',
+  },
+
+  getByOrderNumber: {
+    method: 'GET',
+    path: '/api/orders/by-number/:orderNumber',
+    responses: {
+      200: orderWithItemsResponseSchema,
+      400: validationErrorSchema,
+      401: unauthorizedErrorSchema,
+      404: notFoundErrorSchema,
+      500: internalErrorSchema,
+    },
+    pathParams: z.object({
+      orderNumber: z.string().min(1, 'Order number is required'),
+    }),
+    summary: 'Get an order by order number',
+    description: 'Retrieves a single order by its order number, including items',
   },
 });

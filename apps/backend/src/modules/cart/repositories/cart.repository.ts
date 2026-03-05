@@ -20,6 +20,24 @@ export async function findCartByUserId(userId: string, database: Database = db) 
 }
 
 /**
+ * Find order by user ID (any status, most recent first)
+ * Used for checkout idempotency - finds cart or already-confirmed order
+ * @param userId User ID
+ * @param database Database instance
+ * @returns Order or null if not found
+ */
+export async function findOrderByUserId(userId: string, database: Database = db) {
+  const results = await database
+    .select()
+    .from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(sql`${orders.createdAt} DESC`)
+    .limit(1);
+
+  return results[0] || null;
+}
+
+/**
  * Find cart (order with status='cart') by cart token
  * @param cartToken Cart token
  * @param database Database instance
