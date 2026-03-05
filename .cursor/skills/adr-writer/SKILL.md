@@ -21,7 +21,7 @@ Write Architecture Decision Records that maximize AI-friendliness — structured
 
 ### Phase 2: Write the ADR
 
-Create the ADR at `docs/adr/YYYY-MM-DD-<slug>.md` using today's date.
+Create the ADR at `docs/adr/YYYY-MM-DD-HH-MM-<slug>.md` using today's date and current time (24-hour clock).
 
 Use this structure:
 
@@ -29,7 +29,7 @@ Use this structure:
 # <Title>
 
 **Status:** proposed | accepted | deprecated | superseded
-**Date:** YYYY-MM-DD
+**Date:** YYYY-MM-DD HH:MM
 **Supersedes:** [link if applicable]
 
 ## Context
