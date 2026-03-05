@@ -147,7 +147,7 @@ The feature builds directly on the cart infrastructure: the cart (an order with 
 ### TR-6: Cart Context Update (Web Application)
 
 - After successful checkout, the cart context SHALL be cleared (item count reset to zero) so the header cart badge reflects the empty state.
-- The cart token in `localStorage` SHALL be cleared after checkout since the cart no longer exists.
+- The checkout API handler SHALL clear the `cart_token` cookie in the response, since the cart no longer exists after checkout.
 
 ## Data Flow
 
@@ -173,7 +173,7 @@ The feature builds directly on the cart infrastructure: the cart (an order with 
 4. **User** fills in shipping and billing address forms.
 5. **User** clicks "Place Order".
 6. **Checkout page** sends `POST /api/checkout` with the address data.
-7. On success, **browser** clears cart state (context + localStorage token) and redirects to `/orders/:orderNumber/confirmation`.
+7. On success, **browser** clears cart context state (item count) and redirects to `/orders/:orderNumber/confirmation`. The `cart_token` cookie is cleared by the server in the checkout response.
 8. On failure, **Checkout page** displays validation errors inline.
 
 ### Order Confirmation Page Load

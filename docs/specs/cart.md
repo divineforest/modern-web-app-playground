@@ -72,18 +72,22 @@ A Cart page on the web application provides the user-facing interface for viewin
 - The system SHALL allow clearing all items from a cart in a single operation.
 - The system SHALL delete the cart order record when cleared.
 
-### FR-7: Guest Cart Identification
+### FR-7: Guest Cart Identification and Token Lifecycle
 
-- The system SHALL identify guest carts via a cart token passed in the `x-cart-token` request header.
-- The system SHALL return the cart token in the response header when a new guest cart is created.
+- The system SHALL identify guest carts via a `cart_token` cookie.
+- When a new guest cart is created, the system SHALL set the `cart_token` cookie in the response (non-httpOnly, SameSite=Lax, 30-day Max-Age). The browser sends it automatically on all subsequent cart requests — no client-side header management needed.
+- Guest carts SHALL expire 30 days after the cart was last modified (`updated_at`). The cookie expiry SHALL match this duration so both are consistent.
 - The system SHALL return HTTP 404 if a guest provides an invalid or expired cart token.
+- When a guest user logs in, the auth system SHALL automatically consume the `cart_token` cookie, merge the guest cart into the user's account, and clear the cookie — no explicit merge call is needed from the frontend (see FR-8 and `docs/specs/auth.md` FR-2).
 
 ### FR-8: Guest-to-User Cart Merge
 
-- When an authenticated user has an existing guest cart token, the system SHALL provide an endpoint to merge the guest cart into the user's cart.
+- Cart merge SHALL be triggered automatically by the auth system on login — not by an explicit frontend API call.
 - If the user already has a cart, items from the guest cart SHALL be merged: matching products have their quantities summed; new products are added.
-- After merge, the guest cart SHALL be deleted.
-- If the user has no existing cart, the guest cart SHALL be reassigned to the user (update user ID, clear cart token).
+- After merge, the guest cart SHALL be deleted and the `cart_token` cookie SHALL be cleared.
+- If the user has no existing cart, the guest cart SHALL be reassigned to the user (update user ID, clear cart token column).
+- Merge SHALL execute within a single database transaction to prevent partial state.
+- A `POST /api/cart/merge` endpoint SHALL remain available for edge cases (e.g., a guest cart cookie arrives after login), but the primary path is automatic.
 
 ### FR-9: Cart Page (Web Application)
 
@@ -93,7 +97,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 - The Cart page SHALL display a cart summary section with subtotal and total item count.
 - The Cart page SHALL display an empty state with a message and a link to continue shopping when the cart has no items.
 - The Cart page SHALL include a "Proceed to checkout" button (disabled until checkout is implemented).
-- The Cart page SHALL persist the cart token in `localStorage` for guest users.
+- The Cart page SHALL NOT manage cart token storage — the browser cookie is set and cleared by the server automatically.
 - The Cart page SHALL show optimistic updates for quantity changes and removals, reverting on failure.
 
 ## Technical Requirements
@@ -136,8 +140,9 @@ A Cart page on the web application provides the user-facing interface for viewin
 ### TR-4: Cart API Design
 
 - Cart endpoints SHALL be under `/api/cart`.
-- Guest identification SHALL use the `x-cart-token` request header.
-- Authenticated users SHALL be identified by their bearer token; the `x-cart-token` header is ignored when authenticated.
+- Cart endpoints SHALL be registered in the **public route scope** (before the session auth plugin) so unauthenticated guests can access them. This SHALL be explicit in the server registration — not left implicit by route ordering.
+- Guest identification SHALL use the `cart_token` cookie. The server reads this cookie to locate the guest's cart; it does not require any client-side header construction.
+- Authenticated users are identified via the session cookie (`sid`) resolved by the auth plugin. If `request.user` is present, it takes precedence over any `cart_token` cookie.
 - API contracts SHALL be defined via ts-rest.
 
   | Method | Path | Description |
@@ -162,25 +167,34 @@ A Cart page on the web application provides the user-facing interface for viewin
 - The module SHALL follow the standard module structure: `api/`, `services/`, `repositories/`, `domain/`.
 - The cart module SHALL depend on the orders and products tables but MAY reuse the orders repository for order-level operations.
 
-### TR-7: Cart Token Security
+### TR-7: Cart Token Cookie Configuration
 
 - Cart tokens SHALL be UUID v4 values, cryptographically random.
+- The `cart_token` cookie SHALL be configured as: non-httpOnly (the value is not sensitive — it is a public identifier, not a credential), SameSite=Lax, Secure in production, path `/`, Max-Age matching the 30-day cart expiry.
 - The system SHALL NOT expose other users' carts through token enumeration.
-- Cart token lookup SHALL be constant-time (indexed) to prevent timing attacks.
+- Cart token lookup SHALL be O(log n) via the unique index on `cart_token`.
+
+### TR-8: Guest Cart Expiry and Cleanup
+
+- The `orders` table SHALL store an `expires_at` timestamp column (nullable; NULL means no expiry, used for real orders).
+- When a guest cart is created, `expires_at` SHALL be set to `now() + 30 days`.
+- When a guest cart is modified (item added, updated, or removed), `expires_at` SHALL be refreshed to `now() + 30 days` (rolling expiry matching the cookie).
+- The system SHALL treat a cart whose `expires_at` is in the past as non-existent (equivalent to not found).
+- 🚧 A scheduled cleanup job SHALL periodically hard-delete expired guest cart rows (and their order items via cascade) to prevent unbounded table growth.
 
 ## Data Flow
 
 ### Adding an Item to Cart (Guest)
 
-1. **Guest** sends `POST /api/cart/items` with product ID, quantity, and optionally `x-cart-token` header.
+1. **Guest** sends `POST /api/cart/items` with product ID and quantity. If the browser already holds a `cart_token` cookie, it is sent automatically.
 2. **Cart API handler** validates the request payload.
-3. **Cart service** checks for an existing cart via the cart token (if provided).
-4. If no cart exists, **cart service** creates a new order with `cart` status and generates a cart token.
+3. **Cart service** reads the `cart_token` cookie. If present, it looks up the cart by token and verifies it has not expired.
+4. If no cart exists (first item ever, or token absent/expired), **cart service** creates a new order with `cart` status, generates a UUID cart token, and sets `expires_at = now() + 30 days`.
 5. **Cart service** fetches the product from the **products table** to validate it exists, is active, and capture current price/name/SKU.
 6. **Cart service** validates currency compatibility (first item sets the cart currency, subsequent items must match).
 7. **Cart service** inserts or updates the order item in the **order items table** (upsert on order id + product id).
-8. **Cart service** recalculates and updates the order's subtotal and total amount.
-9. **Cart API handler** returns the updated cart with the cart token in the `x-cart-token` response header.
+8. **Cart service** recalculates the order's subtotal and total, and refreshes `expires_at` to `now() + 30 days`.
+9. **Cart API handler** sets (or refreshes) the `cart_token` cookie in the response and returns the updated cart.
 
 ### Adding an Item to Cart (Authenticated User)
 
@@ -189,26 +203,26 @@ A Cart page on the web application provides the user-facing interface for viewin
 3. **Cart service** looks up existing cart by user ID.
 4. Steps 4–9 follow the same flow as the guest path, but the order is associated with user ID instead of a cart token.
 
-### Merging Guest Cart into User Cart
+### Merging Guest Cart into User Cart (automatic, triggered by login)
 
-1. **Authenticated user** sends `POST /api/cart/merge` with the guest cart token in the request body.
-2. **Cart service** loads the guest cart and the user's existing cart.
-3. If the user has no cart, **cart service** reassigns the guest cart: sets user ID, clears cart token.
-4. If the user has a cart, **cart service** iterates guest cart items:
+1. **Login handler** detects a `cart_token` cookie on the login request.
+2. Within the same login database transaction, **auth service** calls the cart merge service with the resolved user ID and guest cart token.
+3. If the user has no cart, **cart service** reassigns the guest cart: sets user ID, clears `cart_token` column, clears `expires_at`.
+4. If the user has a cart, **cart service** iterates guest cart items within the transaction:
    - Matching products: sum quantities in the user's cart item.
    - New products: move items to the user's cart.
 5. **Cart service** recalculates the user's cart totals.
 6. **Cart service** deletes the guest cart order and its remaining items.
-7. **Cart API handler** returns the merged user cart.
+7. **Login handler** clears the `cart_token` cookie in the login response.
+8. **Browser** never needs to make a separate merge API call.
 
 ### Cart Page Load (Web Application)
 
-1. **Browser** checks `localStorage` for a cart token (guest) or relies on auth cookie/token.
-2. **Browser** sends `GET /api/cart` with appropriate identification.
-3. **Cart API** returns cart data (items, totals) or empty cart representation.
-4. **Cart page** renders item list, quantity controls, and summary.
-5. User interactions (quantity change, remove) trigger optimistic UI updates followed by API calls.
-6. On API failure, the **Cart page** reverts the optimistic update and shows an error notification.
+1. **Browser** sends `GET /api/cart`. The `cart_token` cookie (guest) or `sid` cookie (authenticated) is sent automatically — no client-side token management needed.
+2. **Cart API** resolves identity from cookies and returns cart data (items, totals) or empty cart representation.
+3. **Cart page** renders item list, quantity controls, and summary.
+4. User interactions (quantity change, remove) trigger optimistic UI updates followed by API calls.
+5. On API failure, the **Cart page** reverts the optimistic update and shows an error notification.
 
 ## Error Scenarios
 
@@ -227,7 +241,8 @@ A Cart page on the web application provides the user-facing interface for viewin
 
 - Cart tokens SHALL be cryptographically random UUIDs to prevent guessing.
 - Guest cart endpoints SHALL NOT leak information about other carts (no enumeration).
-- The merge endpoint SHALL require authentication to prevent unauthorized cart takeover.
+- The `cart_token` cookie is non-httpOnly because the token is a public identifier, not a credential — knowing it only allows access to one anonymous cart, not to any user account. Marking it httpOnly would provide no meaningful security benefit while complicating the implementation.
+- The manual `POST /api/cart/merge` endpoint SHALL require authentication to prevent unauthorized cart takeover.
 - Input validation (product ID format, quantity range) SHALL be enforced at the API contract level via Zod schemas.
 
 ## Monitoring and Observability
@@ -259,7 +274,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 - Quantity controls update the API and UI
 - Remove button removes item and updates totals
 - Empty cart state displays correctly
-- Cart token persisted in and loaded from localStorage
+- Cart token cookie is set by the server on first add and refreshed on each mutation
 
 ## Risks and Mitigations
 
@@ -267,6 +282,6 @@ A Cart page on the web application provides the user-facing interface for viewin
 |------|--------|------------|
 | Cart token brute-force | Unauthorized access to guest carts | UUID v4 has 122 bits of entropy; rate-limit cart endpoints |
 | Stale price snapshots | Customer sees different price on product page vs cart | Display "price at time of adding" clearly; 🚧 consider price refresh option |
-| Orphaned guest carts filling the database | Storage growth, query performance | 🚧 Implement cart expiration (deferred) |
+| Orphaned guest carts filling the database | Storage growth, query performance | `expires_at` column + 🚧 scheduled cleanup job (TR-8) |
 | Cart merge race condition | Duplicate items or lost quantities | Run merge within a database transaction with row-level locking |
 | Product deleted after added to cart | Broken references in cart items | FK constraint prevents hard delete; product archival leaves cart items displayable |
