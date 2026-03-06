@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createTestOrderItem } from '../../../../tests/factories/order-items.js';
 import { createTestOrder } from '../../../../tests/factories/orders.js';
+import { createTestProduct } from '../../../../tests/factories/products.js';
 import { createAuthenticatedUser } from '../../../../tests/helpers/auth.js';
 import { buildTestApp } from '../../../app.js';
 import { db, sessions, users } from '../../../db/index.js';
@@ -501,6 +503,125 @@ describe('Orders Routes - Integration Tests', () => {
         const response = await fastify.inject({
           method: 'DELETE',
           url: `/api/orders/${created.id}`,
+        });
+
+        // ASSERT
+        expect(response.statusCode).toBe(401);
+      });
+    });
+  });
+
+  describe('GET /api/orders/me', () => {
+    it('should return users orders with items', async () => {
+      // ARRANGE
+      const auth = await createAuthenticatedUser('myorders@example.com', 'password123', db);
+      const product = await createTestProduct({}, db);
+      const order = await createTestOrder(
+        { userId: auth.userId, status: 'confirmed', currency: 'EUR' },
+        db
+      );
+      await createTestOrderItem(
+        {
+          orderId: order.id,
+          productId: product.id,
+          quantity: '2',
+          unitPrice: '10.50',
+          currency: 'EUR',
+        },
+        db
+      );
+
+      // ACT
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/orders/me',
+        cookies: { sid: auth.sessionToken },
+      });
+
+      // ASSERT
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('application/json');
+
+      const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
+      expect(body.orders).toBeDefined();
+      expect(Array.isArray(body.orders)).toBe(true);
+
+      const myOrder = body.orders.find((o) => o.id === order.id);
+      expect(myOrder).toBeDefined();
+    });
+
+    it('should return empty array when user has no orders', async () => {
+      // ARRANGE
+      const auth = await createAuthenticatedUser('noorders@example.com', 'password123', db);
+
+      // ACT
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/orders/me',
+        cookies: { sid: auth.sessionToken },
+      });
+
+      // ASSERT
+      expect(response.statusCode).toBe(200);
+
+      const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
+      expect(body.orders).toEqual([]);
+    });
+
+    it('should not return other users orders', async () => {
+      // ARRANGE
+      const user1 = await createAuthenticatedUser('user1@example.com', 'password123', db);
+      const user2 = await createAuthenticatedUser('user2@example.com', 'password123', db);
+
+      const user1Order = await createTestOrder({ userId: user1.userId, status: 'confirmed' }, db);
+      await createTestOrder({ userId: user2.userId, status: 'confirmed' }, db);
+
+      // ACT
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/orders/me',
+        cookies: { sid: user1.sessionToken },
+      });
+
+      // ASSERT
+      expect(response.statusCode).toBe(200);
+
+      const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
+      const user1OrderIds = body.orders.map((o) => o.id);
+      expect(user1OrderIds).toContain(user1Order.id);
+      expect(body.orders.length).toBeGreaterThan(0);
+    });
+
+    it('should exclude cart status orders', async () => {
+      // ARRANGE
+      const auth = await createAuthenticatedUser('carttest@example.com', 'password123', db);
+      await createTestOrder({ userId: auth.userId, status: 'cart' }, db);
+      const confirmedOrder = await createTestOrder(
+        { userId: auth.userId, status: 'confirmed' },
+        db
+      );
+
+      // ACT
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/orders/me',
+        cookies: { sid: auth.sessionToken },
+      });
+
+      // ASSERT
+      expect(response.statusCode).toBe(200);
+
+      const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
+      expect(body.orders.every((o) => o.status !== 'cart')).toBe(true);
+      expect(body.orders.some((o) => o.id === confirmedOrder.id)).toBe(true);
+    });
+
+    describe('ACL', () => {
+      it('should return 401 without authentication', async () => {
+        // ACT
+        const response = await fastify.inject({
+          method: 'GET',
+          url: '/api/orders/me',
         });
 
         // ASSERT

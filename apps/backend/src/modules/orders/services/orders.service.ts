@@ -22,6 +22,7 @@ import {
   findOrderById,
   findOrderByOrderNumber,
   findOrderItems,
+  findOrdersByUserId,
   updateOrder,
 } from '../repositories/orders.repository.js';
 
@@ -252,6 +253,45 @@ export async function getOrderByOrderNumber(
 }
 
 /**
+ * List all orders for the authenticated user with items
+ * @param userId User ID
+ * @param database Database instance (for dependency injection)
+ * @returns Array of orders with items
+ */
+export async function listMyOrdersService(userId: string, database: Database = db) {
+  const orders = await findOrdersByUserId(userId, database);
+
+  const ordersWithItems = await Promise.all(
+    orders.map(async (order) => {
+      const items = await findOrderItems(order.id, database);
+
+      const formattedItems = items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        productSku: item.productSku,
+        productImageUrl: item.productImageUrl,
+        unitPrice: item.unitPrice,
+        quantity: Math.floor(Number.parseFloat(item.quantity)),
+        lineTotal: (Number.parseFloat(item.unitPrice) * Number.parseFloat(item.quantity)).toFixed(
+          2
+        ),
+        currency: item.currency,
+      }));
+
+      return {
+        ...order,
+        items: formattedItems,
+      };
+    })
+  );
+
+  logger.info({ userId, count: ordersWithItems.length }, 'Listed user orders');
+
+  return ordersWithItems;
+}
+
+/**
  * Orders service factory function for dependency injection
  * Returns an object with all order operations bound to a specific database
  */
@@ -265,6 +305,7 @@ function createOrdersService(database: Database = db) {
     delete: (id: string) => deleteOrderService(id, database),
     getByOrderNumber: (orderNumber: string, userId: string) =>
       getOrderByOrderNumber(orderNumber, userId, database),
+    listMyOrders: (userId: string) => listMyOrdersService(userId, database),
   };
 }
 

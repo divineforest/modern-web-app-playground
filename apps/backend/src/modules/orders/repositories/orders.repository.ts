@@ -1,4 +1,4 @@
-import { and, desc, eq, type SQL } from 'drizzle-orm';
+import { and, desc, eq, ne, type SQL } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, orderItems, orders } from '../../../db/index.js';
 import type { OrderItem } from '../../../db/schema.js';
@@ -142,4 +142,23 @@ export async function findOrderItems(
   const results = await database.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 
   return results;
+}
+
+/**
+ * Find all orders for a specific user
+ * @param userId User ID
+ * @param database Database instance (for dependency injection)
+ * @returns Array of orders for the user, excluding cart status, ordered by date (newest first)
+ */
+export async function findOrdersByUserId(
+  userId: string,
+  database: Database = db
+): Promise<Order[]> {
+  const results = await database
+    .select()
+    .from(orders)
+    .where(and(eq(orders.userId, userId), ne(orders.status, 'cart')))
+    .orderBy(desc(orders.orderDate));
+
+  return results as Order[];
 }

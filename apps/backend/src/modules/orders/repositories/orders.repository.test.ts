@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createTestOrder } from '../../../../tests/factories/orders.js';
+import { createTestUser } from '../../../../tests/factories/users.js';
 import { db } from '../../../db/index.js';
 import {
   createOrder,
   deleteOrder,
   findAllOrders,
   findOrderById,
+  findOrdersByUserId,
   updateOrder,
 } from './orders.repository.js';
 
@@ -181,6 +183,85 @@ describe('Orders Repository', () => {
 
       // ASSERT
       expect(deleted).toBe(false);
+    });
+  });
+
+  describe('findOrdersByUserId', () => {
+    it('should return orders for the given user', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+      const order1 = await createTestOrder({ userId: user.id, status: 'confirmed' }, db);
+      const order2 = await createTestOrder({ userId: user.id, status: 'fulfilled' }, db);
+
+      // ACT
+      const results = await findOrdersByUserId(user.id, db);
+
+      // ASSERT
+      const orderIds = results.map((o) => o.id);
+      expect(orderIds).toContain(order1.id);
+      expect(orderIds).toContain(order2.id);
+      expect(results.every((o) => o.userId === user.id)).toBe(true);
+    });
+
+    it('should exclude orders with status cart', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+      await createTestOrder({ userId: user.id, status: 'cart' }, db);
+      const confirmedOrder = await createTestOrder({ userId: user.id, status: 'confirmed' }, db);
+
+      // ACT
+      const results = await findOrdersByUserId(user.id, db);
+
+      // ASSERT
+      expect(results.every((o) => o.status !== 'cart')).toBe(true);
+      expect(results.some((o) => o.id === confirmedOrder.id)).toBe(true);
+    });
+
+    it('should not return other users orders', async () => {
+      // ARRANGE
+      const user1 = await createTestUser({}, db);
+      const user2 = await createTestUser({}, db);
+      await createTestOrder({ userId: user1.id, status: 'confirmed' }, db);
+      const user2Order = await createTestOrder({ userId: user2.id, status: 'confirmed' }, db);
+
+      // ACT
+      const results = await findOrdersByUserId(user2.id, db);
+
+      // ASSERT
+      expect(results.every((o) => o.userId === user2.id)).toBe(true);
+      expect(results.some((o) => o.id === user2Order.id)).toBe(true);
+    });
+
+    it('should order by order date descending', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+      const oldOrder = await createTestOrder(
+        { userId: user.id, status: 'confirmed', orderDate: '2024-01-01' },
+        db
+      );
+      const newOrder = await createTestOrder(
+        { userId: user.id, status: 'confirmed', orderDate: '2024-02-01' },
+        db
+      );
+
+      // ACT
+      const results = await findOrdersByUserId(user.id, db);
+
+      // ASSERT
+      const newIndex = results.findIndex((o) => o.id === newOrder.id);
+      const oldIndex = results.findIndex((o) => o.id === oldOrder.id);
+      expect(newIndex).toBeLessThan(oldIndex);
+    });
+
+    it('should return empty array when user has no orders', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+
+      // ACT
+      const results = await findOrdersByUserId(user.id, db);
+
+      // ASSERT
+      expect(results).toEqual([]);
     });
   });
 });

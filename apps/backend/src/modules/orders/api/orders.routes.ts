@@ -60,6 +60,39 @@ const router = s.router(ordersContract, {
   },
 
   /**
+   * List my orders
+   */
+  listMyOrders: async ({ request }) => {
+    try {
+      if (!request.user) {
+        return {
+          status: 401 as const,
+          body: {
+            error: 'Authentication required',
+          },
+        };
+      }
+
+      const orders = await ordersService.listMyOrders(request.user.id);
+
+      return {
+        status: 200 as const,
+        body: {
+          orders,
+        },
+      };
+    } catch (error) {
+      logger.error({ error, userId: request.user?.id }, 'Unexpected error in list my orders route');
+      return {
+        status: 500 as const,
+        body: {
+          error: 'Internal server error',
+        },
+      };
+    }
+  },
+
+  /**
    * Get an order by ID
    */
   getById: async ({ params }) => {

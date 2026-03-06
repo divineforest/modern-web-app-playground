@@ -52,6 +52,9 @@ export function RootLayout() {
                   {user.firstName} {user.lastName}
                 </Typography>
               </Box>
+              <Button variant="text" component={Link} to="/orders">
+                My Orders
+              </Button>
               <Button variant="outlined" onClick={handleLogout}>
                 Logout
               </Button>

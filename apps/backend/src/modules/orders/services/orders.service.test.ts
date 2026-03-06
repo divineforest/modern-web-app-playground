@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { createTestOrderItem } from '../../../../tests/factories/order-items.js';
 import { createTestOrder } from '../../../../tests/factories/orders.js';
+import { createTestProduct } from '../../../../tests/factories/products.js';
+import { createTestUser } from '../../../../tests/factories/users.js';
 import { db } from '../../../db/index.js';
 import {
   createOrderService,
   deleteOrderService,
   getOrderByIdService,
+  listMyOrdersService,
   listOrdersService,
   OrderNotFoundError,
   OrderValidationError,
@@ -158,6 +162,52 @@ describe('Orders Service', () => {
 
       // ACT & ASSERT
       await expect(deleteOrderService(nonExistentId, db)).rejects.toThrow(OrderNotFoundError);
+    });
+  });
+
+  describe('listMyOrdersService', () => {
+    it('should return orders with formatted items', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+      const product = await createTestProduct({}, db);
+      const order = await createTestOrder(
+        { userId: user.id, status: 'confirmed', currency: 'EUR' },
+        db
+      );
+      await createTestOrderItem(
+        {
+          orderId: order.id,
+          productId: product.id,
+          quantity: '2',
+          unitPrice: '10.50',
+          currency: 'EUR',
+        },
+        db
+      );
+
+      // ACT
+      const results = await listMyOrdersService(user.id, db);
+
+      // ASSERT
+      expect(results.length).toBeGreaterThan(0);
+      const myOrder = results.find((o) => o.id === order.id);
+      expect(myOrder).toBeDefined();
+      expect(myOrder?.items).toBeDefined();
+      expect(myOrder?.items.length).toBe(1);
+      expect(myOrder?.items[0]?.quantity).toBe(2);
+      expect(myOrder?.items[0]?.unitPrice).toBe('10.50');
+      expect(myOrder?.items[0]?.lineTotal).toBe('21.00');
+    });
+
+    it('should return empty array for user with no orders', async () => {
+      // ARRANGE
+      const user = await createTestUser({}, db);
+
+      // ACT
+      const results = await listMyOrdersService(user.id, db);
+
+      // ASSERT
+      expect(results).toEqual([]);
     });
   });
 });

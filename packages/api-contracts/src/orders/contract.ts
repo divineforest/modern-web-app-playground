@@ -35,6 +35,18 @@ export const ordersContract = c.router({
     description: 'Creates a new order with the provided data',
   },
 
+  listMyOrders: {
+    method: 'GET',
+    path: '/api/orders/me',
+    responses: {
+      200: z.object({ orders: z.array(orderWithItemsResponseSchema) }),
+      401: unauthorizedErrorSchema,
+      500: internalErrorSchema,
+    },
+    summary: 'List my orders',
+    description: 'Retrieves all orders for the authenticated user, including order items',
+  },
+
   getById: {
     method: 'GET',
     path: '/api/orders/:id',
