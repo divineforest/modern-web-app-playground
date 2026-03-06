@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  customType,
   date,
   index,
   jsonb,
@@ -18,6 +19,15 @@ import {
  * Unified Database Schema
  * All tables are managed by this service and included in migrations.
  */
+
+/**
+ * PostgreSQL tsvector type for full-text search
+ */
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 // =============================================================================
 // Reference Tables
@@ -183,6 +193,7 @@ export const products = pgTable(
     width: numeric('width', { precision: 15, scale: 2 }),
     height: numeric('height', { precision: 15, scale: 2 }),
     length: numeric('length', { precision: 15, scale: 2 }),
+    searchVector: tsvector('search_vector'),
   },
   (table) => [
     check('products_status_check', sql`${table.status} IN ('draft', 'active', 'archived')`),

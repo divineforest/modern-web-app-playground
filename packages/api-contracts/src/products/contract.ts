@@ -9,6 +9,7 @@ import {
   listProductsQuerySchema,
   productResponseSchema,
   productsListResponseSchema,
+  searchProductsQuerySchema,
 } from './schemas.js';
 
 const c = initContract();
@@ -40,5 +41,18 @@ export const productsContract = c.router({
     }),
     summary: 'Get a product by slug',
     description: 'Retrieves a single product by its URL-friendly slug',
+  },
+
+  search: {
+    method: 'GET',
+    path: '/api/products/search',
+    responses: {
+      200: productsListResponseSchema,
+      400: validationErrorSchema,
+      500: internalErrorSchema,
+    },
+    query: searchProductsQuerySchema,
+    summary: 'Search products',
+    description: 'Search products by keywords in name and description with full-text search',
   },
 });

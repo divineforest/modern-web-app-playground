@@ -169,6 +169,13 @@
       "when": 1772711948817,
       "tag": "0023_dusty_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1772804185297,
+      "tag": "0024_mysterious_romulus",
+      "breakpoints": true
     }
   ]
 }

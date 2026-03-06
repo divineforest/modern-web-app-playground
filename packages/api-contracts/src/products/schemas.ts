@@ -41,3 +41,17 @@ export const productsListResponseSchema = z.object({
 });
 
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
+
+export const searchSortEnum = ['relevance', 'price_asc', 'price_desc'] as const;
+export type SearchSort = (typeof searchSortEnum)[number];
+
+export const searchSortSchema = z.enum(searchSortEnum);
+
+export const searchProductsQuerySchema = z.object({
+  q: z.string().min(2, 'Search query must be at least 2 characters'),
+  sort: searchSortSchema.default('relevance'),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type SearchProductsQuery = z.infer<typeof searchProductsQuerySchema>;

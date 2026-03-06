@@ -2,7 +2,11 @@ import { productsContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { logger } from '../../../lib/logger.js';
-import { ProductNotFoundError, productsService } from '../services/products.service.js';
+import {
+  ProductNotFoundError,
+  productsService,
+  type SearchProductsQuery,
+} from '../services/products.service.js';
 
 /**
  * Initialize ts-rest server for type-safe route handling
@@ -57,6 +61,28 @@ const router = s.router(productsContract, {
       }
 
       logger.error({ error, slug: params.slug }, 'Unexpected error in get product by slug route');
+      return {
+        status: 500 as const,
+        body: {
+          error: 'Internal server error',
+        },
+      };
+    }
+  },
+
+  /**
+   * Search products
+   */
+  search: async ({ query }) => {
+    try {
+      const result = await productsService.search(query as SearchProductsQuery);
+
+      return {
+        status: 200 as const,
+        body: result,
+      };
+    } catch (error) {
+      logger.error({ error, query }, 'Unexpected error in search products route');
       return {
         status: 500 as const,
         body: {

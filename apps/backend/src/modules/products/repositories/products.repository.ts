@@ -1,4 +1,4 @@
-import { and, count, desc, eq, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, sql, type SQL } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, products } from '../../../db/index.js';
 import type { Product } from '../domain/product.entity.js';
@@ -104,4 +104,67 @@ export async function findProductById(
 ): Promise<Product | null> {
   const results = await database.select().from(products).where(eq(products.id, id));
   return (results[0] as Product | undefined) || null;
+}
+
+/**
+ * Search options for full-text product search
+ */
+export interface SearchOptions {
+  query: string;
+  sort: 'relevance' | 'price_asc' | 'price_desc';
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Search products using PostgreSQL full-text search
+ * @param options Search options (query, sort, limit, offset)
+ * @param database Database instance (for dependency injection)
+ * @returns Array of matching products (active status only)
+ */
+export async function searchProducts(
+  options: SearchOptions,
+  database: Database = db
+): Promise<Product[]> {
+  const { query, sort, limit, offset } = options;
+
+  const searchQuery = sql`phraseto_tsquery('english', ${query})`;
+  const searchCondition = sql`${products.searchVector} @@ ${searchQuery}`;
+
+  let orderBy: SQL;
+  if (sort === 'relevance') {
+    orderBy = sql`ts_rank(${products.searchVector}, ${searchQuery}) DESC`;
+  } else if (sort === 'price_asc') {
+    orderBy = sql`${products.currency} ASC, ${products.price} ASC, ${products.name} ASC`;
+  } else {
+    orderBy = sql`${products.currency} ASC, ${products.price} DESC, ${products.name} ASC`;
+  }
+
+  const results = await database
+    .select()
+    .from(products)
+    .where(and(eq(products.status, 'active'), searchCondition))
+    .orderBy(orderBy)
+    .limit(limit)
+    .offset(offset);
+
+  return results as Product[];
+}
+
+/**
+ * Count products matching the search query
+ * @param query Search query string
+ * @param database Database instance (for dependency injection)
+ * @returns Total number of matching products (active status only)
+ */
+export async function countSearchResults(query: string, database: Database = db): Promise<number> {
+  const searchQuery = sql`phraseto_tsquery('english', ${query})`;
+  const searchCondition = sql`${products.searchVector} @@ ${searchQuery}`;
+
+  const [result] = await database
+    .select({ count: count() })
+    .from(products)
+    .where(and(eq(products.status, 'active'), searchCondition));
+
+  return result?.count ?? 0;
 }

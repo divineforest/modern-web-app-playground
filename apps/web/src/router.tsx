@@ -9,6 +9,7 @@ import { OrdersPage } from './pages/orders-page';
 import { ProductDetailPage } from './pages/product-detail';
 import { ProductsPage } from './pages/products';
 import { RegisterPage } from './pages/register';
+import { SearchResultsPage } from './pages/search-results';
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
       {
         path: 'products/:slug',
         element: <ProductDetailPage />,
+      },
+      {
+        path: 'search',
+        element: <SearchResultsPage />,
       },
       {
         path: 'cart',
