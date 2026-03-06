@@ -407,5 +407,120 @@ describe('Products Search Routes - Integration Tests', () => {
       expect(body.products.length).toBeGreaterThan(0);
       expect(body.products.some((p) => p.name.includes('Running'))).toBe(true);
     });
+
+    it('should support partial word matching (prefix search)', async () => {
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Laptop Computer',
+          description: 'High performance laptop',
+        },
+        db
+      );
+
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/products/search?q=lapt',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.payload) as ProductListResponse;
+      expect(body.products.length).toBeGreaterThan(0);
+      expect(body.products.some((p) => p.name.includes('Laptop'))).toBe(true);
+    });
+
+    it('should support partial word in multi-word search', async () => {
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Wireless Headphones',
+          description: 'Bluetooth wireless audio',
+        },
+        db
+      );
+
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/products/search?q=wirele%20headph',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.payload) as ProductListResponse;
+      expect(body.products.length).toBeGreaterThan(0);
+      expect(body.products.some((p) => p.name.includes('Wireless'))).toBe(true);
+    });
+
+    it('should use AND logic for multi-word queries', async () => {
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Blue Cotton Shirt',
+          description: 'Comfortable blue shirt',
+        },
+        db
+      );
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Red Cotton Shirt',
+          description: 'Comfortable red shirt',
+        },
+        db
+      );
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Blue Jacket',
+          description: 'Stylish blue jacket',
+        },
+        db
+      );
+
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/products/search?q=blue%20shirt',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.payload) as ProductListResponse;
+      expect(body.products.length).toBeGreaterThan(0);
+      const blueShirt = body.products.find((p) => p.name === 'Blue Cotton Shirt');
+      const redShirt = body.products.find((p) => p.name === 'Red Cotton Shirt');
+      const blueJacket = body.products.find((p) => p.name === 'Blue Jacket');
+
+      expect(blueShirt).toBeDefined();
+      expect(redShirt).toBeUndefined();
+      expect(blueJacket).toBeUndefined();
+    });
+
+    it('should match single words in any position', async () => {
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Unique T-Shirt XYZ123',
+          description: 'Basic t-shirt',
+        },
+        db
+      );
+      await createTestProduct(
+        {
+          status: 'active',
+          name: 'Unique Polo Shirt XYZ123',
+          description: 'Classic polo style',
+        },
+        db
+      );
+
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/api/products/search?q=xyz123',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.payload) as ProductListResponse;
+      expect(body.products.length).toBeGreaterThanOrEqual(2);
+      expect(body.products.some((p) => p.name.includes('T-Shirt'))).toBe(true);
+      expect(body.products.some((p) => p.name.includes('Polo Shirt'))).toBe(true);
+    });
   });
 });

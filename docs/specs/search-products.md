@@ -2,7 +2,7 @@
 
 ## Overview
 
-The search products feature enables customers to quickly find products by entering keywords in a global search bar located in the site header. Search queries match against product names and descriptions using PostgreSQL full-text search with phrase matching semantics. Results are displayed on a dedicated search results page with sorting options for relevance, price, and alphabetical order.
+The search products feature enables customers to quickly find products by entering keywords in a global search bar located in the site header. Search queries match against product names and descriptions using PostgreSQL full-text search with prefix matching (partial word search). Results are displayed on a dedicated search results page with sorting options for relevance, price, and alphabetical order.
 
 This feature improves product discoverability for customers navigating large catalogs, complementing the existing category-based browsing on the products page. Unlike the category filter (which is coarse-grained), search provides fine-grained, keyword-based navigation.
 
@@ -38,17 +38,19 @@ The implementation includes both backend search API and frontend UI components (
 - The system SHALL reject queries shorter than 2 characters with HTTP 400 validation error.
 - The system SHALL trim leading and trailing whitespace from the query.
 - The system SHALL support Unicode characters in search queries (international product names).
-- The system SHALL treat special characters (e.g., @, #, &) as literal text, not operators — PostgreSQL's `phraseto_tsquery` will handle escaping.
-- The system SHALL treat the query as a phrase match: all words in the query must appear in the searchable fields, in the order provided, allowing intermediate words (e.g., "blue shirt" matches "blue cotton shirt").
+- The system SHALL treat special characters (e.g., @, #, &) as literal text, not operators — PostgreSQL's `to_tsquery` will handle escaping.
+- The system SHALL treat the query as a prefix-match search with AND logic: each word (or partial word) in the query must match a word prefix in the searchable fields (e.g., "blue shirt" matches "blue cotton shirt", "shirt" matches "t-shirt", "lapt" matches "laptop").
 
 ### FR-2: Search Fields and Matching
 
 - The system SHALL search within product name and description fields only.
 - The system SHALL NOT search SKU, category, or tags.
-- The system SHALL use PostgreSQL full-text search with phrase matching semantics (using `phraseto_tsquery`).
+- The system SHALL use PostgreSQL full-text search with prefix matching semantics (using `to_tsquery` with `:*` suffix for each word).
 - The system SHALL only return products with `active` status — draft and archived products SHALL be excluded.
 - The system SHALL perform case-insensitive matching.
 - The system SHALL support English stemming (e.g., "running" matches "run", "runs").
+- The system SHALL support partial word matching (e.g., "lapt" matches "laptop", "wirele" matches "wireless").
+- The system SHALL use AND logic for multi-word queries: all words must match (in any order), not just phrases.
 
 ### FR-3: Search Results Display
 
@@ -101,8 +103,9 @@ The implementation includes both backend search API and frontend UI components (
 - The `search_vector` column SHALL be computed from a concatenation of the product name (weight A, highest relevance) and description (weight B, medium relevance).
 - The system SHALL create a GIN index on `search_vector` to enable fast text search queries.
 - The `search_vector` column SHALL update automatically on product insertion or update via a database trigger or application-level logic.
-- The system SHALL use PostgreSQL `phraseto_tsquery` for phrase matching semantics.
+- The system SHALL use PostgreSQL `to_tsquery` with prefix matching (`:*` suffix appended to each word) for partial word matching.
 - The system SHALL use English text search configuration (`'english'`) for stemming and stop word handling.
+- The query transformation SHALL split the user's input into words, escape special characters, append `:*` to each word for prefix matching, and join with `&` (AND operator) to require all words to match.
 
 ### TR-2: Search API Design
 
@@ -145,8 +148,8 @@ The implementation includes both backend search API and frontend UI components (
 3. **Browser** navigates to `/search?q=blue%20shirt&sort=relevance`.
 4. **Search results page** renders, extracts the `q` parameter from the URL, and initiates an API request: `GET /api/products/search?q=blue shirt&sort=relevance&page=1&limit=20`.
 5. **Search API handler** validates the query via the ts-rest contract (minimum 2 characters).
-6. **Products service** converts the query to a PostgreSQL phrase search query using `phraseto_tsquery('english', 'blue shirt')`.
-7. **Products service** queries the database: `SELECT * FROM products WHERE status = 'active' AND search_vector @@ phraseto_tsquery('english', 'blue shirt') ORDER BY ts_rank(search_vector, query) DESC LIMIT 20 OFFSET 0`.
+6. **Products service** converts the query to a PostgreSQL prefix search query by splitting "blue shirt" into words, appending `:*` to each, and joining with `&`: `to_tsquery('english', 'blue:* & shirt:*')`.
+7. **Products service** queries the database: `SELECT * FROM products WHERE status = 'active' AND search_vector @@ to_tsquery('english', 'blue:* & shirt:*') ORDER BY ts_rank(search_vector, query) DESC LIMIT 20 OFFSET 0`.
 8. **Database** returns matching rows using the GIN index on `search_vector`.
 9. **Products service** returns paginated results with total count.
 10. **Search API handler** responds with HTTP 200 and the product list.
@@ -196,13 +199,15 @@ The implementation includes both backend search API and frontend UI components (
 
 ### Unit Tests
 
-- Search service: phrase matching ("blue shirt" finds "blue cotton shirt", not "shirt that is blue")
+- Search service: prefix matching with AND logic ("blue shirt" finds products with both "blue" and "shirt" in any order)
+- Search service: partial word matching ("lapt" finds "laptop", "wirele" finds "wireless")
 - Search service: stemming support ("running shoes" matches products with "run" or "runner")
 - Search service: case-insensitive matching ("Blue" matches "blue")
 - Search service: active products only (draft and archived excluded)
 - Search service: sorting by relevance, price ascending, price descending
 - Search service: pagination (offset, limit)
 - Search service: minimum query length enforcement
+- Search service: single word partial match ("shirt" finds "t-shirt", "polo shirt", "blue shirt")
 
 ### Integration Tests
 
@@ -224,7 +229,8 @@ The implementation includes both backend search API and frontend UI components (
 ### Manual QA Checklist
 
 - Search for a known product name → verify it appears in results
-- Search for a phrase in a product description → verify phrase match works
+- Search for a partial word (e.g., "lapt" for "laptop") → verify prefix matching works
+- Search for multiple keywords (e.g., "blue shirt") → verify AND logic (both words required)
 - Search with query length 1 character → verify validation error
 - Sort by price → verify ascending and descending order
 - Navigate through multiple pages of results → verify pagination consistency
@@ -237,14 +243,14 @@ The implementation includes both backend search API and frontend UI components (
 |------|--------|------------|
 | Search performance degrades with large catalogs | Slow response times, poor UX | GIN index on `search_vector`; monitor query latency; consider caching popular queries |
 | English stemming doesn't match product language | Poor search quality for non-English products | Use English configuration initially; 🚧 support multi-language search configs in the future |
-| Phrase matching is too strict | Customers don't find products they expect | Document phrase search behavior in UI; 🚧 consider adding an OR-based fallback for zero results |
+| Prefix matching with short queries returns too many results | Overwhelming result sets, poor UX | Enforce minimum query length (2 characters); sort by relevance to surface best matches first |
 | Search vector not updated after product edit | Stale search results | Ensure `search_vector` is regenerated on product update via trigger or application logic |
 | High search volume impacts database | Database CPU/memory pressure | Monitor query load; consider read replica for search queries if needed |
 
 ## Security Considerations
 
 - Search queries SHALL be validated at the API contract level (Zod schema) to enforce minimum length and type constraints.
-- The system SHALL use parameterized queries and PostgreSQL's built-in `phraseto_tsquery` to prevent SQL injection.
+- The system SHALL use parameterized queries and PostgreSQL's built-in `to_tsquery` to prevent SQL injection.
 - Search SHALL NOT return draft or archived products, preventing information leakage.
 - Rate limiting MAY be added to the search endpoint to prevent scraping or abuse (not required for initial implementation, but consider if abuse is observed).
 
@@ -354,7 +360,7 @@ The implementation includes both backend search API and frontend UI components (
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | Search performance degrades as catalog grows | Slow queries, poor UX | GIN index on `search_vector`; monitor latency; 🚧 consider caching frequent queries |
-| Phrase matching too strict, yielding zero results | Poor user experience, abandoned searches | Document phrase behavior; 🚧 fall back to OR-based search if phrase search returns zero results |
+| Prefix matching with short queries returns too many results | Poor user experience, overwhelming results | Enforce minimum query length (2 characters); sort by relevance to surface best matches first; 🚧 consider minimum 3 characters if needed |
 | `search_vector` becomes stale after product edits | Customers see outdated results | Ensure regeneration via trigger or ORM hook; validate in tests |
 | English stemming doesn't work for non-English products | Search quality issues in international catalogs | Use English config initially; 🚧 add multi-language support if product catalog expands internationally |
 | High search volume causes database load | DB CPU exhaustion, slow response for all queries | Monitor query load; 🚧 consider offloading search to read replica |

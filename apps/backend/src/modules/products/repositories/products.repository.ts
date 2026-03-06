@@ -117,6 +117,30 @@ export interface SearchOptions {
 }
 
 /**
+ * Transform user query into PostgreSQL tsquery format with prefix matching
+ * @param query User search query
+ * @returns Formatted tsquery string (e.g., "blue:* & shirt:*")
+ */
+function buildPrefixSearchQuery(query: string): string {
+  // Split query into words, filter empty strings
+  const words = query
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
+
+  // Escape special characters and append :* for prefix matching
+  const escapedWords = words
+    .map((word) => {
+      // Replace special tsquery characters with spaces, then trim
+      const cleaned = word.replace(/[&|!():*']/g, ' ').trim();
+      return cleaned.length > 0 ? `${cleaned}:*` : null;
+    })
+    .filter((w): w is string => w !== null);
+
+  return escapedWords.join(' & ');
+}
+
+/**
  * Search products using PostgreSQL full-text search
  * @param options Search options (query, sort, limit, offset)
  * @param database Database instance (for dependency injection)
@@ -128,7 +152,8 @@ export async function searchProducts(
 ): Promise<Product[]> {
   const { query, sort, limit, offset } = options;
 
-  const searchQuery = sql`phraseto_tsquery('english', ${query})`;
+  const tsquery = buildPrefixSearchQuery(query);
+  const searchQuery = sql`to_tsquery('english', ${tsquery})`;
   const searchCondition = sql`${products.searchVector} @@ ${searchQuery}`;
 
   let orderBy: SQL;
@@ -158,7 +183,8 @@ export async function searchProducts(
  * @returns Total number of matching products (active status only)
  */
 export async function countSearchResults(query: string, database: Database = db): Promise<number> {
-  const searchQuery = sql`phraseto_tsquery('english', ${query})`;
+  const tsquery = buildPrefixSearchQuery(query);
+  const searchQuery = sql`to_tsquery('english', ${tsquery})`;
   const searchCondition = sql`${products.searchVector} @@ ${searchQuery}`;
 
   const [result] = await database
