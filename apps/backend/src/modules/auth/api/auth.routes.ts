@@ -3,7 +3,9 @@ import { loginInputSchema, registerInputSchema } from '@mercado/api-contracts';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { env } from '../../../lib/env.js';
-import { logger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
+
+const logger = createModuleLogger('auth');
 import {
   authService,
   EmailAlreadyExistsError,

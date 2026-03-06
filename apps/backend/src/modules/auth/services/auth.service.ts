@@ -3,7 +3,9 @@ import argon2 from 'argon2';
 import type { Database } from '../../../db/index.js';
 import { db } from '../../../db/index.js';
 import { env } from '../../../lib/env.js';
-import { logger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
+
+const logger = createModuleLogger('auth');
 import { mergeGuestCart } from '../../cart/services/cart.service.js';
 import type { LoginInput, RegisterInput, UserProfile } from '../domain/auth.types.js';
 import {

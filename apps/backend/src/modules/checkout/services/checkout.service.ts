@@ -1,7 +1,9 @@
 import { eq, like, sql } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, orders } from '../../../db/index.js';
-import { logger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
+
+const logger = createModuleLogger('checkout');
 import {
   findCartByToken,
   findCartItems,

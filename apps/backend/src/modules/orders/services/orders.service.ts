@@ -5,7 +5,9 @@ import {
   ValidationError,
   type ValidationErrorDetails,
 } from '../../../lib/error-transformers.js';
-import { logger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
+
+const logger = createModuleLogger('orders');
 import type { Order, UpdateOrder } from '../domain/order.entity.js';
 import type {
   CreateOrderInput,

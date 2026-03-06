@@ -1,6 +1,8 @@
 import type { Database } from '../../../db/index.js';
 import { db } from '../../../db/index.js';
-import { logger } from '../../../lib/logger.js';
+import { createModuleLogger } from '../../../lib/logger.js';
+
+const logger = createModuleLogger('products');
 import type { Product } from '../domain/product.entity.js';
 import type { ListProductsQuery, PaginationResult } from '../domain/product.types.js';
 import {
