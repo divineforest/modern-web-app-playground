@@ -56,18 +56,15 @@ describe('Global Error Handler', () => {
 
   describe('ValidationError handling', () => {
     it('should handle ValidationError with string details', async () => {
-      // ARRANGE
       fastify.get('/test-validation-error-string', () => {
         throw new ValidationError('Invalid input provided', 'Field "email" is required');
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-validation-error-string',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body).toEqual({
@@ -78,7 +75,6 @@ describe('Global Error Handler', () => {
     });
 
     it('should handle ValidationError with structured details', async () => {
-      // ARRANGE
       fastify.get('/test-validation-error-object', () => {
         throw new ValidationError('Validation failed', {
           field: 'email',
@@ -86,13 +82,11 @@ describe('Global Error Handler', () => {
         });
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-validation-error-object',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body).toEqual({
@@ -106,18 +100,15 @@ describe('Global Error Handler', () => {
     });
 
     it('should handle ValidationError without details', async () => {
-      // ARRANGE
       fastify.get('/test-validation-error-no-details', () => {
         throw new ValidationError('Something went wrong');
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-validation-error-no-details',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('ValidationError');
@@ -127,7 +118,6 @@ describe('Global Error Handler', () => {
     });
 
     it('should handle subclasses of ValidationError', async () => {
-      // ARRANGE
       class CustomValidationError extends ValidationError {
         constructor(message: string, details?: ValidationErrorDetails) {
           super(message, details);
@@ -139,13 +129,11 @@ describe('Global Error Handler', () => {
         throw new CustomValidationError('Custom validation failed', 'Invalid data');
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-validation-error-subclass',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body).toEqual({
@@ -158,7 +146,6 @@ describe('Global Error Handler', () => {
 
   describe('Fastify validation error handling', () => {
     it('should handle Fastify validation errors', async () => {
-      // ARRANGE
       fastify.post(
         '/test-fastify-validation',
         {
@@ -177,14 +164,12 @@ describe('Global Error Handler', () => {
         }
       );
 
-      // ACT
       const response = await fastify.inject({
         method: 'POST',
         url: '/test-fastify-validation',
         payload: {}, // Missing required 'name' field
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('Validation Error');
@@ -195,20 +180,17 @@ describe('Global Error Handler', () => {
 
   describe('HTTP error handling', () => {
     it('should handle errors with statusCode property', async () => {
-      // ARRANGE
       fastify.get('/test-http-error', () => {
         const error = new Error('Forbidden') as Error & { statusCode: number };
         error.statusCode = 403;
         throw error;
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-http-error',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(403);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('Error');
@@ -218,18 +200,15 @@ describe('Global Error Handler', () => {
 
   describe('Default error handling', () => {
     it('should handle unexpected errors with 500 status', async () => {
-      // ARRANGE
       fastify.get('/test-generic-error', () => {
         throw new Error('Something unexpected happened');
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-generic-error',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
       expect(body).toEqual({
@@ -239,20 +218,17 @@ describe('Global Error Handler', () => {
     });
 
     it('should handle non-Error objects', async () => {
-      // ARRANGE
       fastify.get('/test-non-error', () => {
         // Testing error handling with non-standard errors - intentionally throwing non-Error object
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw { custom: 'error object' } as never;
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-non-error',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('Internal Server Error');
@@ -262,7 +238,6 @@ describe('Global Error Handler', () => {
 
   describe('Error precedence', () => {
     it('should prioritize ValidationError over other properties', async () => {
-      // ARRANGE
       class ValidationErrorWithStatus extends ValidationError {
         statusCode = 409;
         constructor(message: string) {
@@ -275,13 +250,11 @@ describe('Global Error Handler', () => {
         throw new ValidationErrorWithStatus('Validation takes precedence');
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/test-error-precedence',
       });
 
-      // ASSERT
       // Should return 400 (ValidationError) not 409 (statusCode)
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);

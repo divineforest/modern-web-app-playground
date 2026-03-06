@@ -21,7 +21,6 @@ import {
 describe('database-errors', () => {
   describe('PostgresError detection', () => {
     it('should identify direct PostgreSQL error', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'duplicate key value',
@@ -29,12 +28,10 @@ describe('database-errors', () => {
         constraint_name: 'users_email_unique',
       };
 
-      // ACT & ASSERT
       expect(isPostgresError(error)).toBe(true);
     });
 
     it('should identify PostgreSQL error in cause chain', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'unique constraint violation',
@@ -45,12 +42,10 @@ describe('database-errors', () => {
       const wrappedError = new Error('Database operation failed');
       Object.assign(wrappedError, { cause: pgError });
 
-      // ACT & ASSERT
       expect(isPostgresError(wrappedError)).toBe(true);
     });
 
     it('should identify PostgreSQL error in deeply nested cause chain', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'check constraint violation',
@@ -66,34 +61,27 @@ describe('database-errors', () => {
       Object.assign(level1, { cause: level2 });
       Object.assign(level3, { cause: pgError });
 
-      // ACT & ASSERT
       expect(isPostgresError(level1)).toBe(true);
     });
 
     it('should return false for non-PostgreSQL errors', () => {
-      // ARRANGE
       const error = new Error('Regular error');
 
-      // ACT & ASSERT
       expect(isPostgresError(error)).toBe(false);
     });
 
     it('should return false for null or undefined', () => {
-      // ACT & ASSERT
       expect(isPostgresError(null)).toBe(false);
       expect(isPostgresError(undefined)).toBe(false);
     });
 
     it('should handle errors without code property', () => {
-      // ARRANGE
       const error = { message: 'Some error', name: 'Error' };
 
-      // ACT & ASSERT
       expect(isPostgresError(error)).toBe(false);
     });
 
     it('should prevent infinite recursion with circular cause chains', () => {
-      // ARRANGE
       const error1 = new Error('Error 1');
       const error2 = new Error('Error 2');
 
@@ -101,14 +89,12 @@ describe('database-errors', () => {
       Object.assign(error1, { cause: error2 });
       Object.assign(error2, { cause: error1 });
 
-      // ACT & ASSERT
       expect(isPostgresError(error1)).toBe(false);
     });
   });
 
   describe('Foreign key violation detection', () => {
     it('should identify foreign key violation', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'insert or update violates foreign key constraint',
@@ -117,12 +103,10 @@ describe('database-errors', () => {
         detail: 'Key (company_id)=(invalid-uuid) is not present in table "companies".',
       };
 
-      // ACT & ASSERT
       expect(isForeignKeyViolation(error)).toBe(true);
     });
 
     it('should identify FK violation in wrapped error', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'foreign key violation',
@@ -133,12 +117,10 @@ describe('database-errors', () => {
       const drizzleError = new Error('Failed to insert');
       Object.assign(drizzleError, { cause: pgError });
 
-      // ACT & ASSERT
       expect(isForeignKeyViolation(drizzleError)).toBe(true);
     });
 
     it('should return false for non-FK violations', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'unique violation',
@@ -146,14 +128,12 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT & ASSERT
       expect(isForeignKeyViolation(error)).toBe(false);
     });
   });
 
   describe('Unique violation detection', () => {
     it('should identify unique constraint violation', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'duplicate key value violates unique constraint',
@@ -161,12 +141,10 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT & ASSERT
       expect(isUniqueViolation(error)).toBe(true);
     });
 
     it('should return false for non-unique violations', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -174,14 +152,12 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
-      // ACT & ASSERT
       expect(isUniqueViolation(error)).toBe(false);
     });
   });
 
   describe('Not null violation detection', () => {
     it('should identify not null violation', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'null value in column violates not-null constraint',
@@ -190,12 +166,10 @@ describe('database-errors', () => {
         table_name: 'jobs',
       };
 
-      // ACT & ASSERT
       expect(isNotNullViolation(error)).toBe(true);
     });
 
     it('should return false for non-not-null violations', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -203,14 +177,12 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
-      // ACT & ASSERT
       expect(isNotNullViolation(error)).toBe(false);
     });
   });
 
   describe('Check violation detection', () => {
     it('should identify check constraint violation', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'new row violates check constraint',
@@ -218,12 +190,10 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
-      // ACT & ASSERT
       expect(isCheckViolation(error)).toBe(true);
     });
 
     it('should return false for non-check violations', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'unique violation',
@@ -231,14 +201,12 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT & ASSERT
       expect(isCheckViolation(error)).toBe(false);
     });
   });
 
   describe('Constraint name extraction', () => {
     it('should extract constraint name from direct error', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'constraint violation',
@@ -246,12 +214,10 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT & ASSERT
       expect(getConstraintName(error)).toBe(CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE);
     });
 
     it('should extract constraint name from wrapped error', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -262,34 +228,28 @@ describe('database-errors', () => {
       const wrappedError = new Error('Database error');
       Object.assign(wrappedError, { cause: pgError });
 
-      // ACT & ASSERT
       expect(getConstraintName(wrappedError)).toBe(CONSTRAINTS.ORDERS_STATUS_CHECK);
     });
 
     it('should return undefined for errors without constraint name', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'some error',
         code: '42000',
       };
 
-      // ACT & ASSERT
       expect(getConstraintName(error)).toBeUndefined();
     });
 
     it('should return undefined for non-PostgreSQL errors', () => {
-      // ARRANGE
       const error = new Error('Regular error');
 
-      // ACT & ASSERT
       expect(getConstraintName(error)).toBeUndefined();
     });
   });
 
   describe('Constraint violation checking', () => {
     it('should match specific constraint', () => {
-      // ARRANGE
       const error: PostgresError = {
         name: 'PostgresError',
         message: 'unique violation',
@@ -297,13 +257,11 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT & ASSERT
       expect(isConstraintViolation(error, CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE)).toBe(true);
       expect(isConstraintViolation(error, CONSTRAINTS.ORDERS_STATUS_CHECK)).toBe(false);
     });
 
     it('should work with wrapped errors', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -314,14 +272,12 @@ describe('database-errors', () => {
       const wrappedError = new Error('Database error');
       Object.assign(wrappedError, { cause: pgError });
 
-      // ACT & ASSERT
       expect(isConstraintViolation(wrappedError, CONSTRAINTS.ORDERS_STATUS_CHECK)).toBe(true);
     });
   });
 
   describe('DatabaseError class', () => {
     it('should create DatabaseError with proper properties', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'database error',
@@ -332,10 +288,8 @@ describe('database-errors', () => {
         column_name: 'status',
       };
 
-      // ACT
       const error = new DatabaseError('Test error', pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(Error);
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error.name).toBe('DatabaseError');
@@ -348,17 +302,14 @@ describe('database-errors', () => {
     });
 
     it('should handle PostgreSQL error without optional properties', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'minimal error',
         code: '42000',
       };
 
-      // ACT
       const error = new DatabaseError('Minimal error', pgError);
 
-      // ASSERT
       expect(error.code).toBe('42000');
       expect(error.detail).toBeUndefined();
       expect(error.constraint).toBeUndefined();
@@ -369,7 +320,6 @@ describe('database-errors', () => {
 
   describe('ForeignKeyViolationError class', () => {
     it('should create ForeignKeyViolationError with proper message', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'FK violation',
@@ -378,10 +328,8 @@ describe('database-errors', () => {
         detail: 'Key not found',
       };
 
-      // ACT
       const error = new ForeignKeyViolationError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(ForeignKeyViolationError);
       expect(error.name).toBe('ForeignKeyViolationError');
@@ -390,24 +338,20 @@ describe('database-errors', () => {
     });
 
     it('should handle missing constraint name', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'FK violation',
         code: PostgresErrorCode.FOREIGN_KEY_VIOLATION,
       };
 
-      // ACT
       const error = new ForeignKeyViolationError(pgError);
 
-      // ASSERT
       expect(error.message).toContain('unknown');
     });
   });
 
   describe('UniqueConstraintError class', () => {
     it('should create UniqueConstraintError with proper message', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'unique violation',
@@ -415,10 +359,8 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT
       const error = new UniqueConstraintError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(UniqueConstraintError);
       expect(error.name).toBe('UniqueConstraintError');
@@ -428,7 +370,6 @@ describe('database-errors', () => {
 
   describe('NotNullViolationError class', () => {
     it('should create NotNullViolationError with column name', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'null value',
@@ -437,10 +378,8 @@ describe('database-errors', () => {
         table_name: 'jobs',
       };
 
-      // ACT
       const error = new NotNullViolationError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(NotNullViolationError);
       expect(error.name).toBe('NotNullViolationError');
@@ -449,24 +388,20 @@ describe('database-errors', () => {
     });
 
     it('should handle missing column name', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'null value',
         code: PostgresErrorCode.NOT_NULL_VIOLATION,
       };
 
-      // ACT
       const error = new NotNullViolationError(pgError);
 
-      // ASSERT
       expect(error.message).toContain('unknown');
     });
   });
 
   describe('CheckViolationError class', () => {
     it('should create CheckViolationError with constraint name', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -474,10 +409,8 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
-      // ACT
       const error = new CheckViolationError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).toBeInstanceOf(CheckViolationError);
       expect(error.name).toBe('CheckViolationError');
@@ -487,7 +420,6 @@ describe('database-errors', () => {
 
   describe('createDatabaseError', () => {
     it('should create ForeignKeyViolationError for FK violations', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'FK violation',
@@ -495,16 +427,13 @@ describe('database-errors', () => {
         constraint_name: 'test_fk_constraint',
       };
 
-      // ACT
       const error = createDatabaseError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(ForeignKeyViolationError);
       expect(error?.name).toBe('ForeignKeyViolationError');
     });
 
     it('should create UniqueConstraintError for unique violations', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'unique violation',
@@ -512,16 +441,13 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE,
       };
 
-      // ACT
       const error = createDatabaseError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(UniqueConstraintError);
       expect(error?.name).toBe('UniqueConstraintError');
     });
 
     it('should create NotNullViolationError for not null violations', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'null value',
@@ -529,16 +455,13 @@ describe('database-errors', () => {
         column_name: 'title',
       };
 
-      // ACT
       const error = createDatabaseError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(NotNullViolationError);
       expect(error?.name).toBe('NotNullViolationError');
     });
 
     it('should create CheckViolationError for check violations', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'check violation',
@@ -546,33 +469,27 @@ describe('database-errors', () => {
         constraint_name: CONSTRAINTS.ORDERS_STATUS_CHECK,
       };
 
-      // ACT
       const error = createDatabaseError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(CheckViolationError);
       expect(error?.name).toBe('CheckViolationError');
     });
 
     it('should create generic DatabaseError for unknown codes', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'some error',
         code: '42000',
       };
 
-      // ACT
       const error = createDatabaseError(pgError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error).not.toBeInstanceOf(ForeignKeyViolationError);
       expect(error).not.toBeInstanceOf(UniqueConstraintError);
     });
 
     it('should handle wrapped errors', () => {
-      // ARRANGE
       const pgError: PostgresError = {
         name: 'PostgresError',
         message: 'FK violation',
@@ -583,26 +500,20 @@ describe('database-errors', () => {
       const wrappedError = new Error('Drizzle error');
       Object.assign(wrappedError, { cause: pgError });
 
-      // ACT
       const error = createDatabaseError(wrappedError);
 
-      // ASSERT
       expect(error).toBeInstanceOf(ForeignKeyViolationError);
     });
 
     it('should return null for non-PostgreSQL errors', () => {
-      // ARRANGE
       const error = new Error('Regular error');
 
-      // ACT
       const result = createDatabaseError(error);
 
-      // ASSERT
       expect(result).toBeNull();
     });
 
     it('should return null for null or undefined', () => {
-      // ACT & ASSERT
       expect(createDatabaseError(null)).toBeNull();
       expect(createDatabaseError(undefined)).toBeNull();
     });
@@ -610,7 +521,6 @@ describe('database-errors', () => {
 
   describe('CONSTRAINTS constants', () => {
     it('should have all expected constraint names', () => {
-      // ACT & ASSERT
       expect(CONSTRAINTS.ORDERS_ORDER_NUMBER_UNIQUE).toBe('idx_orders_order_number');
       expect(CONSTRAINTS.ORDERS_STATUS_CHECK).toBe('orders_status_check');
     });

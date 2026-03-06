@@ -25,7 +25,6 @@ describe('Core SDK', () => {
 
   describe('upsertContacts', () => {
     it('should successfully upsert contacts', async () => {
-      // ARRANGE
       const requestContacts: CoreContactUpsert[] = [
         {
           company_id: 'company_123',
@@ -56,15 +55,12 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT
       const response = await coreSdk.upsertContacts(requestContacts);
 
-      // ASSERT
       expect(response).toEqual(expectedResponse);
     });
 
     it('should handle empty contacts array', async () => {
-      // ARRANGE
       const requestContacts: CoreContactUpsert[] = [];
       const expectedResponse: UpsertResponse = {
         success: true,
@@ -72,16 +68,13 @@ describe('Core SDK', () => {
         skipped: 0,
       };
 
-      // ACT
       // no HTTP call should be made for empty array
       const result = await coreSdk.upsertContacts(requestContacts);
 
-      // ASSERT
       expect(result).toEqual(expectedResponse);
     });
 
     it('should handle partial errors', async () => {
-      // ARRANGE
       const requestContacts: CoreContactUpsert[] = [
         {
           company_id: 'company_123',
@@ -113,15 +106,12 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT
       const result = await coreSdk.upsertContacts(requestContacts);
 
-      // ASSERT
       expect(result).toEqual(expectedResponse);
     });
 
     it('should throw CoreSdkError on HTTP error', async () => {
-      // ARRANGE
       const requestContacts: CoreContactUpsert[] = [
         {
           company_id: 'company_123',
@@ -143,7 +133,6 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT & ASSERT
       await expect(coreSdk.upsertContacts(requestContacts)).rejects.toThrow(CoreSdkError);
       await expect(coreSdk.upsertContacts(requestContacts)).rejects.toThrow(
         'HTTP error! status: 500'
@@ -151,7 +140,6 @@ describe('Core SDK', () => {
     });
 
     it('should handle network errors with retries', async () => {
-      // ARRANGE
       const requestContacts: CoreContactUpsert[] = [
         {
           company_id: 'company_123',
@@ -184,10 +172,8 @@ describe('Core SDK', () => {
         });
       };
 
-      // ACT
       const response = await coreSdk.upsertContacts(requestContacts);
 
-      // ASSERT
       expect(response).toEqual(expectedResponse);
       expect(callCount).toBe(2); // Should retry once and succeed
 
@@ -196,7 +182,6 @@ describe('Core SDK', () => {
     });
 
     it('should timeout after configured timeout period', async () => {
-      // ARRANGE
       const timeoutCoreSdk = new CoreSdk({
         baseUrl: 'http://localhost:4000',
         apiKey: 'test-key',
@@ -241,7 +226,6 @@ describe('Core SDK', () => {
         });
       };
 
-      // ACT & ASSERT
       await expect(timeoutCoreSdk.upsertContacts(requestContacts)).rejects.toThrow(
         'Request timeout'
       );
@@ -253,7 +237,6 @@ describe('Core SDK', () => {
 
   describe('uploadFile', () => {
     it('should successfully upload a file', async () => {
-      // ARRANGE
       const fileData: CoreFileUpload = {
         filename: 'test-document.pdf',
         contentType: 'application/pdf',
@@ -309,15 +292,12 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT
       const response = await coreSdk.uploadFile(fileData);
 
-      // ASSERT
       expect(response).toEqual(expectedResponse);
     });
 
     it('should handle file upload errors', async () => {
-      // ARRANGE
       const fileData: CoreFileUpload = {
         filename: 'test-document.pdf',
         contentType: 'application/pdf',
@@ -340,12 +320,10 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT & ASSERT
       await expect(coreSdk.uploadFile(fileData)).rejects.toThrow(CoreSdkError);
     });
 
     it('should handle network errors during file upload', async () => {
-      // ARRANGE
       const fileData: CoreFileUpload = {
         filename: 'test-document.pdf',
         contentType: 'application/pdf',
@@ -361,7 +339,6 @@ describe('Core SDK', () => {
         })
       );
 
-      // ACT & ASSERT
       await expect(coreSdk.uploadFile(fileData)).rejects.toThrow(CoreSdkError);
     });
   });

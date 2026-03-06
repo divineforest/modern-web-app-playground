@@ -5,10 +5,8 @@ import { companies } from '../../../db/schema.js';
 import { getCompanyByBillingInboundToken } from './companies.repository.js';
 
 it('inserts and reads a company', async () => {
-  // ARRANGE
   const testCompanyData = buildTestCompanyData();
 
-  // ACT
   const [insertedCompany] = await db.insert(companies).values(testCompanyData).returning();
   expect(insertedCompany).toBeDefined();
 
@@ -18,13 +16,11 @@ it('inserts and reads a company', async () => {
 
   const rows = await db.select().from(companies).where(eq(companies.id, insertedCompany.id));
 
-  // ASSERT
   expect(rows[0]?.id).toBe(insertedCompany.id);
   expect(rows[0]?.name).toBe('Test Company');
 });
 
 it('case-insensitive billing token lookup works correctly', async () => {
-  // ARRANGE
   const testCompanyData = buildTestCompanyData();
   // Set a specific billing token with mixed case (make it unique)
   const mixedCaseToken = `AbC123XyZ-${Date.now()}-${Math.random()}`;

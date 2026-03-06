@@ -46,13 +46,11 @@ describe('Health Routes - Unit Tests', () => {
 
   describe('GET /healthz', () => {
     it('should return health status with basic information', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/healthz',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -73,7 +71,6 @@ describe('Health Routes - Unit Tests', () => {
     });
 
     it('should return consistent structure on multiple calls', async () => {
-      // ACT
       const response1 = await fastify.inject({
         method: 'GET',
         url: '/healthz',
@@ -83,7 +80,6 @@ describe('Health Routes - Unit Tests', () => {
         url: '/healthz',
       });
 
-      // ASSERT
       expect(response1.statusCode).toBe(200);
       expect(response2.statusCode).toBe(200);
 
@@ -100,13 +96,11 @@ describe('Health Routes - Unit Tests', () => {
     });
 
     it('should return proper HTTP headers', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/healthz',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
       expect(response.headers['content-length']).toBeTruthy();
@@ -115,13 +109,11 @@ describe('Health Routes - Unit Tests', () => {
 
   describe('GET /ready', () => {
     it('should return ready status with database check', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/ready',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -135,7 +127,6 @@ describe('Health Routes - Unit Tests', () => {
     });
 
     it('should return consistent ready status on multiple calls', async () => {
-      // ACT
       const response1 = await fastify.inject({
         method: 'GET',
         url: '/ready',
@@ -145,7 +136,6 @@ describe('Health Routes - Unit Tests', () => {
         url: '/ready',
       });
 
-      // ASSERT
       expect(response1.statusCode).toBe(200);
       expect(response2.statusCode).toBe(200);
 
@@ -158,7 +148,6 @@ describe('Health Routes - Unit Tests', () => {
     });
 
     it('should report not_ready when the database check fails', async () => {
-      // ARRANGE
       const transactionSpy = vi.spyOn(db, 'transaction').mockImplementation(async (callback) => {
         const execute = vi
           .fn<typeof db.execute>()
@@ -170,13 +159,11 @@ describe('Health Routes - Unit Tests', () => {
         } as unknown as { execute: typeof db.execute });
       });
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/ready',
       });
 
-      // ASSERT
       expect(transactionSpy).toHaveBeenCalledTimes(1);
       expect(response.statusCode).toBe(503);
       expect(response.headers['content-type']).toContain('application/json');
@@ -191,7 +178,6 @@ describe('Health Routes - Unit Tests', () => {
     });
 
     it('should timeout the database check and return not_ready', async () => {
-      // ARRANGE
       vi.useFakeTimers();
 
       // Create a hanging promise that never resolves to simulate a stuck query.
@@ -208,7 +194,6 @@ describe('Health Routes - Unit Tests', () => {
         } as unknown as { execute: typeof db.execute });
       });
 
-      // ACT
       // Start the request (which will hang waiting for the database query)
       const readinessRequest = fastify.inject({
         method: 'GET',
@@ -222,7 +207,6 @@ describe('Health Routes - Unit Tests', () => {
       await vi.advanceTimersByTimeAsync(DATABASE_READINESS_TIMEOUT_MS);
       const response = await readinessRequest;
 
-      // ASSERT
       expect(transactionSpy).toHaveBeenCalledTimes(1);
       expect(response.statusCode).toBe(503);
       expect(response.headers['content-type']).toContain('application/json');
@@ -239,47 +223,39 @@ describe('Health Routes - Unit Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid routes gracefully', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/invalid-route',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(404);
     });
 
     it('should handle invalid HTTP methods', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'POST',
         url: '/healthz',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(404); // Fastify returns 404 for unsupported methods
     });
   });
 
   describe('Performance', () => {
     it('should respond to health check within reasonable time', async () => {
-      // ARRANGE
       const start = Date.now();
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/healthz',
       });
       const end = Date.now();
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(end - start).toBeLessThan(50); // Should respond much faster with inject
     });
 
     it('should handle concurrent requests', async () => {
-      // ARRANGE
       const requests = Array(10)
         .fill(null)
         .map(() =>
@@ -289,10 +265,8 @@ describe('Health Routes - Unit Tests', () => {
           })
         );
 
-      // ACT
       const responses = await Promise.all(requests);
 
-      // ASSERT
       for (const response of responses) {
         expect(response.statusCode).toBe(200);
       }
@@ -301,13 +275,11 @@ describe('Health Routes - Unit Tests', () => {
 
   describe('Route Registration', () => {
     it('should register routes correctly', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/healthz',
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       // Verify route is responsive

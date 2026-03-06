@@ -4,14 +4,11 @@ import { createModuleLogger, logger } from './logger.js';
 describe('Logger', () => {
   describe('createModuleLogger', () => {
     it('should create a child logger with module name', () => {
-      // ARRANGE
       const moduleLogger = createModuleLogger('test-module');
       const infoSpy = vi.spyOn(moduleLogger, 'info').mockImplementation(() => {});
 
-      // ACT
       moduleLogger.info('Test message');
 
-      // ASSERT
       expect(infoSpy).toHaveBeenCalledWith('Test message');
 
       infoSpy.mockRestore();
@@ -20,7 +17,6 @@ describe('Logger', () => {
 
   describe('default logger', () => {
     it('should be defined and have logging methods', () => {
-      // ACT & ASSERT
       expect(logger).toBeDefined();
       expect(typeof logger.info).toBe('function');
       expect(typeof logger.error).toBe('function');
@@ -29,7 +25,6 @@ describe('Logger', () => {
     });
 
     it('should log messages without throwing errors', () => {
-      // ACT & ASSERT
       expect(() => {
         logger.info('Test info message');
         logger.debug('Test debug message');
@@ -41,7 +36,6 @@ describe('Logger', () => {
 
   describe('PII redaction', () => {
     it('should redact password fields', () => {
-      // ARRANGE
       const infoSpy = vi.spyOn(logger, 'info').mockImplementation(() => {});
       const sensitiveData = {
         username: 'john_doe',
@@ -49,10 +43,8 @@ describe('Logger', () => {
         email: 'john@example.com',
       };
 
-      // ACT
       logger.info(sensitiveData);
 
-      // ASSERT
       const loggedCall = infoSpy.mock.calls[0];
       expect(loggedCall).toBeDefined();
 
@@ -60,7 +52,6 @@ describe('Logger', () => {
     });
 
     it('should redact nested sensitive fields', () => {
-      // ARRANGE
       const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
       const nestedSensitiveData = {
         user: {
@@ -80,10 +71,8 @@ describe('Logger', () => {
         },
       };
 
-      // ACT
       logger.warn(nestedSensitiveData);
 
-      // ASSERT
       const loggedCall = warnSpy.mock.calls[0];
       expect(loggedCall).toBeDefined();
 
@@ -91,7 +80,6 @@ describe('Logger', () => {
     });
 
     it('should redact common auth tokens', () => {
-      // ARRANGE
       const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
       const authData = {
         accessToken: 'access_token_value',
@@ -100,10 +88,8 @@ describe('Logger', () => {
         secret: 'secret_value',
       };
 
-      // ACT
       logger.error(authData);
 
-      // ASSERT
       const loggedCall = errorSpy.mock.calls[0];
       expect(loggedCall).toBeDefined();
 
@@ -111,7 +97,6 @@ describe('Logger', () => {
     });
 
     it('should not redact non-sensitive fields', () => {
-      // ARRANGE
       const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
       const publicData = {
         username: 'john_doe',
@@ -120,10 +105,8 @@ describe('Logger', () => {
         createdAt: '2024-01-01T00:00:00Z',
       };
 
-      // ACT
       logger.debug(publicData);
 
-      // ASSERT
       const loggedCall = debugSpy.mock.calls[0];
       expect(loggedCall).toBeDefined();
 
@@ -131,17 +114,14 @@ describe('Logger', () => {
     });
 
     it('should work with module loggers', () => {
-      // ARRANGE
       const moduleLogger = createModuleLogger('auth-service');
       const infoSpy = vi.spyOn(moduleLogger, 'info').mockImplementation(() => {});
 
-      // ACT
       moduleLogger.info(
         { userId: 123, password: 'userpass', loginAttempt: true },
         'User login attempt'
       );
 
-      // ASSERT
       const loggedCall = infoSpy.mock.calls[0];
       expect(loggedCall).toBeDefined();
 

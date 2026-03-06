@@ -66,7 +66,6 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('POST /api/orders', () => {
     it('should create an order with valid data', async () => {
-      // ARRANGE
       const requestBody = {
         orderNumber: `ORD-${Date.now()}`,
         referenceNumber: 'PO-12345',
@@ -85,7 +84,6 @@ describe('Orders Routes - Integration Tests', () => {
         customerNotes: 'Please deliver to loading dock B',
       };
 
-      // ACT
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
@@ -93,7 +91,6 @@ describe('Orders Routes - Integration Tests', () => {
         payload: requestBody,
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(201);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -107,13 +104,11 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 400 for missing required fields', async () => {
-      // ARRANGE
       const requestBody = {
         orderNumber: `ORD-${Date.now()}`,
         // Missing orderDate, currency, subtotal, totalAmount
       };
 
-      // ACT
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
@@ -121,12 +116,10 @@ describe('Orders Routes - Integration Tests', () => {
         payload: requestBody,
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
     });
 
     it('should return 409 for duplicate order number', async () => {
-      // ARRANGE
       const orderNumber = `ORD-DUPLICATE-${Date.now()}`;
       await createTestOrder({ orderNumber }, db);
 
@@ -138,7 +131,6 @@ describe('Orders Routes - Integration Tests', () => {
         totalAmount: 1500.0,
       };
 
-      // ACT
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/orders',
@@ -146,7 +138,6 @@ describe('Orders Routes - Integration Tests', () => {
         payload: requestBody,
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(409);
       const body = JSON.parse(response.payload) as ErrorResponse;
       expect(body.error).toContain('Duplicate');
@@ -154,7 +145,6 @@ describe('Orders Routes - Integration Tests', () => {
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ARRANGE
         const requestBody = {
           orderNumber: `ORD-${Date.now()}`,
           orderDate: '2024-01-15',
@@ -163,19 +153,16 @@ describe('Orders Routes - Integration Tests', () => {
           totalAmount: 1500.0,
         };
 
-        // ACT
         const response = await fastify.inject({
           method: 'POST',
           url: '/api/orders',
           payload: requestBody,
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
 
       it('should return 401 with invalid token', async () => {
-        // ARRANGE
         const requestBody = {
           orderNumber: `ORD-${Date.now()}`,
           orderDate: '2024-01-15',
@@ -184,7 +171,6 @@ describe('Orders Routes - Integration Tests', () => {
           totalAmount: 1500.0,
         };
 
-        // ACT
         const response = await fastify.inject({
           method: 'POST',
           url: '/api/orders',
@@ -194,7 +180,6 @@ describe('Orders Routes - Integration Tests', () => {
           payload: requestBody,
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
         const body = JSON.parse(response.payload) as ErrorResponse;
         expect(body.message).toBe('Authentication required');
@@ -204,17 +189,14 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('GET /api/orders/:id', () => {
     it('should get an order by ID', async () => {
-      // ARRANGE
       const created = await createTestOrder({}, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: `/api/orders/${created.id}`,
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -224,17 +206,14 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 404 for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: `/api/orders/${nonExistentId}`,
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(404);
 
       const body = JSON.parse(response.payload) as ErrorResponse;
@@ -242,29 +221,24 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/invalid-uuid',
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
     });
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ARRANGE
         const created = await createTestOrder({}, db);
 
-        // ACT
         const response = await fastify.inject({
           method: 'GET',
           url: `/api/orders/${created.id}`,
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
     });
@@ -272,18 +246,15 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('GET /api/orders', () => {
     it('should list all orders', async () => {
-      // ARRANGE
       await createTestOrder({}, db);
       await createTestOrder({}, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders',
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -294,18 +265,15 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should filter by status', async () => {
-      // ARRANGE
       const draftOrder = await createTestOrder({ status: 'draft' }, db);
       const confirmedOrder = await createTestOrder({ status: 'confirmed' }, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders?status=draft',
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       const body = JSON.parse(response.payload) as OrderListResponse;
@@ -314,18 +282,15 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should order by order date (newest first)', async () => {
-      // ARRANGE
       const oldOrder = await createTestOrder({ orderDate: '2024-01-01' }, db);
       const newOrder = await createTestOrder({ orderDate: '2024-02-01' }, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders',
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       const body = JSON.parse(response.payload) as OrderListResponse;
@@ -337,13 +302,11 @@ describe('Orders Routes - Integration Tests', () => {
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ACT
         const response = await fastify.inject({
           method: 'GET',
           url: '/api/orders',
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
     });
@@ -351,10 +314,8 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('PATCH /api/orders/:id', () => {
     it('should update an order', async () => {
-      // ARRANGE
       const created = await createTestOrder({ status: 'draft', notes: 'Original' }, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${created.id}`,
@@ -365,7 +326,6 @@ describe('Orders Routes - Integration Tests', () => {
         },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -376,10 +336,8 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 404 for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${nonExistentId}`,
@@ -389,7 +347,6 @@ describe('Orders Routes - Integration Tests', () => {
         },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(404);
 
       const body = JSON.parse(response.payload) as ErrorResponse;
@@ -397,10 +354,8 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 400 for invalid status value', async () => {
-      // ARRANGE
       const created = await createTestOrder({}, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'PATCH',
         url: `/api/orders/${created.id}`,
@@ -410,16 +365,13 @@ describe('Orders Routes - Integration Tests', () => {
         },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
     });
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ARRANGE
         const created = await createTestOrder({ status: 'draft' }, db);
 
-        // ACT
         const response = await fastify.inject({
           method: 'PATCH',
           url: `/api/orders/${created.id}`,
@@ -428,7 +380,6 @@ describe('Orders Routes - Integration Tests', () => {
           },
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
     });
@@ -436,17 +387,14 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('DELETE /api/orders/:id', () => {
     it('should delete an order', async () => {
-      // ARRANGE
       const created = await createTestOrder({}, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/orders/${created.id}`,
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -465,17 +413,14 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 404 for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT
       const response = await fastify.inject({
         method: 'DELETE',
         url: `/api/orders/${nonExistentId}`,
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(404);
 
       const body = JSON.parse(response.payload) as ErrorResponse;
@@ -483,29 +428,24 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
-      // ACT
       const response = await fastify.inject({
         method: 'DELETE',
         url: '/api/orders/invalid-uuid',
         cookies: { sid: sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(400);
     });
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ARRANGE
         const created = await createTestOrder({}, db);
 
-        // ACT
         const response = await fastify.inject({
           method: 'DELETE',
           url: `/api/orders/${created.id}`,
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
     });
@@ -513,7 +453,6 @@ describe('Orders Routes - Integration Tests', () => {
 
   describe('GET /api/orders/me', () => {
     it('should return users orders with items', async () => {
-      // ARRANGE
       const auth = await createAuthenticatedUser('myorders@example.com', 'password123', db);
       const product = await createTestProduct({}, db);
       const order = await createTestOrder(
@@ -531,14 +470,12 @@ describe('Orders Routes - Integration Tests', () => {
         db
       );
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/me',
         cookies: { sid: auth.sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/json');
 
@@ -551,17 +488,14 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should return empty array when user has no orders', async () => {
-      // ARRANGE
       const auth = await createAuthenticatedUser('noorders@example.com', 'password123', db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/me',
         cookies: { sid: auth.sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
@@ -569,21 +503,18 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should not return other users orders', async () => {
-      // ARRANGE
       const user1 = await createAuthenticatedUser('user1@example.com', 'password123', db);
       const user2 = await createAuthenticatedUser('user2@example.com', 'password123', db);
 
       const user1Order = await createTestOrder({ userId: user1.userId, status: 'confirmed' }, db);
       await createTestOrder({ userId: user2.userId, status: 'confirmed' }, db);
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/me',
         cookies: { sid: user1.sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
@@ -593,7 +524,6 @@ describe('Orders Routes - Integration Tests', () => {
     });
 
     it('should exclude cart status orders', async () => {
-      // ARRANGE
       const auth = await createAuthenticatedUser('carttest@example.com', 'password123', db);
       await createTestOrder({ userId: auth.userId, status: 'cart' }, db);
       const confirmedOrder = await createTestOrder(
@@ -601,14 +531,12 @@ describe('Orders Routes - Integration Tests', () => {
         db
       );
 
-      // ACT
       const response = await fastify.inject({
         method: 'GET',
         url: '/api/orders/me',
         cookies: { sid: auth.sessionToken },
       });
 
-      // ASSERT
       expect(response.statusCode).toBe(200);
 
       const body = JSON.parse(response.payload) as { orders: OrderResponse[] };
@@ -618,13 +546,11 @@ describe('Orders Routes - Integration Tests', () => {
 
     describe('ACL', () => {
       it('should return 401 without authentication', async () => {
-        // ACT
         const response = await fastify.inject({
           method: 'GET',
           url: '/api/orders/me',
         });
 
-        // ASSERT
         expect(response.statusCode).toBe(401);
       });
     });

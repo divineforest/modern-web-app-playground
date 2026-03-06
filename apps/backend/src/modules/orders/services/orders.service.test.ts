@@ -18,7 +18,6 @@ import {
 describe('Orders Service', () => {
   describe('createOrderService', () => {
     it('should create an order with valid data', async () => {
-      // ARRANGE
       const input = {
         status: 'draft' as const,
         orderNumber: `ORD-${Date.now()}`,
@@ -31,10 +30,8 @@ describe('Orders Service', () => {
         totalAmount: 1760,
       };
 
-      // ACT
       const result = await createOrderService(input, db);
 
-      // ASSERT
       expect(result).toBeDefined();
       expect(result.status).toBe('draft');
       expect(result.subtotal).toBe('1500.00');
@@ -42,7 +39,6 @@ describe('Orders Service', () => {
     });
 
     it('should throw OrderValidationError for duplicate order number', async () => {
-      // ARRANGE
       const orderNumber = `ORD-DUPLICATE-${Date.now()}`;
       await createTestOrder({ orderNumber }, db);
 
@@ -55,86 +51,68 @@ describe('Orders Service', () => {
         totalAmount: 1500,
       };
 
-      // ACT & ASSERT
       await expect(createOrderService(input, db)).rejects.toThrow(OrderValidationError);
     });
   });
 
   describe('getOrderByIdService', () => {
     it('should return an order by ID', async () => {
-      // ARRANGE
       const order = await createTestOrder({}, db);
 
-      // ACT
       const result = await getOrderByIdService(order.id, db);
 
-      // ASSERT
       expect(result.id).toBe(order.id);
     });
 
     it('should throw OrderNotFoundError for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT & ASSERT
       await expect(getOrderByIdService(nonExistentId, db)).rejects.toThrow(OrderNotFoundError);
     });
   });
 
   describe('listOrdersService', () => {
     it('should list orders with filters', async () => {
-      // ARRANGE
       await createTestOrder({ status: 'draft' }, db);
       await createTestOrder({ status: 'confirmed' }, db);
 
-      // ACT
       const results = await listOrdersService({ status: 'confirmed' }, db);
 
-      // ASSERT
       expect(results.every((ord) => ord.status === 'confirmed')).toBe(true);
     });
 
     it('should return empty array when no orders match', async () => {
-      // ACT
       const results = await listOrdersService({ status: 'cancelled' }, db);
 
-      // ASSERT
       expect(Array.isArray(results)).toBe(true);
     });
   });
 
   describe('updateOrderService', () => {
     it('should update order fields', async () => {
-      // ARRANGE
       const order = await createTestOrder({ status: 'draft' }, db);
 
-      // ACT
       const result = await updateOrderService(
         order.id,
         { status: 'confirmed', notes: 'Updated' },
         db
       );
 
-      // ASSERT
       expect(result.status).toBe('confirmed');
       expect(result.notes).toBe('Updated');
     });
 
     it('should throw OrderNotFoundError for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT & ASSERT
       await expect(updateOrderService(nonExistentId, { status: 'confirmed' }, db)).rejects.toThrow(
         OrderNotFoundError
       );
     });
 
     it('should throw OrderValidationError for invalid status', async () => {
-      // ARRANGE
       const order = await createTestOrder({}, db);
 
-      // ACT & ASSERT
       await expect(
         updateOrderService(order.id, { status: 'invalid' as never }, db)
       ).rejects.toThrow(OrderValidationError);
@@ -143,13 +121,10 @@ describe('Orders Service', () => {
 
   describe('deleteOrderService', () => {
     it('should delete an order and return ID', async () => {
-      // ARRANGE
       const order = await createTestOrder({}, db);
 
-      // ACT
       const deletedId = await deleteOrderService(order.id, db);
 
-      // ASSERT
       expect(deletedId).toBe(order.id);
 
       // Verify deletion
@@ -157,17 +132,14 @@ describe('Orders Service', () => {
     });
 
     it('should throw OrderNotFoundError for non-existent ID', async () => {
-      // ARRANGE
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      // ACT & ASSERT
       await expect(deleteOrderService(nonExistentId, db)).rejects.toThrow(OrderNotFoundError);
     });
   });
 
   describe('listMyOrdersService', () => {
     it('should return orders with formatted items', async () => {
-      // ARRANGE
       const user = await createTestUser({}, db);
       const product = await createTestProduct({}, db);
       const order = await createTestOrder(
@@ -185,10 +157,8 @@ describe('Orders Service', () => {
         db
       );
 
-      // ACT
       const results = await listMyOrdersService(user.id, db);
 
-      // ASSERT
       expect(results.length).toBeGreaterThan(0);
       const myOrder = results.find((o) => o.id === order.id);
       expect(myOrder).toBeDefined();
@@ -200,13 +170,10 @@ describe('Orders Service', () => {
     });
 
     it('should return empty array for user with no orders', async () => {
-      // ARRANGE
       const user = await createTestUser({}, db);
 
-      // ACT
       const results = await listMyOrdersService(user.id, db);
 
-      // ASSERT
       expect(results).toEqual([]);
     });
   });
