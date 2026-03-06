@@ -8,8 +8,8 @@ import {
   countSearchResults,
   findAllProducts,
   findProductBySlug,
-  searchProducts,
   type ProductFilters,
+  searchProducts,
 } from '../repositories/products.repository.js';
 
 /**

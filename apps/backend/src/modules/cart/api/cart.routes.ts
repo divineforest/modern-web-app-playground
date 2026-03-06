@@ -1,8 +1,8 @@
 import { cartContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { authService } from '../../auth/services/auth.service.js';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { logger } from '../../../lib/logger.js';
+import { authService } from '../../auth/services/auth.service.js';
 import type { CartIdentifier } from '../domain/cart.types.js';
 import {
   CartItemNotFoundError,

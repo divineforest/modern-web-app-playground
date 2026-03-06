@@ -2,12 +2,12 @@ import { eq, like, sql } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, orders } from '../../../db/index.js';
 import { logger } from '../../../lib/logger.js';
-import { findProductById } from '../../products/repositories/products.repository.js';
 import {
+  findCartByToken,
   findCartItems,
   findOrderByUserId,
-  findCartByToken,
 } from '../../cart/repositories/cart.repository.js';
+import { findProductById } from '../../products/repositories/products.repository.js';
 import type { Address, CheckoutRequest } from '../domain/checkout.types.js';
 
 export class CartNotFoundError extends Error {

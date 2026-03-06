@@ -1,9 +1,9 @@
+import argon2 from 'argon2';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildTestApp } from '../../app.js';
-import { db, sessions, users } from '../../db/index.js';
 import { createTestSession } from '../../../tests/factories/sessions.js';
 import { createTestUser } from '../../../tests/factories/users.js';
-import argon2 from 'argon2';
+import { buildTestApp } from '../../app.js';
+import { db, sessions, users } from '../../db/index.js';
 
 describe('Session Auth Plugin', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>;

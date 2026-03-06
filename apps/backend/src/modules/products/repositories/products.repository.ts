@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, type SQL, sql } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, products } from '../../../db/index.js';
 import type { Product } from '../domain/product.entity.js';

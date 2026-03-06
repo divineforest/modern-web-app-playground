@@ -6,14 +6,14 @@ import { createTestUser } from '../../../../tests/factories/users.js';
 import { db, sessions, users } from '../../../db/index.js';
 import {
   EmailAlreadyExistsError,
+  getMe,
   InvalidCredentialsError,
-  SessionExpiredError,
-  SessionNotFoundError,
-  UserNotFoundError,
   login,
   logout,
   register,
-  getMe,
+  SessionExpiredError,
+  SessionNotFoundError,
+  UserNotFoundError,
   validateSession,
 } from './auth.service.js';
 

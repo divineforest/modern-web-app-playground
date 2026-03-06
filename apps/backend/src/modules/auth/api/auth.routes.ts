@@ -1,14 +1,14 @@
-import type { RegisterInput, LoginInput, UserProfile } from '@mercado/api-contracts';
-import { registerInputSchema, loginInputSchema } from '@mercado/api-contracts';
+import type { LoginInput, RegisterInput, UserProfile } from '@mercado/api-contracts';
+import { loginInputSchema, registerInputSchema } from '@mercado/api-contracts';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { env } from '../../../lib/env.js';
 import { logger } from '../../../lib/logger.js';
 import {
+  authService,
   EmailAlreadyExistsError,
   InvalidCredentialsError,
   UserNotFoundError,
-  authService,
 } from '../services/auth.service.js';
 
 /**

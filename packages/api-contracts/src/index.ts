@@ -1,11 +1,11 @@
 export { authContract } from './auth/contract.js';
 export {
-  registerInputSchema,
-  loginInputSchema,
-  userProfileSchema,
-  type RegisterInput,
   type LoginInput,
+  loginInputSchema,
+  type RegisterInput,
+  registerInputSchema,
   type UserProfile,
+  userProfileSchema,
 } from './auth/schemas.js';
 export { cartContract } from './cart/contract.js';
 export * from './cart/schemas.js';

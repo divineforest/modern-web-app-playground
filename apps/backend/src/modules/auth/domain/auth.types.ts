@@ -1,5 +1,5 @@
 export type {
-  RegisterInput,
   LoginInput,
+  RegisterInput,
   UserProfile,
 } from '@mercado/api-contracts';
