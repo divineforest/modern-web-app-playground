@@ -1,57 +1,32 @@
+import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api } from '../lib/api-client';
+import { createContext, useCallback, useContext } from 'react';
+import { tsr } from '../lib/api-client';
 
 interface CartContextValue {
   itemCount: number;
-  refreshCart: () => void;
-  updateItemCount: (count: number) => void;
-  clearCart: () => void;
+  invalidateCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue>({
   itemCount: 0,
-  refreshCart: () => {},
-  updateItemCount: () => {},
-  clearCart: () => {},
+  invalidateCart: () => {},
 });
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [itemCount, setItemCount] = useState(0);
+  const { data } = tsr.cart.getCart.useQuery({
+    queryKey: ['cart'],
+  });
+  const queryClient = useQueryClient();
 
-  const fetchCartCount = useCallback(async () => {
-    try {
-      const response = await api.cart.getCart();
+  const itemCount = data?.status === 200 ? data.body.itemCount : 0;
 
-      if (response.status === 200) {
-        setItemCount(response.body.itemCount);
-      }
-    } catch {
-      // silently ignore network errors for badge
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchCartCount();
-  }, [fetchCartCount]);
-
-  const refreshCart = useCallback(() => {
-    void fetchCartCount();
-  }, [fetchCartCount]);
-
-  const updateItemCount = useCallback((count: number) => {
-    setItemCount(count);
-  }, []);
-
-  const clearCart = useCallback(() => {
-    setItemCount(0);
-  }, []);
+  const invalidateCart = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
+  }, [queryClient]);
 
   return (
-    <CartContext.Provider value={{ itemCount, refreshCart, updateItemCount, clearCart }}>
-      {children}
-    </CartContext.Provider>
+    <CartContext.Provider value={{ itemCount, invalidateCart }}>{children}</CartContext.Provider>
   );
 }
 

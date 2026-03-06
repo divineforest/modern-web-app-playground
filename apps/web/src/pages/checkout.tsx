@@ -1,4 +1,3 @@
-import type { apiContract } from '@mercado/api-contracts';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,14 +11,11 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { useCart } from '../contexts/cart-context';
-import { api } from '../lib/api-client';
-
-type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
+import { tsr } from '../lib/api-client';
 
 interface AddressFormData {
   fullName: string;
@@ -45,15 +41,24 @@ const emptyAddress: AddressFormData = {
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { updateItemCount } = useCart();
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [shippingAddress, setShippingAddress] = useState<AddressFormData>(emptyAddress);
   const [billingAddress, setBillingAddress] = useState<AddressFormData>(emptyAddress);
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const { data, isPending } = tsr.cart.getCart.useQuery({
+    queryKey: ['cart'],
+  });
+
+  const cart = data?.status === 200 ? data.body : null;
+
+  useEffect(() => {
+    if (!isPending && cart && cart.items.length === 0) {
+      navigate('/cart');
+    }
+  }, [isPending, cart, navigate]);
 
   const formatPrice = (price: string, currency: string) => {
     const numericPrice = Number.parseFloat(price);
@@ -62,31 +67,6 @@ export function CheckoutPage() {
       currency: currency,
     }).format(numericPrice);
   };
-
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await api.cart.getCart();
-
-      if (response.status === 200) {
-        if (response.body.items.length === 0) {
-          navigate('/cart');
-          return;
-        }
-        setCart(response.body);
-        setError(null);
-      } else {
-        throw new Error('Failed to fetch cart');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    void fetchCart();
-  }, [fetchCart]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -129,46 +109,11 @@ export function CheckoutPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handlePlaceOrder = async () => {
-    if (!validateForm()) {
-      setError('Please fill in all required fields correctly.');
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await api.checkout.checkout({
-        body: {
-          shippingAddress: {
-            fullName: shippingAddress.fullName,
-            addressLine1: shippingAddress.addressLine1,
-            addressLine2: shippingAddress.addressLine2 || undefined,
-            city: shippingAddress.city,
-            state: shippingAddress.state || undefined,
-            postalCode: shippingAddress.postalCode,
-            countryCode: shippingAddress.countryCode.toUpperCase(),
-            phone: shippingAddress.phone || undefined,
-          },
-          billingAddress: billingSameAsShipping
-            ? undefined
-            : {
-                fullName: billingAddress.fullName,
-                addressLine1: billingAddress.addressLine1,
-                addressLine2: billingAddress.addressLine2 || undefined,
-                city: billingAddress.city,
-                state: billingAddress.state || undefined,
-                postalCode: billingAddress.postalCode,
-                countryCode: billingAddress.countryCode.toUpperCase(),
-                phone: billingAddress.phone || undefined,
-              },
-          billingSameAsShipping,
-        },
-      });
-
+  const checkoutMutation = tsr.checkout.checkout.useMutation({
+    onSuccess: (response) => {
       if (response.status === 200) {
-        updateItemCount(0);
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
         navigate(`/orders/${response.body.orderNumber}/confirmation`);
       } else if (response.status === 400) {
         const errorBody = response.body as {
@@ -195,11 +140,47 @@ export function CheckoutPage() {
       } else {
         setError('Failed to place order. Please try again.');
       }
-    } catch (err) {
+    },
+    onError: (err) => {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setSubmitting(false);
+    },
+  });
+
+  const handlePlaceOrder = () => {
+    if (!validateForm()) {
+      setError('Please fill in all required fields correctly.');
+      return;
     }
+
+    setError(null);
+
+    checkoutMutation.mutate({
+      body: {
+        shippingAddress: {
+          fullName: shippingAddress.fullName,
+          addressLine1: shippingAddress.addressLine1,
+          addressLine2: shippingAddress.addressLine2 || undefined,
+          city: shippingAddress.city,
+          state: shippingAddress.state || undefined,
+          postalCode: shippingAddress.postalCode,
+          countryCode: shippingAddress.countryCode.toUpperCase(),
+          phone: shippingAddress.phone || undefined,
+        },
+        billingAddress: billingSameAsShipping
+          ? undefined
+          : {
+              fullName: billingAddress.fullName,
+              addressLine1: billingAddress.addressLine1,
+              addressLine2: billingAddress.addressLine2 || undefined,
+              city: billingAddress.city,
+              state: billingAddress.state || undefined,
+              postalCode: billingAddress.postalCode,
+              countryCode: billingAddress.countryCode.toUpperCase(),
+              phone: billingAddress.phone || undefined,
+            },
+        billingSameAsShipping,
+      },
+    });
   };
 
   const updateShippingField = (field: keyof AddressFormData, value: string) => {
@@ -243,7 +224,7 @@ export function CheckoutPage() {
     }
   };
 
-  if (loading) {
+  if (isPending) {
     return (
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -581,10 +562,14 @@ export function CheckoutPage() {
               variant="contained"
               fullWidth
               size="large"
-              onClick={() => void handlePlaceOrder()}
-              disabled={submitting}
+              onClick={() => handlePlaceOrder()}
+              disabled={checkoutMutation.isPending}
             >
-              {submitting ? <CircularProgress size={24} color="inherit" /> : 'Place Order'}
+              {checkoutMutation.isPending ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Place Order'
+              )}
             </Button>
           </Paper>
         </Box>

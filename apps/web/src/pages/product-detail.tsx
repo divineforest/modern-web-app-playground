@@ -1,4 +1,3 @@
-import type { apiContract } from '@mercado/api-contracts';
 import Add from '@mui/icons-material/Add';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import Remove from '@mui/icons-material/Remove';
@@ -12,57 +11,50 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { useCart } from '../contexts/cart-context';
-import { api } from '../lib/api-client';
-
-type Product = ClientInferResponseBody<typeof apiContract.products.getBySlug, 200>;
+import { tsr } from '../lib/api-client';
 
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { refreshCart } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
-  const [addingToCart, setAddingToCart] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!slug) {
-      setError('Product slug is missing');
-      setLoading(false);
-      return;
-    }
+  const {
+    data,
+    isPending,
+    error: queryError,
+  } = tsr.products.getBySlug.useQuery({
+    queryKey: ['products', slug],
+    queryData: {
+      params: { slug: slug ?? '' },
+    },
+    enabled: !!slug,
+  });
 
-    setLoading(true);
+  const product = data?.status === 200 ? data.body : null;
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : !slug
+        ? 'Product slug is missing'
+        : data?.status === 404
+          ? 'Product not found'
+          : data && data.status !== 200
+            ? 'Failed to fetch product'
+            : null;
 
-    async function fetchProduct() {
-      try {
-        const response = await api.products.getBySlug({
-          params: { slug: slug as string },
-        });
-
-        if (response.status === 200) {
-          setProduct(response.body);
-        } else if (response.status === 404) {
-          throw new Error('Product not found');
-        } else {
-          throw new Error('Failed to fetch product');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchProduct();
-  }, [slug]);
+  const addToCartMutation = tsr.cart.addItem.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      setShowSuccess(true);
+      setQuantity(1);
+    },
+  });
 
   const formatPrice = (price: string, currency: string) => {
     const numericPrice = Number.parseFloat(price);
@@ -72,34 +64,18 @@ export function ProductDetailPage() {
     }).format(numericPrice);
   };
 
-  const addToCart = async () => {
+  const addToCart = () => {
     if (!product) return;
 
-    setAddingToCart(true);
-
-    try {
-      const response = await api.cart.addItem({
-        body: {
-          productId: product.id,
-          quantity,
-        },
-      });
-
-      if (response.status === 200) {
-        refreshCart();
-        setShowSuccess(true);
-        setQuantity(1);
-      } else {
-        throw new Error('Failed to add item to cart');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to cart');
-    } finally {
-      setAddingToCart(false);
-    }
+    addToCartMutation.mutate({
+      body: {
+        productId: product.id,
+        quantity,
+      },
+    });
   };
 
-  if (loading) {
+  if (isPending) {
     return (
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -117,6 +93,13 @@ export function ProductDetailPage() {
             Back
           </Button>
           <Alert severity="error">{error || 'Product not found'}</Alert>
+          {addToCartMutation.error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {addToCartMutation.error instanceof Error
+                ? addToCartMutation.error.message
+                : 'Failed to add to cart'}
+            </Alert>
+          )}
         </Box>
       </Container>
     );
@@ -127,6 +110,14 @@ export function ProductDetailPage() {
       <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 3 }}>
         Back
       </Button>
+
+      {addToCartMutation.error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {addToCartMutation.error instanceof Error
+            ? addToCartMutation.error.message
+            : 'Failed to add to cart'}
+        </Alert>
+      )}
 
       <Box
         sx={{
@@ -222,7 +213,7 @@ export function ProductDetailPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <IconButton
                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                disabled={quantity <= 1 || addingToCart}
+                disabled={quantity <= 1 || addToCartMutation.isPending}
                 size="small"
               >
                 <Remove />
@@ -236,7 +227,7 @@ export function ProductDetailPage() {
               </Typography>
               <IconButton
                 onClick={() => setQuantity((prev) => prev + 1)}
-                disabled={addingToCart}
+                disabled={addToCartMutation.isPending}
                 size="small"
               >
                 <Add />
@@ -247,12 +238,12 @@ export function ProductDetailPage() {
               variant="contained"
               size="large"
               startIcon={<ShoppingCart />}
-              onClick={() => void addToCart()}
-              disabled={addingToCart}
+              onClick={() => addToCart()}
+              disabled={addToCartMutation.isPending}
               fullWidth
               data-testid="add-to-cart-button"
             >
-              {addingToCart ? 'Adding...' : 'Add to Cart'}
+              {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
             </Button>
           </Box>
 

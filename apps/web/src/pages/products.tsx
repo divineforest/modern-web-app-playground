@@ -1,4 +1,3 @@
-import type { apiContract } from '@mercado/api-contracts';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -9,53 +8,29 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { api } from '../lib/api-client';
+import { tsr } from '../lib/api-client';
 
 const PAGE_SIZE = 20;
 
-type ProductsListResponse = ClientInferResponseBody<typeof apiContract.products.list, 200>;
-type Product = ProductsListResponse['products'][number];
-type PaginationMeta = ProductsListResponse['pagination'];
-
 export function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
+  const { data, isPending, error } = tsr.products.list.useQuery({
+    queryKey: ['products', page],
+    queryData: {
+      query: {
+        status: 'active',
+        page,
+        limit: PAGE_SIZE,
+      },
+    },
+  });
 
-    async function fetchProducts() {
-      try {
-        const response = await api.products.list({
-          query: {
-            status: 'active',
-            page,
-            limit: PAGE_SIZE,
-          },
-        });
-
-        if (response.status === 200) {
-          setProducts(response.body.products);
-          setPagination(response.body.pagination);
-        } else {
-          throw new Error('Failed to fetch products');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void fetchProducts();
-  }, [page]);
+  const products = data?.status === 200 ? data.body.products : [];
+  const pagination = data?.status === 200 ? data.body.pagination : null;
 
   const formatPrice = (price: string, currency: string) => {
     const numericPrice = Number.parseFloat(price);
@@ -65,7 +40,7 @@ export function ProductsPage() {
     }).format(numericPrice);
   };
 
-  if (loading) {
+  if (isPending) {
     return (
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -79,7 +54,9 @@ export function ProductsPage() {
     return (
       <Container maxWidth="lg">
         <Box sx={{ mt: 4 }}>
-          <Alert severity="error">{error}</Alert>
+          <Alert severity="error">
+            {error instanceof Error ? error.message : 'An error occurred'}
+          </Alert>
         </Box>
       </Container>
     );

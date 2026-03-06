@@ -1,4 +1,3 @@
-import type { apiContract } from '@mercado/api-contracts';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -11,19 +10,36 @@ import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { api } from '../lib/api-client';
-
-type OrderWithItems = ClientInferResponseBody<typeof apiContract.orders.getByOrderNumber, 200>;
+import { tsr } from '../lib/api-client';
 
 export function OrderConfirmationPage() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
-  const [order, setOrder] = useState<OrderWithItems | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data,
+    isPending,
+    error: queryError,
+  } = tsr.orders.getByOrderNumber.useQuery({
+    queryKey: ['orders', orderNumber],
+    queryData: {
+      params: { orderNumber: orderNumber ?? '' },
+    },
+    enabled: !!orderNumber,
+  });
+
+  const order = data?.status === 200 ? data.body : null;
+  const error =
+    queryError instanceof Error
+      ? queryError.message
+      : !orderNumber
+        ? 'Order number is missing'
+        : data?.status === 404
+          ? 'Order not found'
+          : data && data.status !== 200
+            ? 'Failed to fetch order'
+            : null;
 
   const formatPrice = (price: string, currency: string) => {
     const numericPrice = Number.parseFloat(price);
@@ -41,38 +57,7 @@ export function OrderConfirmationPage() {
     });
   };
 
-  const fetchOrder = useCallback(async () => {
-    if (!orderNumber) {
-      setError('Order number is missing');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await api.orders.getByOrderNumber({
-        params: { orderNumber },
-      });
-
-      if (response.status === 200) {
-        setOrder(response.body);
-        setError(null);
-      } else if (response.status === 404) {
-        setError('Order not found');
-      } else {
-        throw new Error('Failed to fetch order');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, [orderNumber]);
-
-  useEffect(() => {
-    void fetchOrder();
-  }, [fetchOrder]);
-
-  if (loading) {
+  if (isPending) {
     return (
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">

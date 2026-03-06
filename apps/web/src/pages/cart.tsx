@@ -1,4 +1,3 @@
-import type { apiContract } from '@mercado/api-contracts';
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
 import Remove from '@mui/icons-material/Remove';
@@ -14,21 +13,21 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import type { ClientInferResponseBody } from '@ts-rest/core';
-import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
-import { useCart } from '../contexts/cart-context';
-import { api } from '../lib/api-client';
-
-type Cart = ClientInferResponseBody<typeof apiContract.cart.getCart, 200>;
+import { tsr } from '../lib/api-client';
 
 export function CartPage() {
-  const { updateItemCount } = useCart();
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+
+  const { data, isPending } = tsr.cart.getCart.useQuery({
+    queryKey: ['cart'],
+  });
+
+  const cart = data?.status === 200 ? data.body : null;
 
   const formatPrice = (price: string, currency: string) => {
     const numericPrice = Number.parseFloat(price);
@@ -38,149 +37,129 @@ export function CartPage() {
     }).format(numericPrice);
   };
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await api.cart.getCart();
+  const updateItemMutation = tsr.cart.updateItem.useMutation({
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ['cart'] });
+      const previous = queryClient.getQueryData(['cart']);
 
-      if (response.status === 200) {
-        setCart(response.body);
-        setError(null);
-      } else {
-        throw new Error('Failed to fetch cart');
+      queryClient.setQueryData(['cart'], (old: typeof data) => {
+        if (old?.status !== 200) return old;
+
+        return {
+          ...old,
+          body: {
+            ...old.body,
+            items: old.body.items.map((item) =>
+              item.id === vars.params.itemId
+                ? {
+                    ...item,
+                    quantity: vars.body.quantity,
+                    lineTotal: (Number.parseFloat(item.unitPrice) * vars.body.quantity).toFixed(2),
+                  }
+                : item
+            ),
+          },
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['cart'], context.previous);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setError('Failed to update quantity');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
 
-  useEffect(() => {
-    void fetchCart();
-  }, [fetchCart]);
-
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1 || !cart) return;
-
-    setUpdatingItems((prev) => new Set(prev).add(itemId));
-
-    const previousCart = { ...cart };
-
-    setCart({
-      ...cart,
-      items: cart.items.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              quantity: newQuantity,
-              lineTotal: (Number.parseFloat(item.unitPrice) * newQuantity).toFixed(2),
-            }
-          : item
-      ),
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    updateItemMutation.mutate({
+      params: { itemId },
+      body: { quantity: newQuantity },
     });
-
-    try {
-      const response = await api.cart.updateItem({
-        params: { itemId },
-        body: { quantity: newQuantity },
-      });
-
-      if (response.status === 200) {
-        setCart(response.body);
-        updateItemCount(response.body.itemCount);
-      } else {
-        throw new Error('Failed to update quantity');
-      }
-    } catch (err) {
-      setCart(previousCart);
-      setError(err instanceof Error ? err.message : 'Failed to update quantity');
-    } finally {
-      setUpdatingItems((prev) => {
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-    }
   };
 
-  const removeItem = async (itemId: string) => {
-    if (!cart) return;
+  const removeItemMutation = tsr.cart.removeItem.useMutation({
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ['cart'] });
+      const previous = queryClient.getQueryData(['cart']);
 
-    setUpdatingItems((prev) => new Set(prev).add(itemId));
+      queryClient.setQueryData(['cart'], (old: typeof data) => {
+        if (old?.status !== 200) return old;
 
-    const previousCart = { ...cart };
-
-    setCart({
-      ...cart,
-      items: cart.items.filter((item) => item.id !== itemId),
-    });
-
-    try {
-      const response = await api.cart.removeItem({
-        params: { itemId },
+        return {
+          ...old,
+          body: {
+            ...old.body,
+            items: old.body.items.filter((item) => item.id !== vars.params.itemId),
+          },
+        };
       });
 
-      if (response.status === 200) {
-        setCart(response.body);
-        updateItemCount(response.body.itemCount);
-      } else {
-        throw new Error('Failed to remove item');
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['cart'], context.previous);
       }
-    } catch (err) {
-      setCart(previousCart);
-      setError(err instanceof Error ? err.message : 'Failed to remove item');
-    } finally {
-      setUpdatingItems((prev) => {
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-    }
-  };
+      setError('Failed to remove item');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
 
-  const clearCart = async () => {
-    if (!cart) return;
-
-    const previousCart = { ...cart };
-
-    setCart({
-      items: [],
-      subtotal: '0.00',
-      itemCount: 0,
-      currency: null,
+  const removeItem = (itemId: string) => {
+    removeItemMutation.mutate({
+      params: { itemId },
     });
-
-    try {
-      const response = await api.cart.clearCart();
-
-      if (response.status === 200) {
-        updateItemCount(0);
-      } else {
-        throw new Error('Failed to clear cart');
-      }
-    } catch (err) {
-      setCart(previousCart);
-      setError(err instanceof Error ? err.message : 'Failed to clear cart');
-    }
   };
 
-  if (loading) {
+  const clearCartMutation = tsr.cart.clearCart.useMutation({
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['cart'] });
+      const previous = queryClient.getQueryData(['cart']);
+
+      queryClient.setQueryData(['cart'], (old: typeof data) => {
+        if (old?.status !== 200) return old;
+
+        return {
+          ...old,
+          body: {
+            items: [],
+            subtotal: '0.00',
+            itemCount: 0,
+            currency: null,
+          },
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['cart'], context.previous);
+      }
+      setError('Failed to clear cart');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
+
+  const clearCart = () => {
+    clearCartMutation.mutate();
+  };
+
+  if (isPending) {
     return (
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
           <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 4 }}>
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
         </Box>
       </Container>
     );
@@ -217,6 +196,27 @@ export function CartPage() {
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
           {error}
+        </Alert>
+      )}
+      {updateItemMutation.error && (
+        <Alert severity="error" onClose={() => updateItemMutation.reset()} sx={{ mb: 2 }}>
+          {updateItemMutation.error instanceof Error
+            ? updateItemMutation.error.message
+            : 'Failed to update item'}
+        </Alert>
+      )}
+      {removeItemMutation.error && (
+        <Alert severity="error" onClose={() => removeItemMutation.reset()} sx={{ mb: 2 }}>
+          {removeItemMutation.error instanceof Error
+            ? removeItemMutation.error.message
+            : 'Failed to remove item'}
+        </Alert>
+      )}
+      {clearCartMutation.error && (
+        <Alert severity="error" onClose={() => clearCartMutation.reset()} sx={{ mb: 2 }}>
+          {clearCartMutation.error instanceof Error
+            ? clearCartMutation.error.message
+            : 'Failed to clear cart'}
         </Alert>
       )}
 
@@ -262,8 +262,8 @@ export function CartPage() {
                     }}
                   >
                     <IconButton
-                      onClick={() => void removeItem(item.id)}
-                      disabled={updatingItems.has(item.id)}
+                      onClick={() => removeItem(item.id)}
+                      disabled={removeItemMutation.isPending || updateItemMutation.isPending}
                       size="small"
                       color="error"
                     >
@@ -272,8 +272,12 @@ export function CartPage() {
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <IconButton
-                        onClick={() => void updateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1 || updatingItems.has(item.id)}
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        disabled={
+                          item.quantity <= 1 ||
+                          updateItemMutation.isPending ||
+                          removeItemMutation.isPending
+                        }
                         size="small"
                       >
                         <Remove />
@@ -286,8 +290,8 @@ export function CartPage() {
                         {item.quantity}
                       </Typography>
                       <IconButton
-                        onClick={() => void updateQuantity(item.id, item.quantity + 1)}
-                        disabled={updatingItems.has(item.id)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        disabled={updateItemMutation.isPending || removeItemMutation.isPending}
                         size="small"
                       >
                         <Add />
@@ -304,10 +308,11 @@ export function CartPage() {
           ))}
 
           <Button
-            onClick={() => void clearCart()}
+            onClick={() => clearCart()}
             color="error"
             data-testid="clear-cart-button"
             sx={{ mt: 2 }}
+            disabled={clearCartMutation.isPending}
           >
             Clear Cart
           </Button>
