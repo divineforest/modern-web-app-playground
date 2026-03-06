@@ -2,8 +2,6 @@ import { checkoutContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('checkout');
 import {
   CartNotFoundError,
   checkoutService,
@@ -12,6 +10,8 @@ import {
   OrderNotCheckoutEligibleError,
   OrderNumberGenerationError,
 } from '../services/checkout.service.js';
+
+const logger = createModuleLogger('checkout');
 
 const s = initServer();
 

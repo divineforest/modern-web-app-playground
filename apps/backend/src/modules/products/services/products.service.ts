@@ -1,8 +1,6 @@
 import type { Database } from '../../../db/index.js';
 import { db } from '../../../db/index.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('products');
 import type { Product } from '../domain/product.entity.js';
 import type { ListProductsQuery, PaginationResult } from '../domain/product.types.js';
 import {
@@ -14,9 +12,8 @@ import {
   searchProducts,
 } from '../repositories/products.repository.js';
 
-/**
- * Custom error for product not found
- */
+const logger = createModuleLogger('products');
+
 export class ProductNotFoundError extends Error {
   constructor(slug: string) {
     super(`Product with slug ${slug} not found`);
@@ -29,12 +26,13 @@ export interface ListProductsResult {
   pagination: PaginationResult;
 }
 
-/**
- * List products with optional filtering and pagination
- * @param query Query parameters for filtering and pagination
- * @param database Database instance (for dependency injection)
- * @returns Paginated products with costPrice excluded and pagination metadata
- */
+export interface SearchProductsQuery {
+  q: string;
+  sort: 'relevance' | 'price_asc' | 'price_desc';
+  page: number;
+  limit: number;
+}
+
 export async function listProductsService(
   query: ListProductsQuery = { page: 1, limit: 20 },
   database: Database = db
@@ -66,13 +64,6 @@ export async function listProductsService(
   };
 }
 
-/**
- * Get a product by slug
- * @param slug Product slug
- * @param database Database instance (for dependency injection)
- * @returns Product with costPrice excluded
- * @throws ProductNotFoundError if product not found
- */
 export async function getBySlugService(
   slug: string,
   database: Database = db
@@ -91,22 +82,6 @@ export async function getBySlugService(
   return productWithoutCost;
 }
 
-/**
- * Search products query parameters
- */
-export interface SearchProductsQuery {
-  q: string;
-  sort: 'relevance' | 'price_asc' | 'price_desc';
-  page: number;
-  limit: number;
-}
-
-/**
- * Search products using full-text search
- * @param query Search query parameters
- * @param database Database instance (for dependency injection)
- * @returns Paginated search results with costPrice excluded and pagination metadata
- */
 export async function searchProductsService(
   query: SearchProductsQuery,
   database: Database = db
@@ -133,10 +108,6 @@ export async function searchProductsService(
   };
 }
 
-/**
- * Products service factory function for dependency injection
- * Returns an object with all product operations bound to a specific database
- */
 function createProductsService(database: Database = db) {
   return {
     list: (query?: ListProductsQuery) => listProductsService(query, database),
@@ -145,5 +116,4 @@ function createProductsService(database: Database = db) {
   };
 }
 
-// Export a default service instance using the default database
 export const productsService = createProductsService();

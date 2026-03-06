@@ -2,8 +2,6 @@ import { eq, like, sql } from 'drizzle-orm';
 import type { Database } from '../../../db/index.js';
 import { db, orders } from '../../../db/index.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('checkout');
 import {
   findCartByToken,
   findCartItems,
@@ -11,6 +9,8 @@ import {
 } from '../../cart/repositories/cart.repository.js';
 import { findProductById } from '../../products/repositories/products.repository.js';
 import type { Address, CheckoutRequest } from '../domain/checkout.types.js';
+
+const logger = createModuleLogger('checkout');
 
 export class CartNotFoundError extends Error {
   constructor(message = 'No active cart found') {

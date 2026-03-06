@@ -2,26 +2,17 @@ import { ordersContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('orders');
 import {
   OrderNotFoundError,
   OrderValidationError,
   ordersService,
 } from '../services/orders.service.js';
 
-/**
- * Initialize ts-rest server for type-safe route handling
- */
+const logger = createModuleLogger('orders');
+
 const s = initServer();
 
-/**
- * Orders route handlers
- */
 const router = s.router(ordersContract, {
-  /**
-   * Create a new order
-   */
   create: async ({ body }) => {
     try {
       const order = await ordersService.create(body);
@@ -61,9 +52,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * List my orders
-   */
   listMyOrders: async ({ request }) => {
     try {
       if (!request.user) {
@@ -94,9 +82,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * Get an order by ID
-   */
   getById: async ({ params }) => {
     try {
       const order = await ordersService.getById(params.id);
@@ -125,9 +110,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * List all orders
-   */
   list: async ({ query }) => {
     try {
       const orders = await ordersService.list(query);
@@ -149,9 +131,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * Update an order by ID
-   */
   update: async ({ params, body }) => {
     try {
       const order = await ordersService.update(params.id, body);
@@ -200,9 +179,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * Delete an order by ID
-   */
   delete: async ({ params }) => {
     try {
       const id = await ordersService.delete(params.id);
@@ -234,9 +210,6 @@ const router = s.router(ordersContract, {
     }
   },
 
-  /**
-   * Get an order by order number
-   */
   getByOrderNumber: async ({ request, params }) => {
     try {
       if (!request.user) {
@@ -278,10 +251,6 @@ const router = s.router(ordersContract, {
   },
 });
 
-/**
- * Register orders routes with Fastify
- * @param fastify Fastify instance
- */
 export function registerOrdersRoutes(fastify: FastifyInstance) {
   return s.registerRouter(ordersContract, router, fastify, {
     logInitialization: true,

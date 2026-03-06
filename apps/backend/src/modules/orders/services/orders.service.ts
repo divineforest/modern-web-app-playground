@@ -6,8 +6,6 @@ import {
   type ValidationErrorDetails,
 } from '../../../lib/error-transformers.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('orders');
 import type { Order, UpdateOrder } from '../domain/order.entity.js';
 import type {
   CreateOrderInput,
@@ -28,9 +26,8 @@ import {
   updateOrder,
 } from '../repositories/orders.repository.js';
 
-/**
- * Custom error for order not found
- */
+const logger = createModuleLogger('orders');
+
 export class OrderNotFoundError extends Error {
   constructor(id: string) {
     super(`Order with ID ${id} not found`);
@@ -38,9 +35,6 @@ export class OrderNotFoundError extends Error {
   }
 }
 
-/**
- * Custom error for validation failures
- */
 export class OrderValidationError extends ValidationError {
   constructor(message: string, details?: ValidationErrorDetails) {
     super(message, details);
@@ -48,59 +42,40 @@ export class OrderValidationError extends ValidationError {
   }
 }
 
-/**
- * Create a new order with validation
- * @param input Order input data (already validated by ts-rest, or raw input for direct calls)
- * @param database Database instance (for dependency injection)
- * @returns Created order
- * @throws OrderValidationError if validation fails
- */
 export async function createOrderService(
   input: CreateOrderInput | CreateOrderOutput,
   database: Database = db
 ): Promise<Order> {
   try {
-    // Validate/transform input - handles both raw input (number) and pre-parsed (string)
+    // Handles both raw input (number) and pre-parsed (string) due to ts-rest coercion
     const validatedData: CreateOrderOutput = createOrderSchema.parse(input);
 
-    // Create the order - CreateOrderOutput is compatible with NewOrder
     const order = await createOrder(validatedData, database);
 
     logger.info({ orderId: order.id }, 'Order created successfully');
 
     return order;
   } catch (error) {
-    // Re-throw existing validation errors
     if (error instanceof OrderValidationError) {
       throw error;
     }
 
-    // Handle Zod validation errors
     if (error instanceof Error && error.name === 'ZodError') {
       logger.warn({ error, input }, 'Order validation failed');
       throw new OrderValidationError('Validation failed', { zodError: error.message });
     }
 
-    // Transform database errors to validation errors
     const dbError = transformDatabaseError(error);
     if (dbError) {
       logger.warn({ error, input }, 'Database constraint violation');
       throw new OrderValidationError(dbError.message, dbError.details);
     }
 
-    // Log and re-throw unexpected errors
     logger.error({ error, input }, 'Failed to create order');
     throw error;
   }
 }
 
-/**
- * Get an order by ID
- * @param id Order ID
- * @param database Database instance (for dependency injection)
- * @returns Order
- * @throws OrderNotFoundError if not found
- */
 export async function getOrderByIdService(id: string, database: Database = db): Promise<Order> {
   const order = await findOrderById(id, database);
 
@@ -112,12 +87,6 @@ export async function getOrderByIdService(id: string, database: Database = db): 
   return order;
 }
 
-/**
- * List all orders with optional filtering
- * @param query Query parameters for filtering
- * @param database Database instance (for dependency injection)
- * @returns Array of orders
- */
 export async function listOrdersService(
   query: ListOrdersQuery = {},
   database: Database = db
@@ -135,25 +104,15 @@ export async function listOrdersService(
   return orders;
 }
 
-/**
- * Update an order by ID
- * @param id Order ID
- * @param input Partial order data to update (already validated by ts-rest, or raw input for direct calls)
- * @param database Database instance (for dependency injection)
- * @returns Updated order
- * @throws OrderNotFoundError if not found
- * @throws OrderValidationError if validation fails
- */
 export async function updateOrderService(
   id: string,
   input: UpdateOrderInput | UpdateOrderOutput,
   database: Database = db
 ): Promise<Order> {
   try {
-    // Validate/transform input - handles both raw input (number) and pre-parsed (string)
+    // Handles both raw input (number) and pre-parsed (string) due to ts-rest coercion
     const validatedData: UpdateOrderOutput = updateOrderSchema.parse(input);
 
-    // Update the order
     const order = await updateOrder(id, validatedData as UpdateOrder, database);
 
     if (!order) {
@@ -165,37 +124,26 @@ export async function updateOrderService(
 
     return order;
   } catch (error) {
-    // Re-throw existing domain errors
     if (error instanceof OrderNotFoundError || error instanceof OrderValidationError) {
       throw error;
     }
 
-    // Handle Zod validation errors
     if (error instanceof Error && error.name === 'ZodError') {
       logger.warn({ error, id, input }, 'Order update validation failed');
       throw new OrderValidationError('Validation failed', { zodError: error.message });
     }
 
-    // Transform database errors to validation errors
     const dbError = transformDatabaseError(error);
     if (dbError) {
       logger.warn({ error, id, input }, 'Database constraint violation');
       throw new OrderValidationError(dbError.message, dbError.details);
     }
 
-    // Log and re-throw unexpected errors
     logger.error({ error, id, input }, 'Failed to update order');
     throw error;
   }
 }
 
-/**
- * Delete an order by ID
- * @param id Order ID
- * @param database Database instance (for dependency injection)
- * @returns Deleted order ID
- * @throws OrderNotFoundError if not found
- */
 export async function deleteOrderService(id: string, database: Database = db): Promise<string> {
   const deleted = await deleteOrder(id, database);
 
@@ -209,14 +157,6 @@ export async function deleteOrderService(id: string, database: Database = db): P
   return id;
 }
 
-/**
- * Get an order by order number with items
- * @param orderNumber Order number
- * @param userId User ID to verify ownership
- * @param database Database instance (for dependency injection)
- * @returns Order with items
- * @throws OrderNotFoundError if not found or user doesn't own the order
- */
 export async function getOrderByOrderNumber(
   orderNumber: string,
   userId: string,
@@ -254,12 +194,6 @@ export async function getOrderByOrderNumber(
   };
 }
 
-/**
- * List all orders for the authenticated user with items
- * @param userId User ID
- * @param database Database instance (for dependency injection)
- * @returns Array of orders with items
- */
 export async function listMyOrdersService(userId: string, database: Database = db) {
   const orders = await findOrdersByUserId(userId, database);
 
@@ -293,10 +227,6 @@ export async function listMyOrdersService(userId: string, database: Database = d
   return ordersWithItems;
 }
 
-/**
- * Orders service factory function for dependency injection
- * Returns an object with all order operations bound to a specific database
- */
 function createOrdersService(database: Database = db) {
   return {
     create: (input: CreateOrderInput | CreateOrderOutput) => createOrderService(input, database),
@@ -311,5 +241,4 @@ function createOrdersService(database: Database = db) {
   };
 }
 
-// Export a default service instance using the default database
 export const ordersService = createOrdersService();

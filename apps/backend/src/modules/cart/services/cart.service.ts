@@ -2,8 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { Database } from '../../../db/index.js';
 import { db } from '../../../db/index.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('cart');
 import { findProductById } from '../../products/repositories/products.repository.js';
 import type { CartIdentifier, CartItem, CartResponse } from '../domain/cart.types.js';
 import {
@@ -20,9 +18,8 @@ import {
   upsertCartItem,
 } from '../repositories/cart.repository.js';
 
-/**
- * Custom errors
- */
+const logger = createModuleLogger('cart');
+
 export class CartNotFoundError extends Error {
   constructor(message = 'Cart not found') {
     super(message);

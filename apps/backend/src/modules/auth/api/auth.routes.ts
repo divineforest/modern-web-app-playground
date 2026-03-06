@@ -4,8 +4,6 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { env } from '../../../lib/env.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('auth');
 import {
   authService,
   EmailAlreadyExistsError,
@@ -13,9 +11,8 @@ import {
   UserNotFoundError,
 } from '../services/auth.service.js';
 
-/**
- * Cookie configuration constants
- */
+const logger = createModuleLogger('auth');
+
 const SESSION_COOKIE_NAME = 'sid';
 const CART_TOKEN_COOKIE_NAME = 'cart_token';
 

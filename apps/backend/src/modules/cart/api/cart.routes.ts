@@ -2,8 +2,6 @@ import { cartContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('cart');
 import { authService } from '../../auth/services/auth.service.js';
 import type { CartIdentifier } from '../domain/cart.types.js';
 import {
@@ -14,6 +12,8 @@ import {
   ProductNotAvailableError,
   ProductNotFoundError,
 } from '../services/cart.service.js';
+
+const logger = createModuleLogger('cart');
 
 const s = initServer();
 

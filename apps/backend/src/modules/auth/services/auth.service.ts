@@ -4,8 +4,6 @@ import type { Database } from '../../../db/index.js';
 import { db } from '../../../db/index.js';
 import { env } from '../../../lib/env.js';
 import { createModuleLogger } from '../../../lib/logger.js';
-
-const logger = createModuleLogger('auth');
 import { mergeGuestCart } from '../../cart/services/cart.service.js';
 import type { LoginInput, RegisterInput, UserProfile } from '../domain/auth.types.js';
 import {
@@ -18,9 +16,8 @@ import {
   updateSessionExpiry,
 } from '../repositories/auth.repository.js';
 
-/**
- * Custom errors
- */
+const logger = createModuleLogger('auth');
+
 export class EmailAlreadyExistsError extends Error {
   constructor(message = 'An account with this email address already exists') {
     super(message);
