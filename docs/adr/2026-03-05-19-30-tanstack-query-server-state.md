@@ -44,7 +44,7 @@ Files that contain this pattern:
 |------|-----------|-----------------|
 | `apps/web/src/pages/products.tsx` | `api.products.list` | `products`, `pagination`, `loading`, `error` |
 | `apps/web/src/pages/product-detail.tsx` | `api.products.getBySlug`, `api.cart.addItem` | `product`, `loading`, `error`, `addingToCart` |
-| `apps/web/src/pages/cart.tsx` | `api.cart.getCart`, `api.cart.updateItem`, `api.cart.removeItem`, `api.cart.clearCart` | `cart`, `loading`, `error` |
+| `apps/web/src/pages/cart.tsx` | `api.cart.getCart`, `api.cart.updateItem`, `api.cart.removeItem` | `cart`, `loading`, `error` |
 | `apps/web/src/pages/checkout.tsx` | `api.cart.getCart`, `api.checkout.checkout` | `cart`, `loading`, `submitting`, `error` |
 | `apps/web/src/pages/order-confirmation.tsx` | `api.orders.getByOrderNumber` | `order`, `loading`, `error` |
 | `apps/web/src/contexts/auth-context.tsx` | `api.auth.me`, `api.auth.login`, `api.auth.register`, `api.auth.logout` | `user`, `loading` |
@@ -419,7 +419,7 @@ Each step is independently shippable and testable.
 
 6. **Migrate cart-context.tsx.** Replace manual `fetchCartCount` with `tsr.cart.getCart.useQuery({ queryKey: ['cart'] })`. Remove `refreshCart` — consumers invalidate the `['cart']` query key instead. Verify: badge count updates after add/remove item.
 
-7. **Migrate cart.tsx.** Replace cart fetch with `tsr.cart.getCart.useQuery`. Replace `updateItem`, `removeItem`, `clearCart` with `useMutation` hooks that invalidate `['cart']`. Reimplement optimistic updates via `onMutate`/`onError`/`onSettled`. Verify: cart operations work, badge stays in sync.
+7. **Migrate cart.tsx.** Replace cart fetch with `tsr.cart.getCart.useQuery`. Replace `updateItem`, `removeItem` with `useMutation` hooks that invalidate `['cart']`. Reimplement optimistic updates via `onMutate`/`onError`/`onSettled`. Verify: cart operations work, badge stays in sync.
 
 8. **Migrate checkout.tsx.** Replace cart fetch with `tsr.cart.getCart.useQuery`. Replace checkout submit with `tsr.checkout.checkout.useMutation`. Verify: checkout flow works end-to-end.
 

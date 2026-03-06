@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { refreshCart, clearCart } = useCart();
+  const { invalidateCart } = useCart();
 
   const checkAuth = useCallback(async () => {
     try {
@@ -53,12 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.status === 200) {
         setUser(response.body);
-        refreshCart();
+        invalidateCart();
       } else {
         throw new Error('Invalid email or password');
       }
     },
-    [refreshCart]
+    [invalidateCart]
   );
 
   const register = useCallback(
@@ -69,21 +69,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.status === 201) {
         setUser(response.body);
-        refreshCart();
+        invalidateCart();
       } else if (response.status === 409) {
         throw new Error(response.body.error);
       } else {
         throw new Error('Registration failed');
       }
     },
-    [refreshCart]
+    [invalidateCart]
   );
 
   const logout = useCallback(async () => {
     await api.auth.logout({ body: {} });
     setUser(null);
-    clearCart();
-  }, [clearCart]);
+    invalidateCart();
+  }, [invalidateCart]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>

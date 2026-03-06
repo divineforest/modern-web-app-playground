@@ -20,7 +20,7 @@ The web app has three pages with real user flows:
 |-------|------|
 | `/` | Browse products grid, paginate, click to detail |
 | `/products/:slug` | View product, select quantity, add to cart |
-| `/cart` | View cart, update quantities, remove items, clear cart |
+| `/cart` | View cart, update quantities, remove items |
 
 These flows involve cross-app integration: the web app calls the backend API via `@ts-rest/core` client (`apps/web/src/lib/api-client.ts`), manages cart tokens in `localStorage` (`apps/web/src/lib/cart-token.ts`), and maintains global cart state via React context (`apps/web/src/contexts/cart-context.tsx`).
 
@@ -179,13 +179,11 @@ import type { Locator, Page } from '@playwright/test';
 export class CartPage {
   readonly cartItems: Locator;
   readonly emptyState: Locator;
-  readonly clearCartButton: Locator;
   readonly continueShoppingLink: Locator;
 
   constructor(private readonly page: Page) {
     this.cartItems = page.getByTestId('cart-item');
     this.emptyState = page.getByText('Your cart is empty');
-    this.clearCartButton = page.getByRole('button', { name: /clear cart/i });
     this.continueShoppingLink = page.getByRole('link', { name: /continue shopping/i });
   }
 
@@ -390,7 +388,6 @@ Components in `apps/web/src/` SHALL use `data-testid` attributes for elements th
 | `apps/web/src/pages/product-detail.tsx` | `add-to-cart-button` | Add to cart button |
 | `apps/web/src/pages/cart.tsx` | `cart-item` | Each cart line item |
 | `apps/web/src/pages/cart.tsx` | `cart-item-quantity` | Quantity control per item |
-| `apps/web/src/pages/cart.tsx` | `clear-cart-button` | Clear cart button |
 
 Tests SHALL prefer accessible selectors (`getByRole`, `getByText`) over `data-testid` when the accessible name is stable. `data-testid` is a fallback for elements without unique accessible identifiers.
 
@@ -473,7 +470,7 @@ Use Cypress as the E2E framework.
 ## Migration Path
 
 1. Run `pnpm --filter @mercado/web add -D @playwright/test` and `pnpm --filter @mercado/web exec playwright install chromium`. Create `apps/web/playwright.config.ts`. Verify: `pnpm --filter @mercado/web exec playwright test` runs (0 tests found).
-2. Add `data-testid` attributes to `apps/web/src/pages/products.tsx` (`product-card`), `apps/web/src/pages/product-detail.tsx` (`quantity-input`, `add-to-cart-button`), and `apps/web/src/pages/cart.tsx` (`cart-item`, `cart-item-quantity`, `clear-cart-button`). Verify: `pnpm lint:web` passes.
+2. Add `data-testid` attributes to `apps/web/src/pages/products.tsx` (`product-card`), `apps/web/src/pages/product-detail.tsx` (`quantity-input`, `add-to-cart-button`), and `apps/web/src/pages/cart.tsx` (`cart-item`, `cart-item-quantity`). Verify: `pnpm lint:web` passes.
 3. Create `apps/web/e2e/pages/products-page.ts`, `apps/web/e2e/pages/product-detail-page.ts`, `apps/web/e2e/pages/cart-page.ts`. Verify: TypeScript compiles without errors.
 4. Create `apps/web/e2e/fixtures/test-base.ts` exporting the extended `test` with page object fixtures.
 5. Write `apps/web/e2e/products.spec.ts` — validates product listing loads, cards render, pagination works. Verify: `pnpm test:e2e` passes with 1 spec file.

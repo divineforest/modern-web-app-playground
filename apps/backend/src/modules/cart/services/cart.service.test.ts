@@ -8,7 +8,6 @@ import {
   CartItemNotFoundError,
   CartNotFoundError,
   CurrencyMismatchError,
-  clearCart,
   getCart,
   mergeGuestCart,
   ProductNotAvailableError,
@@ -299,32 +298,6 @@ describe('Cart Service', () => {
       await expect(removeItemFromCart({ type: 'user', userId }, INVALID_UUID, db)).rejects.toThrow(
         CartItemNotFoundError
       );
-    });
-  });
-
-  describe('clearCart', () => {
-    it('should clear all items and delete cart', async () => {
-      const userId = TEST_USER_ID;
-      await addItemToCart({ type: 'user', userId }, testProduct.id, 1, db);
-      await addItemToCart({ type: 'user', userId }, testProduct2.id, 2, db);
-
-      let cart = await getCart({ type: 'user', userId }, db);
-      expect(cart.items).toHaveLength(2);
-
-      const result = await clearCart({ type: 'user', userId }, db);
-
-      expect(result.items).toHaveLength(0);
-      expect(result.subtotal).toBe('0.00');
-
-      cart = await getCart({ type: 'user', userId }, db);
-      expect(cart.items).toHaveLength(0);
-    });
-
-    it('should return empty cart if cart does not exist', async () => {
-      const result = await clearCart({ type: 'guest', cartToken: INVALID_UUID }, db);
-
-      expect(result.items).toHaveLength(0);
-      expect(result.subtotal).toBe('0.00');
     });
   });
 

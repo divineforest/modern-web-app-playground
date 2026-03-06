@@ -134,7 +134,7 @@ export const cartContract = c.router({
     body: updateItemSchema,
     summary: 'Update item quantity',
   },
-  // removeItem, clearCart, mergeCart follow the same pattern
+  // removeItem, mergeCart follow the same pattern
 });
 ```
 

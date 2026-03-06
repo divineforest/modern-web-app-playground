@@ -119,42 +119,6 @@ export function CartPage() {
     });
   };
 
-  const clearCartMutation = tsr.cart.clearCart.useMutation({
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['cart'] });
-      const previous = queryClient.getQueryData(['cart']);
-
-      queryClient.setQueryData(['cart'], (old: typeof data) => {
-        if (old?.status !== 200) return old;
-
-        return {
-          ...old,
-          body: {
-            items: [],
-            subtotal: '0.00',
-            itemCount: 0,
-            currency: null,
-          },
-        };
-      });
-
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['cart'], context.previous);
-      }
-      setError('Failed to clear cart');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-    },
-  });
-
-  const clearCart = () => {
-    clearCartMutation.mutate();
-  };
-
   if (isPending) {
     return (
       <Container maxWidth="lg">
@@ -210,13 +174,6 @@ export function CartPage() {
           {removeItemMutation.error instanceof Error
             ? removeItemMutation.error.message
             : 'Failed to remove item'}
-        </Alert>
-      )}
-      {clearCartMutation.error && (
-        <Alert severity="error" onClose={() => clearCartMutation.reset()} sx={{ mb: 2 }}>
-          {clearCartMutation.error instanceof Error
-            ? clearCartMutation.error.message
-            : 'Failed to clear cart'}
         </Alert>
       )}
 
@@ -306,16 +263,6 @@ export function CartPage() {
               </CardContent>
             </Card>
           ))}
-
-          <Button
-            onClick={() => clearCart()}
-            color="error"
-            data-testid="clear-cart-button"
-            sx={{ mt: 2 }}
-            disabled={clearCartMutation.isPending}
-          >
-            Clear Cart
-          </Button>
         </Box>
 
         <Paper sx={{ p: 3, height: 'fit-content', minWidth: { xs: '100%', md: 300 } }}>

@@ -294,43 +294,6 @@ export async function removeItemFromCart(
 }
 
 /**
- * Clear all items from cart and delete the cart
- */
-export async function clearCart(
-  identifier: CartIdentifier,
-  database: Database = db
-): Promise<CartResponse> {
-  let cart = null;
-
-  if (identifier.type === 'user') {
-    cart = await findCartByUserId(identifier.userId, database);
-  } else if (identifier.cartToken) {
-    cart = await findCartByToken(identifier.cartToken, database);
-  }
-
-  if (!cart) {
-    return {
-      items: [],
-      subtotal: '0.00',
-      itemCount: 0,
-      currency: null,
-    };
-  }
-
-  await deleteAllCartItems(cart.id, database);
-  await deleteCartOrder(cart.id, database);
-
-  logger.info({ cartId: cart.id }, 'Cleared and deleted cart');
-
-  return {
-    items: [],
-    subtotal: '0.00',
-    itemCount: 0,
-    currency: null,
-  };
-}
-
-/**
  * Merge guest cart into authenticated user's cart
  * If user has no cart, reassign guest cart to user
  * If user has a cart, merge items (sum quantities for matching products)
@@ -397,7 +360,6 @@ function createCartService(database: Database = db) {
       updateItemQuantity(identifier, itemId, quantity, database),
     removeItem: (identifier: CartIdentifier, itemId: string) =>
       removeItemFromCart(identifier, itemId, database),
-    clearCart: (identifier: CartIdentifier) => clearCart(identifier, database),
     mergeGuestCart: (userId: string, guestCartToken: string) =>
       mergeGuestCart(userId, guestCartToken, database),
   };

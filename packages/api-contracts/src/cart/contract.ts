@@ -7,13 +7,7 @@ import {
   unprocessableEntityErrorSchema,
   validationErrorSchema,
 } from '../shared/errors.js';
-import {
-  addItemSchema,
-  cartResponseSchema,
-  mergeCartSchema,
-  successResponseSchema,
-  updateItemSchema,
-} from './schemas.js';
+import { addItemSchema, cartResponseSchema, mergeCartSchema, updateItemSchema } from './schemas.js';
 
 const c = initContract();
 
@@ -74,17 +68,6 @@ export const cartContract = c.router({
     }),
     summary: 'Remove item from cart',
     description: 'Removes a single item from the cart. Deletes cart if it was the last item.',
-  },
-
-  clearCart: {
-    method: 'DELETE',
-    path: '/api/cart',
-    responses: {
-      200: successResponseSchema,
-      500: internalErrorSchema,
-    },
-    summary: 'Clear cart',
-    description: 'Removes all items from the cart and deletes the cart.',
   },
 
   mergeCart: {

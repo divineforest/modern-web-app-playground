@@ -231,28 +231,6 @@ const router = s.router(cartContract, {
     }
   },
 
-  clearCart: async ({ request }) => {
-    try {
-      const identifier = await extractCartIdentifier(request);
-      await cartService.clearCart(identifier);
-
-      return {
-        status: 200 as const,
-        body: {
-          success: true,
-        },
-      };
-    } catch (error) {
-      logger.error({ error }, 'Unexpected error in clear cart route');
-      return {
-        status: 500 as const,
-        body: {
-          error: 'Internal server error',
-        },
-      };
-    }
-  },
-
   mergeCart: async ({ request, body }) => {
     try {
       const userId = await extractAuthenticatedUserId(request);

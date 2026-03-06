@@ -64,20 +64,4 @@ test.describe('Cart flow', () => {
     await cartPage.removeItem(0);
     await expect(cartPage.emptyState).toBeVisible();
   });
-
-  test('clear cart removes all items', async ({ productsPage, cartPage, page }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
-
-    await page.getByTestId('add-to-cart-button').click();
-    await expect(page.getByText('Added to cart!')).toBeVisible();
-
-    await cartPage.goto();
-    await expect(cartPage.cartItems).toHaveCount(1);
-
-    await cartPage.clearCart();
-    await expect(cartPage.emptyState).toBeVisible();
-  });
 });

@@ -15,7 +15,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 ### Goals
 
 - Allow guests and authenticated users to add products to a persistent, database-backed cart
-- Provide API endpoints for full cart lifecycle (add, view, update quantity, remove items, clear cart)
+- Provide API endpoints for full cart lifecycle (add, view, update quantity, remove items)
 - Introduce a general-purpose order items table
 - Deliver a Cart page in the web application with quantity controls, item removal, and price totals
 - Support merging a guest cart into an authenticated user's cart
@@ -67,20 +67,15 @@ A Cart page on the web application provides the user-facing interface for viewin
 - The system SHALL allow removing a single item from the cart by item ID.
 - The system SHOULD delete the cart (order record) when the last item is removed.
 
-### FR-6: Clear Cart
-
-- The system SHALL allow clearing all items from a cart in a single operation.
-- The system SHALL delete the cart order record when cleared.
-
-### FR-7: Guest Cart Identification and Token Lifecycle
+### FR-6: Guest Cart Identification and Token Lifecycle
 
 - The system SHALL identify guest carts via a `cart_token` cookie.
 - When a new guest cart is created, the system SHALL set the `cart_token` cookie in the response (non-httpOnly, SameSite=Lax, 30-day Max-Age). The browser sends it automatically on all subsequent cart requests — no client-side header management needed.
 - Guest carts SHALL expire 30 days after the cart was last modified (`updated_at`). The cookie expiry SHALL match this duration so both are consistent.
 - The system SHALL return HTTP 404 if a guest provides an invalid or expired cart token.
-- When a guest user logs in, the auth system SHALL automatically consume the `cart_token` cookie, merge the guest cart into the user's account, and clear the cookie — no explicit merge call is needed from the frontend (see FR-8 and `docs/specs/auth.md` FR-2).
+- When a guest user logs in, the auth system SHALL automatically consume the `cart_token` cookie, merge the guest cart into the user's account, and clear the cookie — no explicit merge call is needed from the frontend (see FR-7 and `docs/specs/auth.md` FR-2).
 
-### FR-8: Guest-to-User Cart Merge
+### FR-7: Guest-to-User Cart Merge
 
 - Cart merge SHALL be triggered automatically by the auth system on login — not by an explicit frontend API call.
 - If the user already has a cart, items from the guest cart SHALL be merged: matching products have their quantities summed; new products are added.
@@ -89,7 +84,7 @@ A Cart page on the web application provides the user-facing interface for viewin
 - Merge SHALL execute within a single database transaction to prevent partial state.
 - A `POST /api/cart/merge` endpoint SHALL remain available for edge cases (e.g., a guest cart cookie arrives after login), but the primary path is automatic.
 
-### FR-9: Cart Page (Web Application)
+### FR-8: Cart Page (Web Application)
 
 - The Cart page SHALL display a list of cart items showing: product image, product name, SKU, unit price, quantity, and line total.
 - The Cart page SHALL provide increment/decrement controls to adjust item quantity.

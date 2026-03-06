@@ -4,7 +4,6 @@ export class CartPage {
   readonly page: Page;
   readonly cartItems: Locator;
   readonly emptyState: Locator;
-  readonly clearCartButton: Locator;
   readonly continueShoppingLink: Locator;
   readonly cartSummaryItemCount: Locator;
   readonly loadingIndicator: Locator;
@@ -13,7 +12,6 @@ export class CartPage {
     this.page = page;
     this.cartItems = page.getByTestId('cart-item');
     this.emptyState = page.getByText('Your cart is empty');
-    this.clearCartButton = page.getByTestId('clear-cart-button');
     this.continueShoppingLink = page.getByRole('link', { name: /continue shopping/i });
     this.cartSummaryItemCount = page.getByText(/^Items:/).locator('..');
     this.loadingIndicator = page.getByRole('progressbar');
@@ -53,9 +51,5 @@ export class CartPage {
   async getItemQuantity(index: number) {
     const text = await this.cartItems.nth(index).getByTestId('cart-item-quantity').textContent();
     return Number(text);
-  }
-
-  async clearCart() {
-    await this.clearCartButton.click();
   }
 }
