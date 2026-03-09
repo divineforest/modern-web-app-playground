@@ -38,81 +38,63 @@ This project uses centralized version management:
 
 ## Quick Start
 
-**1. Start PostgreSQL Database & LocalStack**:
-
 ```bash
-# Start PostgreSQL and LocalStack services
-docker-compose up -d
+# Install dependencies
+corepack enable && pnpm install
 
-# Services:
-# - PostgreSQL: mercado_dev (development), mercado_test (testing)
-# - LocalStack: S3 emulation at http://localhost:4566
-# Credentials: see POSTGRES_USER/POSTGRES_PASSWORD in docker-compose.yml
+# Start full stack (Postgres + backend + web)
+make dev
 ```
 
-**2. Setup Temporal Server**:
+`make dev` starts Docker infrastructure, waits for Postgres to be ready, then launches the backend and web dev servers in the background with log files in `logs/`.
 
 ```bash
-# Install Temporal CLI (macOS)
-brew install temporal
-
-# Start Temporal server locally (runs on localhost:7233)
-temporal server start-dev
-
-# Server will be available at:
-# - Temporal server: localhost:7233
-# - Web UI: http://localhost:8233
+make status   # Show running PIDs and Docker status
+make logs     # Tail all log files
+make stop     # Kill app processes and bring down Docker
+make worker   # Start Temporal worker (optional, separate command)
 ```
 
-**3. Setup Local Development**:
+**First-time setup**:
 
 ```bash
 # Use Node.js version from .nvmrc (if using nvm)
 nvm use
 
-# Install dependencies (pnpm version from package.json)
-corepack enable
-pnpm install
-
-# Set DATABASE_URL (use credentials from docker-compose.yml: POSTGRES_USER/POSTGRES_PASSWORD)
+# Set DATABASE_URL (see docker-compose.yml for POSTGRES_USER/POSTGRES_PASSWORD)
 export DATABASE_URL="postgresql://<user>:<password>@localhost:5432/mercado_dev"
-
-# Test LocalStack S3 connectivity
-pnpm test:s3
-
-# Run Fastify server locally
-pnpm dev
 ```
 
 ## Development
 
-**Database & LocalStack Management**:
+**Process Management (Makefile)**:
 
 ```bash
-docker-compose up          # Start services (foreground)
-docker-compose up -d       # Start services in background
-docker-compose logs        # View service logs
-docker-compose logs db     # View PostgreSQL logs only
-docker-compose logs localstack  # View LocalStack logs only
-docker-compose down -v     # Stop and reset (removes data)
+make dev          # Start Postgres + backend + web (idempotent — safe to re-run)
+make stop         # Stop all app processes and Docker
+make status       # Show PID + liveness for each service
+make logs         # Tail logs/backend.log and logs/web.log
+make worker       # Start Temporal worker separately
+make backend      # Start/restart backend only
+make web          # Start/restart web only
 ```
 
-**Temporal Workflow Management**:
+**Docker (infrastructure only)**:
 
 ```bash
-temporal server start-dev  # Start local Temporal server
-pnpm temporal:worker       # Start Temporal worker (processes workflows)
+docker compose up -d       # Start Postgres in background
+docker compose down -v     # Stop and reset (removes data)
+docker compose logs db     # View Postgres logs
+```
+
+**Temporal**:
+
+```bash
+temporal server start-dev  # Start local Temporal server (localhost:7233, UI :8233)
 pnpm temporal:hello-world  # Run example workflow
 ```
 
-**Fastify Server Development**:
-
-```bash
-pnpm start                 # Start Fastify server
-pnpm dev                   # Watch mode (with hot reload)
-```
-
-**Web Frontend**:
+**Web Frontend (standalone)**:
 
 ```bash
 pnpm dev:web               # Vite dev server (http://localhost:5173)

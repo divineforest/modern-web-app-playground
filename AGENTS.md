@@ -47,6 +47,24 @@ This avoids the Delete permission prompt that breaks auto-agent mode.
 
 ## Commands
 
+### Process Management (Makefile)
+
+The `Makefile` at the project root manages the full local stack. Prefer these over running services manually.
+
+```bash
+make dev          # Start Postgres + backend + web (idempotent)
+make stop         # Kill app processes and bring down Docker
+make status       # Show PID + liveness for each service
+make logs         # Tail logs/backend.log and logs/web.log
+make worker       # Start Temporal worker (not included in make dev)
+make backend      # Start/restart backend only
+make web          # Start/restart web only
+```
+
+- PID files live in `pids/`, log files in `logs/` (both gitignored)
+- Re-running `make dev` prints "already running" instead of spawning duplicates
+- Stale PID files (process crashed) are cleaned automatically on next start
+
 ### Backend
 
 ```bash
