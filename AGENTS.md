@@ -5,10 +5,10 @@ Backend e-commerce system (Mercado). Integrates with Core microservice.
 ## Monorepo Structure
 
 This project uses a **pnpm workspace monorepo**:
-- Backend application: `apps/backend/` (package name: `@mercado/backend`)
-- Web application: `apps/web/` (package name: `@mercado/web`)
+- `apps/backend/` — Fastify 5 HTTP server (package name: `@mercado/backend`)
+- `apps/web/` — React + Vite frontend (package name: `@mercado/web`)
+- `packages/api-contracts/` — Shared ts-rest API contracts consumed by both apps
 - Workspace root: manages shared tooling (biome, cspell, husky) and delegates backend commands via `--filter`
-- All backend code, tests, and configs live in `apps/backend/`
 - Run commands from root: `pnpm <command>` automatically targets the backend package
 
 ## Project Stack
@@ -31,7 +31,7 @@ When in doubt, use the most common/standard value and proceed. Only ask when the
 
 **Always use pnpm to run scripts instead of executing them directly.**
 
- 1. Check `package.json` "scripts" section first - use `pnpm <script-name>` if it exists
+1. Check `package.json` "scripts" section first - use `pnpm <script-name>` if it exists
 2. Otherwise, use `pnpm exec ./path/to/script` (e.g., `pnpm exec ./scripts/custom-script.sh`)
 3. Never run scripts directly like `./scripts/smoke-test.sh` or `bash scripts/smoke-test.sh`
 
@@ -45,6 +45,114 @@ git mv old/path/file.ts new/path/file.ts
 
 This avoids the Delete permission prompt that breaks auto-agent mode.
 
+## Commands
+
+### Backend
+
+```bash
+pnpm dev              # Start backend in watch mode (tsx watch)
+pnpm build            # Compile contracts + backend (tsc)
+pnpm test             # Run backend unit tests (vitest run)
+pnpm test:watch       # Vitest in watch mode
+pnpm test:coverage    # Vitest with coverage
+pnpm test:smoke       # Verify server starts and health endpoints respond
+```
+
+Run a single test file:
+```bash
+pnpm test -- src/modules/auth/services/auth.service.test.ts
+```
+
+Run tests matching a name pattern:
+```bash
+pnpm test -- --grep "should register a new user"
+```
+
+### Frontend
+
+```bash
+pnpm dev:web          # Vite dev server on :5173
+pnpm build:web        # Production build
+pnpm test:e2e         # Playwright end-to-end tests
+```
+
+### Database
+
+```bash
+pnpm db:generate      # Generate Drizzle migration from schema changes (runs tsc first)
+pnpm db:migrate       # Apply migrations to dev database
+pnpm db:migrate:test  # Apply migrations to test database
+pnpm db:studio        # Open Drizzle Studio
+```
+
+### Code Quality
+
+```bash
+pnpm lint             # Biome + ESLint (unified)
+pnpm check:fix        # Biome auto-fix
+pnpm lint:eslint      # ESLint only
+pnpm typecheck        # tsc --noEmit
+pnpm type-coverage    # Must stay above 97%
+```
+
+## Architecture
+
+### Backend Module Structure
+
+Each domain module in `apps/backend/src/modules/<domain>/` follows:
+```
+api/          ← ts-rest route handlers (thin — delegate to services)
+domain/       ← domain types and validation errors
+services/     ← business logic
+repositories/ ← database queries (Drizzle)
+```
+
+Shared infrastructure lives in:
+- `src/infra/` — Fastify plugins (auth, health, metrics)
+- `src/db/` — Drizzle connection, schema, migrations
+- `src/lib/` — Utilities (env parsing, HTTP client, error transformers, logging)
+- `src/shared/` — Domain-agnostic SDK clients only (no business logic; if the method name contains a domain term, it belongs in `src/modules/<domain>/`)
+
+### API Contracts
+
+`packages/api-contracts/` defines ts-rest contracts shared between backend and frontend. The backend registers handlers against these contracts; the frontend calls them via `tsr` (the typed ts-rest React Query client at `apps/web/src/lib/api-client.ts`).
+
+When adding a new endpoint:
+1. Add the route to the contract in `packages/api-contracts/src/`
+2. Implement the handler in the appropriate `modules/<domain>/api/` file
+3. Register it in `apps/backend/src/app.ts`
+
+### Authentication
+
+Session-cookie based (`sid` cookie, HttpOnly, SameSite=Lax, 7-day sliding expiry). Routes requiring auth are wrapped with the auth plugin at registration time in `app.ts`. The frontend's `CartProvider` and `RequireAuth` component handle client-side auth state.
+
+### React Query Cache Keys
+
+The frontend uses a global `['cart']` query key populated by `CartProvider` on mount. Any component can subscribe via `tsr.cart.getCart.useQuery({ queryKey: ['cart'] })` and will deduplicate with no extra network request. After mutating cart state, call `queryClient.invalidateQueries({ queryKey: ['cart'] })`.
+
+### Database Migrations
+
+**Never manually create or edit migration files.** Drizzle-kit tracks migrations via `meta/_journal.json` — manually created `.sql` files are silently ignored.
+
+Correct workflow:
+1. Edit `apps/backend/src/db/schema-local.ts`
+2. `pnpm db:generate`
+3. Review the generated SQL
+4. `pnpm db:migrate`
+
+Migration conventions:
+- UUIDs: always `gen_random_uuid()` — never `uuid_generate_v4()`
+- Constrained values: use CHECK constraints by default; only convert to ENUM after values are stable for 6+ months across 2+ tables
+- ENUM naming: singular, snake_case, no `_enum`/`_type` suffix; values lowercase snake_case
+
+### Infrastructure Changes
+
+After modifying `env.ts`, `app.ts`, `server.ts`, `db/connection.ts`, `src/infra/**`, or any config/deployment file, run:
+```bash
+pnpm test:smoke
+```
+This validates server startup, `/healthz`, `/ready` (DB connectivity), and `/docs`.
+
 ## Code Style
 
 - **Biome** for formatting and basic linting - run `pnpm check:fix`
@@ -52,6 +160,20 @@ This avoids the Delete permission prompt that breaks auto-agent mode.
 - **Both tools**: Run `pnpm lint` for unified linting (Biome + ESLint)
 - **Enforced**: `import type` for TypeScript type imports
 - Style: 2-space indent, 100 char width, single quotes, semicolons required
+
+## Coding Conventions
+
+### Tests
+
+- One `X.test.ts` per `X.ts`, co-located next to the source file
+- Test names describe business requirements, not implementation
+- Tests use `buildTestApp()` for integration tests and `afterEach` DB cleanup
+
+### Specs
+
+Specs in `docs/specs/` describe **what** the system needs, not how to build it. Use `FR-*` for functional requirements (observable behavior) and `TR-*` for technical constraints. Do not prescribe internal naming, npm packages, or code structure. Data model sections describe the target state — never frame as "changes" or "migrations".
+
+When writing a new feature spec, follow the workflow in `.agents/skills/create-spec/SKILL.md`. It requires reading `docs/specification-guide.md` and `docs/architecture.md`, a clarification phase before drafting, and self-scoring (minimum 8.0/10).
 
 ## After Changes
 
@@ -65,7 +187,6 @@ Use a two-phase approach to avoid timeouts on large codebases:
 - Run TypeScript check on changed files only: `npx tsc --noEmit path/to/file1.ts path/to/file2.ts`
 - Include direct importers of modified files
 - This catches 95% of issues in <5 seconds
-- Example: If you modified `apps/backend/src/modules/foo/bar.ts`, also check `apps/backend/src/modules/foo/index.ts` and any files that import from it
 
 **Phase 2: Run full project checks**
 - Only after Phase 1 passes, run full checks:
