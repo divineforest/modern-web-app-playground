@@ -1,0 +1,14 @@
+---
+description: Testing conventions
+globs:
+  - ".test.ts"
+alwaysApply: false
+---
+
+# Testing Rules
+
+## File Organization
+
+- For each source file `X.ts`, keep **one** and only one test file `X.test.ts`
+- Test files live next to the files they test (co-located)
+- Use descriptive test names that explain the business requirement

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" fill="#F3F4F6"/>
+  <rect x="55" y="65" width="90" height="70" rx="6" stroke="#9CA3AF" stroke-width="3"/>
+  <circle cx="100" cy="95" r="18" stroke="#9CA3AF" stroke-width="3"/>
+  <circle cx="100" cy="95" r="9" fill="#9CA3AF"/>
+  <circle cx="75" cy="78" r="4" fill="#9CA3AF"/>
+  <text x="100" y="158" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#9CA3AF">No photo</text>
+</svg>

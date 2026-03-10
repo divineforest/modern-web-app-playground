@@ -1,0 +1,118 @@
+services:
+  - type: web
+    name: mercado-api-staging
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    preDeployCommand: pnpm --filter @mercado/backend db:migrate
+    startCommand: pnpm --filter @mercado/backend start
+    healthCheckPath: /healthz
+    autoDeployTrigger: "commit"
+
+  - type: worker
+    name: mercado-worker-staging
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    startCommand: pnpm --filter @mercado/backend temporal:worker
+    autoDeployTrigger: "commit"
+
+  - type: cron
+    name: mercado-job-generation-daily-staging
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: staging
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    startCommand: pnpm --filter @mercado/backend run:job-generation
+    autoDeployTrigger: "commit"
+    schedule: "0 2 * * *" # Runs daily at 2:00 AM UTC
+
+  - type: web
+    name: mercado-api-prod
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    preDeployCommand: pnpm --filter @mercado/backend db:migrate
+    startCommand: pnpm --filter @mercado/backend start
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"
+
+  - type: worker
+    name: mercado-worker-prod
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    startCommand: pnpm --filter @mercado/backend temporal:worker
+    autoDeployTrigger: "off"
+
+  - type: cron
+    name: mercado-job-generation-daily-prod
+    runtime: node
+    repo: https://github.com/mercado/mercado
+    plan: starter
+    envVars:
+      - fromGroup: prod
+    region: frankfurt
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @mercado/backend build
+    startCommand: pnpm --filter @mercado/backend run:job-generation
+    autoDeployTrigger: "off"
+    schedule: "0 2 * * *" # Runs daily at 2:00 AM UTC
+
+envVarGroups:
+  - name: "staging"
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: API_BEARER_TOKENS
+        sync: false
+      - key: CORE_API_KEY
+        sync: false
+      - key: CORE_API_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TEMPORAL_ADDRESS
+        sync: false
+      - key: TEMPORAL_API_KEY
+        sync: false
+      - key: TEMPORAL_NAMESPACE
+        sync: false
+
+  - name: "prod"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_BEARER_TOKENS
+        sync: false
+      - key: CORE_API_KEY
+        sync: false
+      - key: CORE_API_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: TEMPORAL_ADDRESS
+        sync: false
+      - key: TEMPORAL_API_KEY
+        sync: false
+      - key: TEMPORAL_NAMESPACE
+        sync: false
+version: "1"

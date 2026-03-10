@@ -1,0 +1,9 @@
+# Redocly CLI Configuration
+# See: https://redocly.com/docs/cli/configuration
+
+extends:
+  - recommended
+
+rules:
+  # Allow localhost in server URLs for development purposes
+  no-server-example.com: off

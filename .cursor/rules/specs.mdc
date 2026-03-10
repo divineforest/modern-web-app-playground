@@ -1,0 +1,27 @@
+---
+description: Guidelines for writing feature specs in specs/
+globs: specs/*.md
+alwaysApply: false
+---
+
+# Spec Writing — Requirements, Not Build Instructions
+
+Specs describe **what the system needs**, not **how to build it**. Tech specifics (frameworks, providers, column names) are fine when they state a requirement. They cross the line when they become implementation instructions.
+
+## The test
+
+Ask: "Is this telling the implementer *what to achieve*, or *how to code it*?"
+
+- "The system SHALL process events via a Temporal workflow" — requirement ✓
+- "The workflow SHALL be named `paymentWebhookWorkflow`" — build instruction ✗
+- "The orders table SHALL include a `paid_at` column" — requirement ✓
+- "ALTER TABLE orders ADD COLUMN paid_at TIMESTAMPTZ" — build instruction ✗
+- "The system SHALL verify Stripe webhook signatures" — requirement ✓
+- "The endpoint SHALL use the `stripe` npm package" — build instruction ✗
+
+## Rules
+
+- Functional Requirements (FR-*) describe observable behavior, inputs, outputs, and constraints
+- Technical Requirements (TR-*) state technical constraints (infrastructure, env vars, schema) but not coding decisions
+- Data model sections describe the target state of entities — never frame as "changes", "additions", or "migrations"
+- Do NOT prescribe: npm packages, internal naming (functions, workflows, activities), framework-internal patterns (route types, hook types), or code structure within a module

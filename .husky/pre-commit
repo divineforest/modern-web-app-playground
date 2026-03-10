@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Fix PATH for GUI Git clients (SourceTree, GitHub Desktop, etc.)
+
+# Load nvm if available
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Add common Node.js installation paths
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+
+# Enable corepack to ensure pnpm is available
+command -v corepack >/dev/null 2>&1 && corepack enable 2>/dev/null
+
+# Format staged files only
+files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
+[ -n "$files" ] && pnpm biome format --write --no-errors-on-unmatched --files-ignore-unknown=true $files
+git update-index --again
+
+# ESLint check for staged TypeScript files (backend package)
+echo "Checking ESLint..."
+ts_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^apps/backend/.*\.(ts|tsx)$' || true)
+if [ -n "$ts_files" ]; then
+  backend_ts_files=$(printf '%s\n' "$ts_files" | sed 's|^apps/backend/||')
+  printf '%s\n' "$backend_ts_files" | xargs pnpm --filter @mercado/backend exec eslint || {
+    echo "❌ ESLint check failed. Fix the errors or run 'pnpm lint:eslint:fix' to auto-fix."
+    exit 1
+  }
+fi
+
+# Type coverage check
+echo "Running TypeScript type check..."
+pnpm typecheck || {
+  echo "❌ TypeScript type check failed. Fix the TypeScript errors or run 'pnpm typecheck' to reproduce."
+  exit 1
+}
+
+echo "Checking type coverage..."
+pnpm type-coverage || {
+  echo "❌ Type coverage check failed. Current coverage is below the required 97%."
+  echo "Run 'pnpm type-coverage:detail' to see which files need better type coverage."
+  exit 1
+}

@@ -1,0 +1,269 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm run format:check
+
+      - name: Lint
+        run: |
+          pnpm run lint:biome
+          pnpm --filter @mercado/backend lint:eslint
+
+      - name: Type check
+        run: pnpm --filter @mercado/backend typecheck
+
+      - name: Type coverage
+        run: pnpm --filter @mercado/backend type-coverage
+
+      - name: Build
+        run: pnpm --filter @mercado/backend build
+
+      - name: Security audit
+        run: pnpm audit --audit-level moderate
+
+      - name: Spell check
+        run: pnpm run spell
+
+      - name: Dead code detection
+        run: pnpm --filter @mercado/backend knip
+
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs (only updates dependencies, no secrets risk)
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mercado_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup database extensions
+        run: |
+          # Install PostgreSQL client
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+          # Create required PostgreSQL extensions
+          PGPASSWORD=password psql -h localhost -U user -d mercado_test << 'EOF'
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+          EOF
+
+      - name: Run database migrations
+        run: pnpm --filter @mercado/backend db:migrate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+
+      - name: Tests
+        run: pnpm --filter @mercado/backend test:coverage
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [static-checks, tests]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mercado_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install jq for JSON validation
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Setup database extensions
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=password psql -h localhost -U user -d mercado_test << 'EOF'
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+          EOF
+
+      - name: Run database migrations
+        run: pnpm --filter @mercado/backend db:migrate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+
+      - name: Build application
+        run: pnpm --filter @mercado/backend build
+
+      - name: Run smoke test (built server)
+        run: pnpm --filter @mercado/backend test:smoke:build
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+          PORT: 3000
+          HOST: localhost
+          LOG_LEVEL: error
+          API_BEARER_TOKENS: ci_test_token_12345
+          VIES_API_KEY: ci_test_vies_key
+          CORE_API_URL: http://localhost:4000
+          CORE_API_KEY: ci_test_api_key
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [static-checks, tests]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: mercado_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @mercado/web exec playwright install --with-deps chromium
+
+      - name: Setup database
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          PGPASSWORD=password psql -h localhost -U user -d mercado_test << 'EOF'
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+          EOF
+          pnpm --filter @mercado/backend db:migrate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://user:password@localhost:5432/mercado_test
+          PORT: 3000
+          HOST: localhost
+          LOG_LEVEL: error
+          API_BEARER_TOKENS: ci_test_token_12345
+          VIES_API_KEY: ci_test_vies_key
+          CORE_API_URL: http://localhost:4000
+          CORE_API_KEY: ci_test_api_key
+          CI: true
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/e2e/test-results/
+          retention-days: 14

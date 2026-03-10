@@ -1,0 +1,80 @@
+# Gitleaks configuration for detecting secrets and sensitive information
+title = "Gitleaks Configuration"
+
+[extend]
+# Use the default gitleaks rules as a base
+useDefault = true
+
+# Additional custom rules for this project
+[[rules]]
+id = "mercado-api-key"
+description = "Mercado API Key"
+regex = '''(?i)mercado[_-]?api[_-]?key[_-]?[:=]\s*['""]?([a-zA-Z0-9]{32,})['""]?'''
+secretGroup = 1
+
+[[rules]]
+id = "mercado-secret"
+description = "Mercado system secret"
+regex = '''(?i)mercado[_-]?secret[_-]?[:=]\s*['""]?([a-zA-Z0-9]{16,})['""]?'''
+secretGroup = 1
+
+[[rules]]
+id = "database-connection"
+description = "Database connection string"
+regex = '''(?i)(postgres|mysql|mongodb)://[^\s'"]+'''
+
+# Allowlist for false positives
+[allowlist]
+description = "Global allowlist"
+regexes = [
+  # Test data and mock values
+  '''(?i)(test|mock|fake|example|demo)[_-]?(key|secret|token|password)''',
+  # Documentation examples
+  '''(?i)your[_-]?(api[_-]?key|secret|token)''',
+  # Common placeholders
+  '''(?i)(placeholder|sample|template)[_-]?(value|key|secret)''',
+  # Version numbers that might look like secrets
+  '''\d+\.\d+\.\d+''',
+  # Common test UUIDs
+  '''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
+]
+
+paths = [
+  # Ignore test files with mock data
+  '''.*test.*''',
+  '''.*spec.*''',
+  '''.*mock.*''',
+  # Ignore documentation
+  '''.*\.md''',
+  # Ignore configuration files that might have examples
+  '''.*\.example\..*''',
+  # Ignore lock files
+  '''pnpm-lock\.yaml''',
+  '''package-lock\.json''',
+  '''yarn\.lock''',
+]
+
+# Entropy detection settings
+[allowlist.entropy]
+# Reduce false positives from base64 encoded content
+min = 4.5
+max = 7.0
+
+# File extensions to ignore for entropy checks
+[allowlist.files]
+extensions = [
+  "log",
+  "lock",
+  "svg",
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "pdf",
+]
+
+# Commit range settings
+[extend.git]
+# Scan the entire git history by default
+# Can be overridden with --log-opts flag
+logOpts = "--all"
