@@ -265,15 +265,33 @@ Example:
 
 ### 10. Testing and Validation
 
-Every specification must describe how correctness will be verified.
+Every specification must describe how correctness will be verified. Structure this section with explicit subsections:
 
-Include:
+#### Unit Tests
 
-- Unit, integration, and end-to-end test coverage expectations
-- Mocking or stubbing strategy for external systems
-- Manual QA or acceptance test cases
-- Observability signals that confirm success
-- Rollback or feature-flag validation strategy
+List key unit test scenarios for services and domain logic.
+
+#### Integration Tests
+
+List API-level integration test scenarios covering success and error paths. Include mocking or stubbing strategy for external systems.
+
+#### End-to-End Tests (required for user-facing features)
+
+For any feature that introduces or modifies user-facing pages or flows, list concrete E2E test scenarios covering the main success path. These scenarios will be implemented as Playwright tests during development.
+
+Guidelines:
+
+- Cover the primary happy path (the main thing the feature does for the user)
+- Cover the most important alternate path (e.g., empty state, error state)
+- Do NOT attempt exhaustive E2E coverage — edge cases belong in unit/integration tests
+- Write scenarios as user-observable behaviors (e.g., "Entering a query and submitting navigates to the search results page")
+- Reference existing E2E tests as examples: `apps/web/e2e/search.spec.ts`, `apps/web/e2e/cart-flow.spec.ts`
+
+Backend-only features (APIs, background jobs, migrations) do not require E2E test scenarios.
+
+#### Manual QA Checklist
+
+List visual or interactive checks that are hard to automate (styling, responsiveness, UX feel).
 
 ---
 
@@ -436,7 +454,24 @@ List expected errors and responses.
 
 ## Testing and Validation
 
-Describe tests, QA steps, and verification.
+### Unit Tests
+
+- Service: [describe key unit test scenarios]
+
+### Integration Tests
+
+- Full API flow: [describe integration test scenarios]
+
+### End-to-End Tests
+
+<!-- Required for user-facing features. List 3-8 scenarios covering the main success path.
+     Backend-only features may omit this section. -->
+
+- [User action] → [expected observable result]
+
+### Manual QA Checklist
+
+- [Visual or interactive check]
 
 ## Risks and Mitigations
 

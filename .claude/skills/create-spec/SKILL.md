@@ -17,7 +17,7 @@ Your role is spec author only — never implement code.
 ### Phase 1: Understand
 
 1. Read `docs/specification-guide.md` for the template and conventions
-2. Read `docs/architecture.md` for system context
+2. Read `docs/architecture/overview.md` for system context
 3. Analyze the user's request — identify the core feature, affected modules, and integration points
 4. List what you know vs. what's ambiguous
 
@@ -32,6 +32,7 @@ Ask the user targeted questions before writing anything. Focus on:
 - **Data model impact**: New tables, schema changes, migrations
 - **Error handling**: What happens when things go wrong?
 - **Security**: Auth, authorization, input validation, rate limiting
+- **E2E scenarios**: For user-facing features, what are the 3-5 main user flows that should be verified end-to-end?
 
 Use the AskQuestion tool for structured questions when possible. Group related questions.
 
@@ -54,6 +55,7 @@ Do NOT proceed to drafting until you have enough clarity. It's better to ask one
    - Retry strategies and dead-letter handling for async operations
    - Database index needs for query patterns
    - Backward compatibility if modifying existing features
+   - E2E test scenarios for user-facing features (main success path + key alternate paths)
 
 ### Phase 4: Review and Iterate
 
@@ -62,7 +64,7 @@ After drafting, self-evaluate the spec across three dimensions:
 | Dimension | What it measures |
 |-----------|-----------------|
 | **Clarity** | Can a developer implement this without asking questions? Are requirements unambiguous? |
-| **Completeness** | Are all scenarios covered? Edge cases? Error handling? Testing strategy? |
+| **Completeness** | Are all scenarios covered? Edge cases? Error handling? Testing strategy? For user-facing features: are E2E scenarios listed for the main success path? |
 | **Technical approach** | Is the design sound? Does it follow project patterns? Are risks identified? |
 
 **Rules:**
