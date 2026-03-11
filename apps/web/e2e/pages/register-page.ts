@@ -16,11 +16,11 @@ export class RegisterPage {
   constructor(page: Page) {
     this.page = page;
     this.heading = page.getByRole('heading', { name: 'Create your account' });
-    this.firstNameInput = page.getByLabel('First Name');
-    this.lastNameInput = page.getByLabel('Last Name');
-    this.emailInput = page.getByLabel('Email', { exact: true });
-    this.passwordInput = page.getByLabel('Password', { exact: true });
-    this.confirmPasswordInput = page.getByLabel('Confirm Password');
+    this.firstNameInput = page.locator('input[autocomplete=given-name]');
+    this.lastNameInput = page.locator('input[autocomplete=family-name]');
+    this.emailInput = page.locator('input[type=email]');
+    this.passwordInput = page.locator('input[autocomplete=new-password]').first();
+    this.confirmPasswordInput = page.locator('input[autocomplete=new-password]').last();
     this.submitButton = page.getByRole('button', { name: 'Register' });
     this.errorAlert = page.getByRole('alert');
     this.loginLink = page.getByRole('link', { name: 'Login here' });

@@ -15,7 +15,7 @@ export class OrdersPage {
     this.pageTitle = page.getByRole('heading', { name: 'My Orders' });
     this.emptyState = page.getByText("You haven't placed any orders yet");
     this.browseProductsButton = page.getByRole('link', { name: /browse products/i });
-    this.orderAccordions = page.locator('[role="button"][aria-expanded]');
+    this.orderAccordions = page.locator('button[aria-expanded]');
     this.loadingIndicator = page.getByRole('progressbar');
     this.errorAlert = page.getByRole('alert');
     this.retryButton = page.getByRole('button', { name: /retry/i });

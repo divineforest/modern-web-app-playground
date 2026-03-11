@@ -30,7 +30,7 @@ test.describe('Authentication', () => {
     await authenticatedPage.goto('/');
     await authenticatedPage.getByRole('button', { name: 'Logout' }).click();
 
-    await expect(authenticatedPage.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(authenticatedPage.getByRole('link', { name: 'Sign in' })).toBeVisible();
     await expect(authenticatedPage.getByRole('button', { name: 'Logout' })).not.toBeVisible();
   });
 

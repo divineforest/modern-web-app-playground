@@ -129,7 +129,10 @@ export function OrdersPage() {
 
   if (!orders || orders.length === 0) {
     return (
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          My Orders
+        </Typography>
         <Box sx={{ mt: 4, textAlign: 'center' }}>
           <Typography variant="h5" gutterBottom>
             You haven't placed any orders yet

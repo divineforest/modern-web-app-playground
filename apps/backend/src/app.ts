@@ -31,7 +31,7 @@ export async function buildApp() {
 
   // Register rate limiting
   await fastify.register(import('@fastify/rate-limit'), {
-    max: 100,
+    max: env.NODE_ENV === 'production' ? 100 : 10000,
     timeWindow: '1 minute',
   });
 

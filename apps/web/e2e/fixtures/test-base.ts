@@ -58,16 +58,17 @@ export const test = base.extend<TestFixtures>({
   },
   authenticatedPage: async ({ page }, use) => {
     const user = testUser();
-    const helper = new ApiHelper(page.request);
 
-    // Register via API (fast, no UI overhead)
-    await helper.registerUser(user);
-
-    // Login via UI — the browser handles the session cookie naturally
-    await page.goto('/login');
-    await page.getByLabel('Email', { exact: true }).fill(user.email);
-    await page.getByLabel('Password', { exact: true }).fill(user.password);
-    await page.getByRole('button', { name: 'Login' }).click();
+    // Register via UI — the register endpoint sets the session cookie on the
+    // Vite proxy origin (localhost:5173), so all subsequent API calls are
+    // correctly authenticated without any domain mismatch.
+    await page.goto('/register');
+    await page.locator('input[autocomplete=given-name]').fill(user.firstName);
+    await page.locator('input[autocomplete=family-name]').fill(user.lastName);
+    await page.locator('input[type=email]').fill(user.email);
+    await page.locator('input[autocomplete=new-password]').first().fill(user.password);
+    await page.locator('input[autocomplete=new-password]').last().fill(user.password);
+    await page.getByRole('button', { name: 'Register' }).click();
     await page.waitForURL('/');
 
     await use(page);

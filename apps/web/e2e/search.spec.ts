@@ -13,23 +13,23 @@ test.describe('Product Search', () => {
     page,
   }) => {
     await page.goto('/');
-    await searchResultsPage.search('shirt');
+    await searchResultsPage.search('mug');
 
-    await page.waitForURL(/\/search\?q=shirt/);
-    expect(page.url()).toContain('/search?q=shirt&sort=relevance');
+    await page.waitForURL(/\/search\?q=mug/);
+    expect(page.url()).toContain('/search?q=mug&sort=relevance');
   });
 
   test('search results display matching products', async ({ searchResultsPage }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
     await expect(searchResultsPage.resultsHeading).toBeVisible();
-    await expect(searchResultsPage.resultsHeading).toContainText('shirt');
+    await expect(searchResultsPage.resultsHeading).toContainText('mug');
     await expect(searchResultsPage.resultCount).toBeVisible();
     await expect(searchResultsPage.productCards.first()).toBeVisible();
   });
 
   test('sorting controls update URL and re-fetch results', async ({ searchResultsPage, page }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
     await searchResultsPage.sortBy('price_asc');
     expect(page.url()).toContain('sort=price_asc');
@@ -43,7 +43,7 @@ test.describe('Product Search', () => {
   });
 
   test('pagination works correctly', async ({ searchResultsPage, page }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
     const paginationButtons = searchResultsPage.pagination.getByRole('button');
     const hasMultiplePages = (await paginationButtons.count()) > 3;
@@ -81,7 +81,7 @@ test.describe('Product Search', () => {
   });
 
   test('product cards link to product detail page', async ({ searchResultsPage, page }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
     const firstCard = searchResultsPage.productCards.first();
     await expect(firstCard).toBeVisible();
@@ -96,23 +96,23 @@ test.describe('Product Search', () => {
   });
 
   test('search from search results page works', async ({ searchResultsPage, page }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
-    await searchResultsPage.search('pants');
+    await searchResultsPage.search('ceramic');
 
-    await page.waitForURL(/\/search\?q=pants/);
-    expect(page.url()).toContain('/search?q=pants&sort=relevance');
-    await expect(searchResultsPage.resultsHeading).toContainText('pants');
+    await page.waitForURL(/\/search\?q=ceramic/);
+    expect(page.url()).toContain('/search?q=ceramic&sort=relevance');
+    await expect(searchResultsPage.resultsHeading).toContainText('ceramic');
   });
 
   test('result count displays correctly', async ({ searchResultsPage }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'relevance' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'relevance' });
 
     await expect(searchResultsPage.resultCount).toBeVisible();
   });
 
   test('sorting buttons highlight active sort', async ({ searchResultsPage }) => {
-    await searchResultsPage.goto({ q: 'shirt', sort: 'price_asc' });
+    await searchResultsPage.goto({ q: 'mug', sort: 'price_asc' });
 
     await expect(searchResultsPage.sortPriceAsc).toHaveAttribute('aria-pressed', 'true');
     await expect(searchResultsPage.sortRelevance).toHaveAttribute('aria-pressed', 'false');
