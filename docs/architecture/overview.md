@@ -17,7 +17,9 @@ packages/
 └── api-contracts/              # Shared API contracts (ts-rest + Zod)
     ├── src/
     │   ├── shared/             # Shared error and pagination schemas
+    │   ├── auth/               # Auth contract and schemas
     │   ├── cart/               # Cart contract and schemas
+    │   ├── checkout/           # Checkout contract and schemas
     │   ├── products/           # Products contract and schemas
     │   ├── orders/             # Orders contract and schemas
     │   ├── router.ts           # Combined API contract
@@ -32,13 +34,16 @@ apps/
 │   │   ├── db/                 # Database layer
 │   │   │   ├── schema.ts       # Drizzle schema (single source of truth)
 │   │   │   ├── connection.ts   # Database connection factory
+│   │   │   ├── index.ts        # Public exports
 │   │   │   └── migrations/     # SQL migration files
 │   │   ├── infra/              # Infrastructure/operational endpoints
 │   │   │   ├── auth/           # Bearer token authentication plugin
 │   │   │   └── health/         # Health check routes (/healthz, /ready)
 │   │   ├── modules/            # Domain-driven feature modules
+│   │   │   ├── auth/           # User authentication (login, register, sessions)
 │   │   │   ├── cart/           # Shopping cart (add/update/remove items)
-│   │   │   ├── products/       # Product catalog (list, detail)
+│   │   │   ├── checkout/       # Checkout flow (order creation from cart)
+│   │   │   ├── products/       # Product catalog (list, detail, search)
 │   │   │   ├── orders/         # Order management (CRUD, status tracking)
 │   │   │   └── payment-webhooks/ # Stripe webhook processing (Temporal workflows)
 │   │   ├── shared/             # Cross-module infrastructure
@@ -46,16 +51,22 @@ apps/
 │   │   │   │   └── core/       # Core microservice (SDK + repository)
 │   │   │   └── workflows/      # Temporal infrastructure (client, worker, registry)
 │   │   ├── scripts/            # CLI scripts
-│   │   └── server.ts           # Fastify server entry point
+│   │   ├── app.ts              # Fastify app factory
+│   │   ├── instrument.ts       # OpenTelemetry instrumentation
+│   │   └── server.ts           # Server entry point
 │   └── tests/
 │       ├── factories/          # Test data factories
+│       ├── fixtures/           # Test fixture files
+│       ├── helpers/            # Test helper utilities
 │       ├── setup/              # Test environment setup
 │       └── smoke/              # Smoke tests
 └── web/                        # React frontend (Vite + MUI)
     └── src/
-        ├── lib/                # Shared utilities (api-client.ts, cart-token.ts)
-        ├── contexts/           # React contexts (cart state)
-        ├── pages/              # Page components (products, cart)
+        ├── lib/                # Shared utilities (api-client.ts)
+        ├── components/         # Reusable components (cart-sidebar, require-auth)
+        ├── contexts/           # React contexts (auth, cart)
+        ├── assets/             # Static assets (images, SVGs)
+        ├── pages/              # Page components (products, cart, checkout, login, register, orders)
         ├── layouts/            # Layout components (root-layout)
         └── router.tsx          # React Router configuration
 ```
@@ -147,8 +158,6 @@ See [Shared API Contracts](./arch/shared-api-contracts.md) for detailed design.
 ## Environment
 
 Single source of truth: `apps/backend/src/lib/env.ts` (uses @t3-oss/env-core + Zod).
-
-Template: `.env.example`
 
 ## Local Development
 
