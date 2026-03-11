@@ -89,7 +89,12 @@ export function ProductsPage() {
                   <Card
                     key={product.id}
                     data-testid="product-card"
-                    sx={{ display: 'flex', flexDirection: 'column', height: 360 }}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: 'auto',
+                      minHeight: 340,
+                    }}
                   >
                     <CardActionArea
                       component={Link}
@@ -109,7 +114,7 @@ export function ProductsPage() {
                           height: 200,
                           flexShrink: 0,
                           objectFit: product.imageUrl ? 'cover' : 'none',
-                          bgcolor: '#F3F4F6',
+                          bgcolor: '#F5F5F4',
                         }}
                       />
                       <CardContent
@@ -182,13 +187,27 @@ export function ProductsPage() {
                                     alignItems: 'flex-start',
                                   }}
                                 >
-                                  <Box component="span" sx={{ fontSize: '0.8rem', mt: '0.1em' }}>
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      fontSize: '0.8rem',
+                                      mt: '0.1em',
+                                      color: 'text.secondary',
+                                    }}
+                                  >
                                     {symbol}
                                   </Box>
                                   <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>
                                     {integer}
                                   </Box>
-                                  <Box component="span" sx={{ fontSize: '0.8rem', mt: '0.1em' }}>
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      fontSize: '0.8rem',
+                                      mt: '0.1em',
+                                      color: 'text.secondary',
+                                    }}
+                                  >
                                     {fraction}
                                   </Box>
                                 </Typography>

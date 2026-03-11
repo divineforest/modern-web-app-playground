@@ -40,10 +40,10 @@ export function RootLayout() {
           position: 'sticky',
           top: 0,
           zIndex: 1100,
-          backgroundColor: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(12px)',
+          backgroundColor: 'rgba(250, 250, 249, 0.85)',
+          backdropFilter: 'blur(20px)',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: 'rgba(231, 229, 228, 0.6)',
         }}
       >
         <Container maxWidth="lg">
@@ -51,7 +51,7 @@ export function RootLayout() {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              height: 64,
+              height: 72,
               gap: 3,
             }}
           >
@@ -64,9 +64,12 @@ export function RootLayout() {
                 textDecoration: 'none',
                 fontWeight: 800,
                 letterSpacing: '-0.04em',
-                color: 'primary.main',
+                background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                 flexShrink: 0,
-                transition: 'opacity 0.15s ease',
+                transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   opacity: 0.8,
                 },
@@ -109,9 +112,9 @@ export function RootLayout() {
                       px: 1.5,
                       py: 0.5,
                       borderRadius: 2,
-                      bgcolor: '#F8FAFC',
+                      bgcolor: '#F5F5F4',
                       border: '1px solid',
-                      borderColor: 'divider',
+                      borderColor: '#E7E5E4',
                     }}
                   >
                     <AccountCircle sx={{ color: 'primary.main', fontSize: 20 }} />

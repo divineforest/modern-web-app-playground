@@ -156,7 +156,12 @@ export function OrdersPage() {
             key={order.id}
             expanded={expandedOrderId === order.id}
             onChange={() => handleAccordionChange(order.id)}
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              ...(expandedOrderId === order.id && {
+                borderLeft: '3px solid #4F46E5',
+              }),
+            }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
@@ -195,7 +200,11 @@ export function OrdersPage() {
                   </Typography>
                 ) : (
                   order.items.map((item) => (
-                    <Card key={item.id} variant="outlined" sx={{ mb: 1 }}>
+                    <Card
+                      key={item.id}
+                      variant="outlined"
+                      sx={{ mb: 1, '&:hover': { transform: 'none' } }}
+                    >
                       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                           <Box
@@ -206,7 +215,7 @@ export function OrdersPage() {
                               width: 60,
                               height: 60,
                               objectFit: item.productImageUrl ? 'cover' : 'none',
-                              bgcolor: '#F3F4F6',
+                              bgcolor: '#F5F5F4',
                               borderRadius: 1,
                               flexShrink: 0,
                             }}

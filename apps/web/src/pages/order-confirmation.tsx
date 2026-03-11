@@ -83,8 +83,33 @@ export function OrderConfirmationPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Box
+          sx={{
+            width: 96,
+            height: 96,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #ECFDF5, #D1FAE5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mx: 'auto',
+            mb: 2,
+          }}
+        >
+          <CheckCircle sx={{ fontSize: 80, color: 'success.main' }} />
+        </Box>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
           Order Confirmed!
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
@@ -92,7 +117,14 @@ export function OrderConfirmationPage() {
         </Typography>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper
+        sx={{
+          p: 3,
+          mb: 3,
+          borderTop: '3px solid',
+          borderImage: 'linear-gradient(135deg, #4F46E5, #7C3AED) 1',
+        }}
+      >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box>
             <Typography variant="h6">Order {order.orderNumber}</Typography>
@@ -165,7 +197,7 @@ export function OrderConfirmationPage() {
                     width: 60,
                     height: 60,
                     objectFit: item.productImageUrl ? 'cover' : 'none',
-                    bgcolor: '#F3F4F6',
+                    bgcolor: '#F5F5F4',
                     borderRadius: 1,
                     flexShrink: 0,
                   }}
@@ -221,7 +253,19 @@ export function OrderConfirmationPage() {
           </Typography>
         </Box>
 
-        <Button component={Link} to="/" variant="contained" fullWidth size="large">
+        <Button
+          component={Link}
+          to="/"
+          variant="contained"
+          fullWidth
+          size="large"
+          sx={{
+            background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+            },
+          }}
+        >
           Continue Shopping
         </Button>
       </Paper>

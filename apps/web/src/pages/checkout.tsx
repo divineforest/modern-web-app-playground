@@ -264,7 +264,7 @@ export function CheckoutPage() {
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         <Box sx={{ flex: 1 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: 3, mb: 3, borderTop: '3px solid #4F46E5' }}>
             <Typography variant="h6" gutterBottom>
               Shipping Address
             </Typography>
@@ -361,7 +361,7 @@ export function CheckoutPage() {
             </Box>
           </Paper>
 
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: 3, borderTop: '3px solid #818CF8' }}>
             <Typography variant="h6" gutterBottom>
               Billing Address
             </Typography>
@@ -481,7 +481,15 @@ export function CheckoutPage() {
         </Box>
 
         <Box sx={{ minWidth: { xs: '100%', md: 350 } }}>
-          <Paper sx={{ p: 3, position: 'sticky', top: 16 }}>
+          <Paper
+            sx={{
+              p: 3,
+              position: 'sticky',
+              top: 16,
+              borderTop: '3px solid',
+              borderImage: 'linear-gradient(135deg, #4F46E5, #7C3AED) 1',
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Order Summary
             </Typography>
@@ -500,7 +508,7 @@ export function CheckoutPage() {
                           width: 50,
                           height: 50,
                           objectFit: item.productImageUrl ? 'cover' : 'none',
-                          bgcolor: '#F3F4F6',
+                          bgcolor: '#F5F5F4',
                           borderRadius: 1,
                           flexShrink: 0,
                         }}
@@ -564,6 +572,12 @@ export function CheckoutPage() {
               size="large"
               onClick={() => handlePlaceOrder()}
               disabled={checkoutMutation.isPending}
+              sx={{
+                background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+                },
+              }}
             >
               {checkoutMutation.isPending ? (
                 <CircularProgress size={24} color="inherit" />

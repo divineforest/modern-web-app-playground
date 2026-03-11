@@ -53,11 +53,15 @@ export function RegisterPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '60vh',
+        background: 'radial-gradient(ellipse at top, #EEF2FF 0%, #FAFAF9 70%)',
+        borderRadius: 4,
       }}
     >
-      <Paper sx={{ p: 4, maxWidth: 400, width: '100%' }}>
+      <Paper
+        sx={{ p: 5, maxWidth: 400, width: '100%', boxShadow: '0 4px 24px rgba(28, 25, 23, 0.08)' }}
+      >
         <Typography variant="h4" component="h1" gutterBottom>
-          Register
+          Create your account
         </Typography>
 
         {error && (

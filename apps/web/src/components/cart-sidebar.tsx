@@ -24,7 +24,15 @@ export function CartSidebar() {
   const cart = data?.status === 200 ? data.body : null;
 
   return (
-    <Paper sx={{ p: 2, position: 'sticky', top: 16 }}>
+    <Paper
+      sx={{
+        p: 2,
+        position: 'sticky',
+        top: 88,
+        borderTop: '3px solid',
+        borderImage: 'linear-gradient(135deg, #4F46E5, #7C3AED) 1',
+      }}
+    >
       <Typography variant="h6" gutterBottom>
         Your Cart
       </Typography>

@@ -144,8 +144,10 @@ export function ProductDetailPage() {
                   height: 'auto',
                   maxHeight: 500,
                   objectFit: product.imageUrl ? 'cover' : 'none',
-                  bgcolor: '#F3F4F6',
-                  borderRadius: 1,
+                  bgcolor: '#F5F5F4',
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: 'divider',
                 }}
               />
             </Box>
@@ -189,13 +191,19 @@ export function ProductDetailPage() {
                       component="span"
                       sx={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'flex-start' }}
                     >
-                      <Box component="span" sx={{ fontSize: '1rem', mt: '0.15em' }}>
+                      <Box
+                        component="span"
+                        sx={{ fontSize: '1rem', mt: '0.15em', color: 'text.secondary' }}
+                      >
                         {symbol}
                       </Box>
                       <Box component="span" sx={{ fontSize: '2rem', lineHeight: 1 }}>
                         {integer}
                       </Box>
-                      <Box component="span" sx={{ fontSize: '1rem', mt: '0.15em' }}>
+                      <Box
+                        component="span"
+                        sx={{ fontSize: '1rem', mt: '0.15em', color: 'text.secondary' }}
+                      >
                         {fraction}
                       </Box>
                     </Typography>
@@ -211,7 +219,8 @@ export function ProductDetailPage() {
                 )}
               </Box>
 
-              <Box sx={{ mb: 3 }}>
+              {/* Purchase zone */}
+              <Box sx={{ bgcolor: '#F5F5F4', p: 3, borderRadius: 3, mb: 3 }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Quantity
                 </Typography>
@@ -247,6 +256,12 @@ export function ProductDetailPage() {
                   disabled={addToCartMutation.isPending}
                   fullWidth
                   data-testid="add-to-cart-button"
+                  sx={{
+                    background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+                    },
+                  }}
                 >
                   {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
                 </Button>

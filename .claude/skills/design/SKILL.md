@@ -24,6 +24,10 @@ Your design sensibility favors: generous whitespace, subtle depth (soft shadows 
 - **Icons**: `@mui/icons-material`
 - **Routing**: `react-router-dom` v7
 
+## Style Guide
+
+The definitive reference for the current visual language — palette, typography, shadows, component treatments, and page-specific styling — is [`docs/style-guide.md`](../../../docs/style-guide.md). Read it before making design changes to stay consistent with the established aesthetic.
+
 ## Design Tokens
 
 All visual decisions flow through `theme.ts`. Prefer theme overrides over inline `sx` styles for consistency:

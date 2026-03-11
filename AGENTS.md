@@ -49,6 +49,8 @@ pnpm build:web        # Production build
 pnpm test:e2e         # Playwright end-to-end tests
 ```
 
+The web app's visual language (palette, typography, shadows, component treatments, page-specific styling) is documented in [`docs/style-guide.md`](docs/style-guide.md).
+
 ### Database
 
 ```bash

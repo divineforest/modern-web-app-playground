@@ -136,14 +136,39 @@ export function CartPage() {
           Shopping Cart
         </Typography>
         <Paper sx={{ p: 6, textAlign: 'center' }}>
-          <ShoppingCart sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Box
+            sx={{
+              width: 96,
+              height: 96,
+              borderRadius: '50%',
+              bgcolor: '#EEF2FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 2,
+            }}
+          >
+            <ShoppingCart sx={{ fontSize: 48, color: 'primary.main' }} />
+          </Box>
           <Typography variant="h6" gutterBottom>
             Your cart is empty
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Add some products to get started!
           </Typography>
-          <Button component={Link} to="/" variant="contained" size="large">
+          <Button
+            component={Link}
+            to="/"
+            variant="contained"
+            size="large"
+            sx={{
+              background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+              },
+            }}
+          >
             Continue Shopping
           </Button>
         </Paper>
@@ -180,7 +205,11 @@ export function CartPage() {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         <Box sx={{ flex: 1 }}>
           {cart.items.map((item) => (
-            <Card key={item.id} data-testid="cart-item" sx={{ mb: 2 }}>
+            <Card
+              key={item.id}
+              data-testid="cart-item"
+              sx={{ mb: 2, '&:hover': { transform: 'none' } }}
+            >
               <CardContent>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Box
@@ -191,8 +220,8 @@ export function CartPage() {
                       width: 120,
                       height: 120,
                       objectFit: item.productImageUrl ? 'cover' : 'none',
-                      bgcolor: '#F3F4F6',
-                      borderRadius: 1,
+                      bgcolor: '#F5F5F4',
+                      borderRadius: 1.5,
                       flexShrink: 0,
                     }}
                   />
@@ -265,7 +294,15 @@ export function CartPage() {
           ))}
         </Box>
 
-        <Paper sx={{ p: 3, height: 'fit-content', minWidth: { xs: '100%', md: 300 } }}>
+        <Paper
+          sx={{
+            p: 3,
+            height: 'fit-content',
+            minWidth: { xs: '100%', md: 300 },
+            borderTop: '3px solid',
+            borderImage: 'linear-gradient(135deg, #4F46E5, #7C3AED) 1',
+          }}
+        >
           <Typography variant="h6" gutterBottom>
             Cart Summary
           </Typography>
@@ -298,7 +335,13 @@ export function CartPage() {
             variant="contained"
             fullWidth
             size="large"
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+              },
+            }}
           >
             Proceed to Checkout
           </Button>
