@@ -1,6 +1,6 @@
 # Mercado
 
-E-commerce backend (Fastify + TypeScript) with a React frontend, PostgreSQL, and Temporal workflows — structured as a pnpm monorepo.
+A modern web app playground built for AI-assisted development. E-commerce domain (Fastify + TypeScript, React, PostgreSQL, Temporal) structured as a pnpm monorepo — optimized for productive collaboration between developers and AI agents.
 
 ## ✨ AI Assistant Setup Prompt
 
