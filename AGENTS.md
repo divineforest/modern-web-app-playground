@@ -46,8 +46,14 @@ pnpm test:smoke       # Verify server starts and health endpoints respond
 ```bash
 pnpm dev:web          # Vite dev server on :5173
 pnpm build:web        # Production build
-pnpm test:e2e         # Playwright end-to-end tests
+pnpm test:e2e         # Playwright end-to-end tests (run from monorepo root)
 ```
+
+E2E invocation rules — violating these causes wrong results:
+- **Run all tests:** `pnpm test:e2e` from monorepo root (or `cd apps/web && pnpm test:e2e`)
+- **Run one file:** `pnpm --filter @mercado/web exec playwright test e2e/<file>.spec.ts` from monorepo root
+- **Never** `npx playwright test` from monorepo root — picks up backend test files
+- **Never** `pnpm test:e2e -- --grep "..."` — pnpm arg forwarding breaks Playwright arg parsing; use `exec` form above with `--grep` appended directly
 
 The web app's visual language (palette, typography, shadows, component treatments, page-specific styling) is documented in [`docs/style-guide.md`](docs/style-guide.md).
 

@@ -153,7 +153,7 @@ if (res.status === 200) {
 
 **OpenAPI**: Generated automatically from contracts via `pnpm openapi:generate`.
 
-See [Shared API Contracts](./arch/shared-api-contracts.md) for detailed design.
+See [API Contracts Architecture](./api-contracts.md) for detailed design.
 
 ## Environment
 
