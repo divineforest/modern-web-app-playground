@@ -136,7 +136,9 @@ if (res.status === 200) { setUser(res.body); }
 
 ## OpenAPI Generation
 
-OpenAPI 3.0.0 spec is auto-generated from contracts via `@fastify/swagger`. Swagger UI is available at `/docs` in development. Contracts' `summary` and `description` fields appear in the generated spec. Path params, query, body, and response schemas are all extracted automatically.
+OpenAPI 3.0.3 spec is generated from contracts via `@ts-rest/open-api` (`generateOpenApi()`). The generation script (`apps/backend/src/scripts/generate-openapi.ts`) supports filtering by contract and outputs a standalone JSON spec. Swagger UI serves the spec at `/docs` in development via `@fastify/swagger-ui`.
+
+Contracts' `summary` and `description` fields appear in the generated spec. Path params, query, body, and response schemas are all extracted automatically from Zod definitions.
 
 ## Conventions
 
