@@ -136,7 +136,10 @@ if (res.status === 200) { setUser(res.body); }
 
 ## OpenAPI Generation
 
-OpenAPI 3.0.3 spec is generated from contracts via `@ts-rest/open-api` (`generateOpenApi()`). The generation script (`apps/backend/src/scripts/generate-openapi.ts`) supports filtering by contract and outputs a standalone JSON spec. Swagger UI serves the spec at `/docs` in development via `@fastify/swagger-ui`.
+OpenAPI 3.0.3 spec is generated from contracts via `@ts-rest/open-api` (`generateOpenApi()`). Two consumption points:
+
+- **Development server**: `app.ts` generates the spec at startup and serves it via Swagger UI at `/docs`. The `@fastify/swagger` plugin is registered as a minimal shell required by `@fastify/swagger-ui`, but the actual spec is replaced with the ts-rest-generated one via `transformSpecification`.
+- **CLI generation**: `apps/backend/src/scripts/generate-openapi.ts` supports filtering by contract and outputs standalone JSON/YAML files for client generation and validation.
 
 Contracts' `summary` and `description` fields appear in the generated spec. Path params, query, body, and response schemas are all extracted automatically from Zod definitions.
 

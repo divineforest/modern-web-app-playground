@@ -1,4 +1,6 @@
+import { apiContract } from '@mercado/api-contracts';
 import * as Sentry from '@sentry/node';
+import { generateOpenApi } from '@ts-rest/open-api';
 import Fastify from 'fastify';
 import { serverConfig } from './config/server.js';
 import { authPlugin } from './infra/auth/index.js';
@@ -53,24 +55,25 @@ export async function buildApp() {
     done();
   });
 
-  // Register Swagger for API documentation
-  await fastify.register(import('@fastify/swagger'), {
-    openapi: {
-      openapi: '3.0.0',
-      info: {
-        title: 'Mercado E-commerce API',
-        description: 'Mercado E-commerce System API',
-        version: '1.0.0',
-      },
-      servers: [
-        {
-          url: `http://localhost:${env.PORT || 3000}`,
-          description: 'Development server',
-        },
-      ],
-      tags: [{ name: 'Health', description: 'Health check endpoints' }],
+  // Generate OpenAPI spec from ts-rest contracts (single source of truth)
+  // @fastify/swagger is registered as a minimal shell required by @fastify/swagger-ui,
+  // but the actual spec is replaced with the ts-rest-generated one via transformSpecification.
+  const openApiSpec = generateOpenApi(apiContract, {
+    openapi: '3.0.3',
+    info: {
+      title: 'Mercado E-commerce API',
+      description: 'Mercado E-commerce System API',
+      version: '1.0.0',
     },
+    servers: [
+      {
+        url: `http://localhost:${env.PORT || 3000}`,
+        description: 'Development server',
+      },
+    ],
   });
+
+  await fastify.register(import('@fastify/swagger'));
 
   await fastify.register(import('@fastify/swagger-ui'), {
     routePrefix: '/docs',
@@ -79,9 +82,7 @@ export async function buildApp() {
       deepLinking: false,
     },
     staticCSP: true,
-    transformSpecification: (swaggerObject) => {
-      return swaggerObject;
-    },
+    transformSpecification: () => openApiSpec,
     transformSpecificationClone: true,
   });
 
