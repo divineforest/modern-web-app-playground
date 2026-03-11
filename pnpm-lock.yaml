@@ -22,6 +22,9 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      playwright:
+        specifier: ^1.58.2
+        version: 1.58.2
 
   apps/backend:
     dependencies:
