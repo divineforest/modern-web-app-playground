@@ -39,7 +39,14 @@ Add Playwright as the E2E test framework, installed in `apps/web/`, testing the 
 
 ### 1. Package installation
 
-Playwright is added as a dev dependency to `apps/web/`:
+The `playwright` CLI is installed at the workspace root (needed for browser installation commands):
+
+```bash
+pnpm add -Dw playwright
+pnpm exec playwright install chrome
+```
+
+`@playwright/test` is added as a dev dependency to `apps/web/`:
 
 ```jsonc
 // apps/web/package.json
@@ -469,7 +476,7 @@ Use Cypress as the E2E framework.
 
 ## Migration Path
 
-1. Run `pnpm --filter @mercado/web add -D @playwright/test` and `pnpm --filter @mercado/web exec playwright install chromium`. Create `apps/web/playwright.config.ts`. Verify: `pnpm --filter @mercado/web exec playwright test` runs (0 tests found).
+1. Run `pnpm add -Dw playwright` (workspace root), `pnpm exec playwright install chrome`, then `pnpm --filter @mercado/web add -D @playwright/test`. Create `apps/web/playwright.config.ts`. Verify: `pnpm --filter @mercado/web exec playwright test` runs (0 tests found).
 2. Add `data-testid` attributes to `apps/web/src/pages/products.tsx` (`product-card`), `apps/web/src/pages/product-detail.tsx` (`quantity-input`, `add-to-cart-button`), and `apps/web/src/pages/cart.tsx` (`cart-item`, `cart-item-quantity`). Verify: `pnpm lint:web` passes.
 3. Create `apps/web/e2e/pages/products-page.ts`, `apps/web/e2e/pages/product-detail-page.ts`, `apps/web/e2e/pages/cart-page.ts`. Verify: TypeScript compiles without errors.
 4. Create `apps/web/e2e/fixtures/test-base.ts` exporting the extended `test` with page object fixtures.

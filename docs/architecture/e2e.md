@@ -2,6 +2,7 @@
 
 ## Quick Reference
 
+- **Installation**: `pnpm add -Dw playwright` (workspace root for CLI), `pnpm --filter @mercado/web add -D @playwright/test` (test runner), then `pnpm exec playwright install chrome`
 - **Framework**: Playwright (Chromium)
 - **Location**: `apps/web/e2e/`
 - **Config**: `apps/web/playwright.config.ts`
