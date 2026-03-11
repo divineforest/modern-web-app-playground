@@ -86,6 +86,7 @@ jspm_packages/
 tmp/
 temp/
 local/
+test-results/
 
 # Editor directories and files
 .vscode/
