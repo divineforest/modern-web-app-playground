@@ -55,7 +55,7 @@ Do NOT proceed to drafting until you have enough clarity. It's better to ask one
    - Database index needs for query patterns
    - Backward compatibility if modifying existing features
 
-### Phase 4: Score and Iterate
+### Phase 4: Review and Iterate
 
 After drafting, self-evaluate the spec across three dimensions:
 
@@ -65,25 +65,10 @@ After drafting, self-evaluate the spec across three dimensions:
 | **Completeness** | Are all scenarios covered? Edge cases? Error handling? Testing strategy? |
 | **Technical approach** | Is the design sound? Does it follow project patterns? Are risks identified? |
 
-**Scoring format:**
-
-```
-## Spec Score
-
-| Dimension          | Score | Notes                        |
-|--------------------|-------|------------------------------|
-| Clarity            | X.X   | ...                          |
-| Completeness       | X.X   | ...                          |
-| Technical approach | X.X   | ...                          |
-| **Overall**        | **X.X** | ...                        |
-```
-
 **Rules:**
-- Minimum passing score: **8.0 / 10**
-- If any dimension < 7.0, that dimension MUST be improved before finalizing
-- If overall < 8.0: identify specific gaps, suggest improvements, ask the user for input, then revise
-- Be honest — inflated scores defeat the purpose
-- After revisions, re-score and show the delta
+- Minimum passing bar: all three dimensions must be strong (roughly 8/10 each)
+- If any dimension is weak, identify the specific gaps, revise the spec, and re-evaluate
+- Do NOT append scores or a score table to the spec file — evaluation is internal only
 
 ### Phase 5: Finalize
 

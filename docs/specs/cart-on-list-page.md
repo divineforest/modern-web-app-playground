@@ -228,13 +228,3 @@ The change is frontend-only. All required API endpoints (`addItem`, `updateItem`
 | Concurrent mutations from list page and cart sidebar/page | Stale optimistic state, incorrect quantity displayed | Both paths invalidate `['cart']` in `onSettled`; React Query re-fetches authoritative state; the last settled response wins |
 | Accessibility regression — interactive elements inside a card that is itself a link | Screen reader confusion, broken focus order | Ensure DOM structure separates the link region from the interactive controls region; validate with axe or similar |
 
----
-
-## Spec Score
-
-| Dimension | Score | Notes |
-|-----------|-------|-------|
-| Clarity | 9.0 | RFC 2119 throughout; all requirements numbered; edge cases explicitly called out including quantity-to-zero removal path and click-through risk |
-| Completeness | 8.5 | All FR/TR sections covered; optimistic update shape defined precisely; testing spans unit, integration, E2E, and manual QA |
-| Technical approach | 9.0 | Correctly identifies `addItem` has no pre-emptive optimistic update; mutation isolation per card explicitly specified; React Query deduplication addressed; `CardActionArea` restructuring named as a risk with mitigation |
-| **Overall** | **8.9** | Exceeds the 8.0 minimum threshold |

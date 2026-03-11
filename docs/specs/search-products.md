@@ -366,18 +366,3 @@ The implementation includes both backend search API and frontend UI components (
 | High search volume causes database load | DB CPU exhaustion, slow response for all queries | Monitor query load; 🚧 consider offloading search to read replica |
 | Customers expect autocomplete/suggestions | Reduced engagement compared to competitors | Ship basic search first; 🚧 gather usage data and add autocomplete in future iteration |
 
----
-
-## Spec Score
-
-| Dimension | Score | Notes |
-|-----------|-------|-------|
-| **Clarity** | 9.5 | Requirements are unambiguous. Query validation, phrase matching semantics, UI flows, and API contract are well-defined. Specifies trigger-based `search_vector` maintenance. |
-| **Completeness** | 9.5 | Covers happy path (search → results → sort → paginate), error scenarios (query too short, no results), edge cases (sort reset to page 1, special characters, query preservation in UI), and comprehensive testing strategy. |
-| **Technical approach** | 9.5 | PostgreSQL full-text search with GIN index is appropriate. Follows project patterns (ts-rest, modular structure, pagination). Prescriptive on implementation details (trigger, currency grouping, parameterized queries). |
-| **Overall** | **9.5** | Spec is clear, complete, and technically sound. Ready for implementation. |
-
-**Iteration summary:**
-
-- **v1 (initial draft):** Overall 8.8 — good foundation but lacked edge case coverage
-- **v2 (refinements):** Overall 9.5 — added special character handling, sort + pagination reset behavior, query preservation in UI, and prescriptive trigger approach for `search_vector`
