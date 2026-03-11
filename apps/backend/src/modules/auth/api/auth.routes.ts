@@ -1,31 +1,33 @@
-import type { LoginInput, RegisterInput, UserProfile } from '@mercado/api-contracts';
-import { loginInputSchema, registerInputSchema } from '@mercado/api-contracts';
-import type { FastifyInstance, FastifyReply } from 'fastify';
-import { ZodError } from 'zod';
+import { authContract } from '@mercado/api-contracts';
+import { initServer } from '@ts-rest/fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { env } from '../../../lib/env.js';
 import { createModuleLogger } from '../../../lib/logger.js';
 import {
   authService,
   EmailAlreadyExistsError,
   InvalidCredentialsError,
+  SessionExpiredError,
+  SessionNotFoundError,
   UserNotFoundError,
 } from '../services/auth.service.js';
 
 const logger = createModuleLogger('auth');
 
+const s = initServer();
+
 const SESSION_COOKIE_NAME = 'sid';
 const CART_TOKEN_COOKIE_NAME = 'cart_token';
 
-/**
- * Calculate Max-Age in seconds based on session expiry days
- */
+type AuthCookieAction =
+  | { action: 'set-session'; token: string }
+  | { action: 'clear-session' }
+  | { action: 'clear-cart-token' };
+
 function getSessionMaxAge(): number {
   return env.SESSION_EXPIRY_DAYS * 24 * 60 * 60;
 }
 
-/**
- * Set session cookie on response
- */
 function setSessionCookie(reply: FastifyReply, token: string): void {
   reply.setCookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
@@ -36,121 +38,79 @@ function setSessionCookie(reply: FastifyReply, token: string): void {
   });
 }
 
-/**
- * Clear session cookie from response
- */
 function clearSessionCookie(reply: FastifyReply): void {
-  reply.clearCookie(SESSION_COOKIE_NAME, {
-    path: '/',
-  });
+  reply.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
 }
 
-/**
- * Clear cart token cookie from response
- */
 function clearCartTokenCookie(reply: FastifyReply): void {
-  reply.clearCookie(CART_TOKEN_COOKIE_NAME, {
-    path: '/',
-  });
+  reply.clearCookie(CART_TOKEN_COOKIE_NAME, { path: '/' });
 }
 
-/**
- * Register auth routes with Fastify
- */
-export async function registerAuthRoutes(fastify: FastifyInstance) {
-  /**
-   * POST /api/auth/register - Register new user
-   */
-  fastify.post<{
-    Body: RegisterInput;
-    Reply: UserProfile | { error: string };
-  }>('/api/auth/register', async (request, reply) => {
+function applyCookieActions(reply: FastifyReply, actions: AuthCookieAction[]): void {
+  for (const action of actions) {
+    switch (action.action) {
+      case 'set-session':
+        setSessionCookie(reply, action.token);
+        break;
+      case 'clear-session':
+        clearSessionCookie(reply);
+        break;
+      case 'clear-cart-token':
+        clearCartTokenCookie(reply);
+        break;
+    }
+  }
+}
+
+const router = s.router(authContract, {
+  register: async ({ body, request }) => {
     try {
-      // Validate request body
-      const validatedInput = registerInputSchema.parse(request.body);
+      const { user, sessionToken } = await authService.register(body);
 
-      const { user, sessionToken } = await authService.register(validatedInput);
-
-      setSessionCookie(reply, sessionToken);
+      (request as FastifyRequest & { authCookieActions?: AuthCookieAction[] }).authCookieActions = [
+        { action: 'set-session', token: sessionToken },
+      ];
 
       logger.info({ userId: user.id }, 'Registration successful');
 
-      return reply.status(201).send(user);
+      return { status: 201 as const, body: user };
     } catch (error) {
-      if (error instanceof ZodError) {
-        return reply.status(400).send({
-          error: error.errors[0]?.message || 'Validation failed',
-        });
-      }
-
       if (error instanceof EmailAlreadyExistsError) {
-        return reply.status(409).send({
-          error: error.message,
-        });
+        return { status: 409 as const, body: { error: error.message } };
       }
 
-      logger.error(
-        { error, body: { email: request.body.email } },
-        'Unexpected error in register route'
-      );
-      return reply.status(500).send({
-        error: 'Internal server error',
-      });
+      logger.error({ error, body: { email: body.email } }, 'Unexpected error in register route');
+      return { status: 500 as const, body: { error: 'Internal server error' } };
     }
-  });
+  },
 
-  /**
-   * POST /api/auth/login - Login user
-   */
-  fastify.post<{
-    Body: LoginInput;
-    Reply: UserProfile | { error: string };
-  }>('/api/auth/login', async (request, reply) => {
+  login: async ({ body, request }) => {
     try {
-      // Validate request body
-      const validatedInput = loginInputSchema.parse(request.body);
-
       const cartToken = request.cookies[CART_TOKEN_COOKIE_NAME];
-      const { user, sessionToken, cartMerged } = await authService.login(validatedInput, cartToken);
+      const { user, sessionToken, cartMerged } = await authService.login(body, cartToken);
 
-      setSessionCookie(reply, sessionToken);
-
+      const cookieActions: AuthCookieAction[] = [{ action: 'set-session', token: sessionToken }];
       if (cartMerged && cartToken) {
-        clearCartTokenCookie(reply);
+        cookieActions.push({ action: 'clear-cart-token' });
       }
+
+      (request as FastifyRequest & { authCookieActions?: AuthCookieAction[] }).authCookieActions =
+        cookieActions;
 
       logger.info({ userId: user.id, cartMerged }, 'Login successful');
 
-      return reply.status(200).send(user);
+      return { status: 200 as const, body: user };
     } catch (error) {
-      if (error instanceof ZodError) {
-        return reply.status(400).send({
-          error: error.errors[0]?.message || 'Validation failed',
-        });
-      }
-
       if (error instanceof InvalidCredentialsError) {
-        return reply.status(401).send({
-          error: error.message,
-        });
+        return { status: 401 as const, body: { error: error.message } };
       }
 
-      logger.error(
-        { error, body: { email: request.body.email } },
-        'Unexpected error in login route'
-      );
-      return reply.status(500).send({
-        error: 'Internal server error',
-      });
+      logger.error({ error, body: { email: body.email } }, 'Unexpected error in login route');
+      return { status: 500 as const, body: { error: 'Internal server error' } };
     }
-  });
+  },
 
-  /**
-   * POST /api/auth/logout - Logout user
-   */
-  fastify.post<{
-    Reply: { success: boolean } | { error: string };
-  }>('/api/auth/logout', async (request, reply) => {
+  logout: async ({ request }) => {
     try {
       const token = request.cookies[SESSION_COOKIE_NAME];
 
@@ -158,50 +118,63 @@ export async function registerAuthRoutes(fastify: FastifyInstance) {
         await authService.logout(token);
       }
 
-      clearSessionCookie(reply);
+      (request as FastifyRequest & { authCookieActions?: AuthCookieAction[] }).authCookieActions = [
+        { action: 'clear-session' },
+      ];
 
-      return reply.status(200).send({ success: true });
+      return { status: 200 as const, body: { success: true } };
     } catch (error) {
       logger.error({ error }, 'Unexpected error in logout route');
-      return reply.status(500).send({
-        error: 'Internal server error',
-      });
+      return { status: 500 as const, body: { error: 'Internal server error' } };
     }
-  });
+  },
 
-  /**
-   * GET /api/auth/me - Get current user (protected)
-   */
-  await fastify.register(async (protectedScope) => {
-    await protectedScope.register((await import('../../../infra/auth/index.js')).authPlugin);
-
-    protectedScope.get<{
-      Reply: UserProfile | { error: string };
-    }>('/api/auth/me', async (request, reply) => {
-      try {
-        if (!request.user) {
-          return reply.status(401).send({
-            error: 'Authentication required',
-          });
-        }
-
-        const user = await authService.getMe(request.user.id);
-
-        return reply.status(200).send(user);
-      } catch (error) {
-        if (error instanceof UserNotFoundError) {
-          return reply.status(401).send({
-            error: 'User not found',
-          });
-        }
-
-        logger.error({ error }, 'Unexpected error in me route');
-        return reply.status(500).send({
-          error: 'Internal server error',
-        });
+  me: async ({ request }) => {
+    try {
+      // Validate session manually — auth routes are registered in public scope
+      const sessionToken = request.cookies[SESSION_COOKIE_NAME];
+      if (!sessionToken) {
+        return { status: 401 as const, body: { error: 'Authentication required' } };
       }
-    });
+
+      let userId: string;
+      try {
+        const sessionUser = await authService.validateSession(sessionToken);
+        userId = sessionUser.id;
+      } catch (error) {
+        if (error instanceof SessionNotFoundError || error instanceof SessionExpiredError) {
+          return { status: 401 as const, body: { error: 'Authentication required' } };
+        }
+        throw error;
+      }
+
+      const user = await authService.getMe(userId);
+
+      return { status: 200 as const, body: user };
+    } catch (error) {
+      if (error instanceof UserNotFoundError) {
+        return { status: 401 as const, body: { error: 'User not found' } };
+      }
+
+      logger.error({ error }, 'Unexpected error in me route');
+      return { status: 500 as const, body: { error: 'Internal server error' } };
+    }
+  },
+});
+
+/**
+ * Register auth routes with Fastify instance
+ */
+export function registerAuthRoutes(fastify: FastifyInstance) {
+  fastify.addHook('onSend', (request, reply, _payload, done) => {
+    const req = request as FastifyRequest & { authCookieActions?: AuthCookieAction[] };
+    if (req.authCookieActions) {
+      applyCookieActions(reply, req.authCookieActions);
+    }
+    done();
   });
+
+  s.registerRouter(authContract, router, fastify, { logInitialization: true });
 
   logger.info('Auth routes registered');
 }

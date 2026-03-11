@@ -248,6 +248,7 @@ describe('Auth Routes Integration', () => {
       const logoutResponse = await app.inject({
         method: 'POST',
         url: '/api/auth/logout',
+        payload: {},
         cookies: {
           sid: sessionCookie?.value || '',
         },
@@ -279,6 +280,7 @@ describe('Auth Routes Integration', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/logout',
+        payload: {},
       });
 
       expect(response.statusCode).toBe(200);
