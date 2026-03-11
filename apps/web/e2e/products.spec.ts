@@ -23,10 +23,12 @@ test.describe('Products listing', () => {
     await productsPage.goto();
     await expect(productsPage.productCards.first()).toBeVisible();
 
+    const productName = await productsPage.productCards.first().getByRole('heading').textContent();
+
     await productsPage.clickProduct(0);
 
     await page.waitForURL(/\/products\/.+/);
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(productName ?? '');
   });
 
   test('pagination is visible when there are multiple pages', async ({ productsPage }) => {
@@ -34,8 +36,8 @@ test.describe('Products listing', () => {
     await expect(productsPage.productCards.first()).toBeVisible();
 
     const count = await productsPage.getProductCount();
-    if (count >= 20) {
-      await expect(productsPage.pagination).toBeVisible();
-    }
+    test.skip(count < 20, 'Not enough products to trigger pagination');
+
+    await expect(productsPage.pagination).toBeVisible();
   });
 });

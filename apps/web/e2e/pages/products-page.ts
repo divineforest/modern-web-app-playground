@@ -30,4 +30,12 @@ export class ProductsPage {
   async goToPage(pageNumber: number) {
     await this.pagination.getByRole('button', { name: `Go to page ${pageNumber}` }).click();
   }
+
+  /** Navigate to products listing, then click the first product card. */
+  async gotoFirstProduct() {
+    await this.goto();
+    await this.productCards.first().waitFor({ state: 'visible' });
+    await this.clickProduct(0);
+    await this.page.waitForURL(/\/products\/.+/);
+  }
 }

@@ -5,15 +5,24 @@ test.describe('My Orders page', () => {
     await ordersPage.goto();
     await page.waitForURL(/\/login/);
     expect(page.url()).toContain('/login');
+    expect(page.url()).toContain('returnTo=%2Forders');
   });
 
-  test('displays empty state when user has no orders', async ({ ordersPage }) => {
+  test('displays empty state when user has no orders', async ({
+    authenticatedPage: _auth,
+    ordersPage,
+  }) => {
     await ordersPage.goto();
+    await expect(ordersPage.pageTitle).toBeVisible();
     await expect(ordersPage.emptyState).toBeVisible();
     await expect(ordersPage.browseProductsButton).toBeVisible();
   });
 
-  test('browse products button navigates to catalog', async ({ ordersPage, page }) => {
+  test('browse products button navigates to catalog', async ({
+    authenticatedPage: _auth,
+    ordersPage,
+    page,
+  }) => {
     await ordersPage.goto();
     await expect(ordersPage.emptyState).toBeVisible();
 

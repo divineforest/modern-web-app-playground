@@ -122,18 +122,21 @@ export function SearchResultsPage() {
           <Button
             onClick={() => handleSortChange('relevance')}
             variant={sort === 'relevance' ? 'contained' : 'outlined'}
+            aria-pressed={sort === 'relevance'}
           >
             Relevance
           </Button>
           <Button
             onClick={() => handleSortChange('price_asc')}
             variant={sort === 'price_asc' ? 'contained' : 'outlined'}
+            aria-pressed={sort === 'price_asc'}
           >
             Price: Low to High
           </Button>
           <Button
             onClick={() => handleSortChange('price_desc')}
             variant={sort === 'price_desc' ? 'contained' : 'outlined'}
+            aria-pressed={sort === 'price_desc'}
           >
             Price: High to Low
           </Button>

@@ -19,26 +19,23 @@ test.describe('Cart flow', () => {
     await productsPage.goto();
     await expect(productsPage.productCards.first()).toBeVisible();
 
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+    const productName = await productsPage.productCards.first().getByRole('heading').textContent();
 
+    await productsPage.gotoFirstProduct();
     await page.getByTestId('add-to-cart-button').click();
     await expect(page.getByText('Added to cart!')).toBeVisible();
 
     await cartPage.goto();
     await expect(cartPage.cartItems).toHaveCount(1);
+    await expect(cartPage.cartItems.first()).toContainText(productName ?? '');
   });
 
   test('add multiple quantities and verify in cart', async ({
     productsPage,
     productDetailPage,
     cartPage,
-    page,
   }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+    await productsPage.gotoFirstProduct();
 
     await productDetailPage.setQuantity(3);
     await productDetailPage.addToCart();
@@ -50,10 +47,7 @@ test.describe('Cart flow', () => {
   });
 
   test('remove item from cart', async ({ productsPage, cartPage, page }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+    await productsPage.gotoFirstProduct();
 
     await page.getByTestId('add-to-cart-button').click();
     await expect(page.getByText('Added to cart!')).toBeVisible();

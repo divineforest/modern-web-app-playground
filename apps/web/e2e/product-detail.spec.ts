@@ -5,19 +5,18 @@ test.describe('Product detail', () => {
     await productsPage.goto();
     await expect(productsPage.productCards.first()).toBeVisible();
 
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+    const productName = await productsPage.productCards.first().getByRole('heading').textContent();
 
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await productsPage.gotoFirstProduct();
+
+    const heading = page.getByRole('heading', { level: 1 });
+    await expect(heading).toHaveText(productName ?? '');
     await expect(page.getByTestId('add-to-cart-button')).toBeVisible();
     await expect(page.getByTestId('quantity-input')).toHaveText('1');
   });
 
-  test('quantity controls work correctly', async ({ productsPage, productDetailPage, page }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+  test('quantity controls work correctly', async ({ productsPage, productDetailPage }) => {
+    await productsPage.gotoFirstProduct();
 
     await expect(productDetailPage.quantityDisplay).toHaveText('1');
 
@@ -28,11 +27,8 @@ test.describe('Product detail', () => {
     await expect(productDetailPage.quantityDisplay).toHaveText('1');
   });
 
-  test('add to cart shows success message', async ({ productsPage, productDetailPage, page }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+  test('add to cart shows success message', async ({ productsPage, productDetailPage }) => {
+    await productsPage.gotoFirstProduct();
 
     await productDetailPage.addToCart();
 
@@ -44,10 +40,7 @@ test.describe('Product detail', () => {
     productDetailPage,
     page,
   }) => {
-    await productsPage.goto();
-    await expect(productsPage.productCards.first()).toBeVisible();
-    await productsPage.clickProduct(0);
-    await page.waitForURL(/\/products\/.+/);
+    await productsPage.gotoFirstProduct();
 
     await productDetailPage.backButton.click();
 
