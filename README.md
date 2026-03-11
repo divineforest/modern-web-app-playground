@@ -11,7 +11,7 @@ _Use this README to set up the complete development and test environment. Execut
 - **Backend**: Node.js 22+, TypeScript, Fastify 5, ts-rest (type-safe APIs), Drizzle ORM
 - **Frontend**: React, Vite
 - **Database**: PostgreSQL (Docker), Temporal (workflow orchestration)
-- **Testing**: Vitest
+- **Testing**: Vitest, Playwright (E2E)
 - **Quality**: Biome + ESLint, CSpell, Gitleaks, Knip, 97% type coverage enforced
 
 ## Prerequisites
@@ -66,6 +66,14 @@ pnpm test:watch            # Watch mode
 pnpm test:coverage         # Coverage report
 pnpm test:smoke            # Smoke tests
 pnpm test:s3               # LocalStack S3 integration test
+pnpm test:e2e              # Playwright end-to-end tests
+pnpm test:e2e:ui           # Playwright tests with UI mode
+```
+
+**First-time E2E setup** — install Chromium for Playwright:
+
+```bash
+pnpm exec playwright install chromium
 ```
 
 ### Code Quality
