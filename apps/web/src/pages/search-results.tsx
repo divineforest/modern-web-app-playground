@@ -6,6 +6,7 @@ import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
+import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Pagination from '@mui/material/Pagination';
@@ -175,17 +176,37 @@ export function SearchResultsPage() {
                     alignItems: 'stretch',
                   }}
                 >
-                  <CardMedia
-                    component="img"
-                    image={product.imageUrl ?? noPhoto}
-                    alt={product.name}
-                    sx={{
-                      height: 200,
-                      flexShrink: 0,
-                      objectFit: product.imageUrl ? 'cover' : 'none',
-                      bgcolor: '#F5F5F4',
-                    }}
-                  />
+                  <Box sx={{ position: 'relative' }}>
+                    <CardMedia
+                      component="img"
+                      image={product.imageUrl ?? noPhoto}
+                      alt={product.name}
+                      sx={{
+                        height: 200,
+                        flexShrink: 0,
+                        objectFit: product.imageUrl ? 'cover' : 'none',
+                        bgcolor: '#F5F5F4',
+                      }}
+                    />
+                    {product.compareAtPrice && (
+                      <Chip
+                        label={`−${Math.round((1 - Number.parseFloat(product.price) / Number.parseFloat(product.compareAtPrice)) * 100)}%`}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'secondary.main',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '0.6875rem',
+                          height: 22,
+                          borderRadius: 1,
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                  </Box>
                   <CardContent
                     sx={{
                       flexGrow: 1,
@@ -226,57 +247,55 @@ export function SearchResultsPage() {
                     )}
 
                     <Box sx={{ mt: 'auto' }}>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap' }}
-                      >
-                        {(() => {
-                          const numericPrice = Number.parseFloat(product.price);
-                          const parts = new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: product.currency,
-                          }).formatToParts(numericPrice);
-                          const symbol = parts.find((p) => p.type === 'currency')?.value ?? '';
-                          const integer = parts
-                            .filter((p) => p.type === 'integer' || p.type === 'group')
-                            .map((p) => p.value)
-                            .join('');
-                          const fraction = parts.find((p) => p.type === 'fraction')?.value ?? '00';
-                          return (
-                            <Typography
+                      {(() => {
+                        const numericPrice = Number.parseFloat(product.price);
+                        const parts = new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: product.currency,
+                        }).formatToParts(numericPrice);
+                        const symbol = parts.find((p) => p.type === 'currency')?.value ?? '';
+                        const integer = parts
+                          .filter((p) => p.type === 'integer' || p.type === 'group')
+                          .map((p) => p.value)
+                          .join('');
+                        const fraction = parts.find((p) => p.type === 'fraction')?.value ?? '00';
+                        return (
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontWeight: 'bold',
+                              display: 'inline-flex',
+                              alignItems: 'flex-start',
+                              color: product.compareAtPrice ? 'secondary.dark' : 'text.primary',
+                            }}
+                          >
+                            <Box
                               component="span"
-                              sx={{
-                                fontWeight: 'bold',
-                                display: 'inline-flex',
-                                alignItems: 'flex-start',
-                              }}
+                              sx={{ fontSize: '0.8rem', mt: '0.1em', opacity: 0.7 }}
                             >
-                              <Box
-                                component="span"
-                                sx={{ fontSize: '0.8rem', mt: '0.1em', color: 'text.secondary' }}
-                              >
-                                {symbol}
-                              </Box>
-                              <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>
-                                {integer}
-                              </Box>
-                              <Box
-                                component="span"
-                                sx={{ fontSize: '0.8rem', mt: '0.1em', color: 'text.secondary' }}
-                              >
-                                {fraction}
-                              </Box>
-                            </Typography>
-                          );
-                        })()}
-                        {product.compareAtPrice && (
-                          <Typography variant="body2" color="text.secondary">
-                            Recommended:{' '}
-                            <Box component="span" sx={{ textDecoration: 'line-through' }}>
-                              {formatPrice(product.compareAtPrice, product.currency)}
+                              {symbol}
+                            </Box>
+                            <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>
+                              {integer}
+                            </Box>
+                            <Box
+                              component="span"
+                              sx={{ fontSize: '0.8rem', mt: '0.1em', opacity: 0.7 }}
+                            >
+                              {fraction}
                             </Box>
                           </Typography>
-                        )}
-                      </Box>
+                        );
+                      })()}
+                      {product.compareAtPrice && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', textDecoration: 'line-through', mt: 0.25 }}
+                        >
+                          {formatPrice(product.compareAtPrice, product.currency)}
+                        </Typography>
+                      )}
                     </Box>
                   </CardContent>
                 </CardActionArea>

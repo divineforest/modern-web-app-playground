@@ -134,10 +134,10 @@ export function ProductCardCartControls({ productId, productName }: Props) {
               : `Decrease quantity of ${productName}`
           }
           sx={{
-            bgcolor: 'grey.200',
+            bgcolor: '#F5F5F4',
             width: 32,
             height: 32,
-            '&:hover': { bgcolor: 'grey.300' },
+            '&:hover': { bgcolor: '#E7E5E4' },
           }}
         >
           <Remove fontSize="small" />
@@ -161,10 +161,10 @@ export function ProductCardCartControls({ productId, productName }: Props) {
           disabled={isMutating}
           aria-label={`Increase quantity of ${productName}`}
           sx={{
-            bgcolor: 'grey.200',
+            bgcolor: '#F5F5F4',
             width: 32,
             height: 32,
-            '&:hover': { bgcolor: 'grey.300' },
+            '&:hover': { bgcolor: '#E7E5E4' },
           }}
         >
           <Add fontSize="small" />
@@ -190,7 +190,7 @@ export function ProductCardCartControls({ productId, productName }: Props) {
           size="small"
           onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
           disabled={pendingQty <= 1 || addItemMutation.isPending}
-          sx={{ bgcolor: 'grey.200', width: 28, height: 28, '&:hover': { bgcolor: 'grey.300' } }}
+          sx={{ bgcolor: '#F5F5F4', width: 28, height: 28, '&:hover': { bgcolor: '#E7E5E4' } }}
         >
           <Remove sx={{ fontSize: 14 }} />
         </IconButton>
@@ -203,7 +203,7 @@ export function ProductCardCartControls({ productId, productName }: Props) {
           size="small"
           onClick={() => setPendingQty((q) => q + 1)}
           disabled={addItemMutation.isPending}
-          sx={{ bgcolor: 'grey.200', width: 28, height: 28, '&:hover': { bgcolor: 'grey.300' } }}
+          sx={{ bgcolor: '#F5F5F4', width: 28, height: 28, '&:hover': { bgcolor: '#E7E5E4' } }}
         >
           <Add sx={{ fontSize: 14 }} />
         </IconButton>
@@ -216,16 +216,15 @@ export function ProductCardCartControls({ productId, productName }: Props) {
         onClick={() => addItemMutation.mutate({ body: { productId, quantity: pendingQty } })}
         aria-label={`Add ${productName} to cart`}
         sx={{
-          bgcolor: '#FFD814',
-          color: '#0F1111',
-          fontWeight: 'bold',
-          borderRadius: 5,
-          textTransform: 'none',
-          boxShadow: 'none',
+          background: 'linear-gradient(135deg, #4F46E5, #4338CA)',
+          color: '#ffffff',
           fontSize: '0.85rem',
           py: 0.75,
-          '&:hover': { bgcolor: '#F7CA00', boxShadow: 'none' },
-          '&.Mui-disabled': { bgcolor: '#FFD814', opacity: 0.6, color: '#0F1111' },
+          '&:hover': {
+            background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+          },
+          '&.Mui-disabled': { opacity: 0.5 },
         }}
       >
         {addItemMutation.isPending ? 'Adding…' : 'Add to Cart'}
