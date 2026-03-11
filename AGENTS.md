@@ -117,5 +117,5 @@ Feature specs live in `docs/specs/`. Use `FR-*` for functional requirements, `TR
 
 - `pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm type-coverage`
 - If implementing from `docs/specs/`: Remove 🚧 from completed items
-- If the task touched `apps/web/`: use the browser tool to walk through the primary user flow end-to-end
+- If the task added or modified a user-facing feature: use the browser tool to walk through the affected user flows end-to-end
 - If implementing a user-facing feature with E2E scenarios in the spec: write Playwright tests covering those scenarios in `apps/web/e2e/`. Follow existing patterns (`apps/web/e2e/*.spec.ts`, page objects in `apps/web/e2e/pages/`). Run `pnpm test:e2e` to verify.
