@@ -94,7 +94,7 @@
     "@t3-oss/env-core": "^0.10.1",
     "@temporalio/activity": "^1.13.2",
     "@temporalio/client": "^1.13.2",
-    "@temporalio/worker": "^1.13.2",
+    "@temporalio/worker": "^1.15.0",
     "@temporalio/workflow": "^1.13.2",
     "@ts-rest/core": "^3.52.1",
     "@ts-rest/fastify": "^3.52.1",
