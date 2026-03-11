@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import noPhoto from '../assets/no-photo.svg';
 import { CartSidebar } from '../components/cart-sidebar';
+import { ProductCardCartControls } from '../components/product-card-cart-controls';
 import { tsr } from '../lib/api-client';
 
 const PAGE_SIZE = 20;
@@ -102,7 +103,6 @@ export function ProductsPage() {
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        height: '100%',
                         alignItems: 'stretch',
                       }}
                     >
@@ -119,7 +119,6 @@ export function ProductsPage() {
                       />
                       <CardContent
                         sx={{
-                          flexGrow: 1,
                           display: 'flex',
                           flexDirection: 'column',
                           overflow: 'hidden',
@@ -225,6 +224,10 @@ export function ProductsPage() {
                         </Box>
                       </CardContent>
                     </CardActionArea>
+
+                    <Box sx={{ px: 2, pb: 2 }}>
+                      <ProductCardCartControls productId={product.id} productName={product.name} />
+                    </Box>
                   </Card>
                 ))}
               </Box>
