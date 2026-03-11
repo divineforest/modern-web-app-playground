@@ -1,5 +1,4 @@
 ---
-description: Infrastructure changes require smoke test verification
 globs:
   - apps/backend/src/lib/env.ts
   - apps/backend/src/config/**
@@ -15,7 +14,6 @@ globs:
   - render.yaml
   - apps/backend/tsconfig.json
   - .github/workflows/**
-alwaysApply: false
 ---
 
 # Infrastructure Changes - Smoke Test Required

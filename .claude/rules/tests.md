@@ -1,8 +1,5 @@
 ---
-description: Testing conventions
-globs:
-  - ".test.ts"
-alwaysApply: false
+globs: "*.test.ts"
 ---
 
 # Testing Rules

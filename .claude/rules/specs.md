@@ -1,7 +1,5 @@
 ---
-description: Guidelines for writing feature specs in specs/
 globs: specs/*.md
-alwaysApply: false
 ---
 
 # Spec Writing — Requirements, Not Build Instructions

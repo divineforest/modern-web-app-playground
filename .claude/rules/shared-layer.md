@@ -1,8 +1,5 @@
 ---
-description: Shared layer must be domain-agnostic
-globs:
-  - "apps/backend/src/shared/**"
-alwaysApply: false
+globs: apps/backend/src/shared/**
 ---
 
 # Shared Layer Rules
