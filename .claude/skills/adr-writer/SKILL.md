@@ -12,7 +12,7 @@ Write Architecture Decision Records that maximize AI-friendliness — structured
 ### Phase 1: Gather Context
 
 1. Read the project's AI principles: `docs/ai-principles.md` and `docs/ai-guide.md`
-2. Read `docs/architecture.md` and `AGENTS.md` for current architecture context
+2. Read `docs/architecture/overview.md` and `AGENTS.md` for current architecture context
 3. Scan `docs/adr/` for existing ADRs to maintain consistency
 4. Ask the user about the decision if not already clear:
    - What problem are we solving?

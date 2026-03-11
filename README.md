@@ -111,7 +111,7 @@ pnpm temporal:hello-world  # Run example workflow
 ## Docs
 
 - [`AGENTS.md`](./AGENTS.md) — full architecture, conventions, and commands for AI agents
-- [`docs/architecture.md`](./docs/architecture.md) — system architecture
+- [`docs/architecture/overview.md`](./docs/architecture/overview.md) — system architecture
 - [`docs/testing-guidelines.md`](./docs/testing-guidelines.md) — testing strategy
 - [`docs/adr/`](./docs/adr/) — architecture decisions
 - [`docs/specs/`](./docs/specs/) — feature specifications
