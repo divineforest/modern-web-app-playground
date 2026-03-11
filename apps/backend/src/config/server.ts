@@ -22,3 +22,12 @@ export const serverConfig: FastifyServerOptions = {
 
 export const serverPort = env.PORT || 3000;
 export const serverHost = env.HOST || '0.0.0.0';
+
+/**
+ * Shared options for ts-rest registerRouter calls.
+ * Enables response validation in non-production to catch contract drift early.
+ */
+export const tsRestRouterOptions = {
+  logInitialization: true,
+  responseValidation: env.NODE_ENV !== 'production',
+};

@@ -1,5 +1,6 @@
 import { cartContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
+import { tsRestRouterOptions } from '../../../config/server.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
 import { authService } from '../../auth/services/auth.service.js';
@@ -286,7 +287,5 @@ export function registerCartRoutes(fastify: FastifyInstance) {
     done();
   });
 
-  return s.registerRouter(cartContract, router, fastify, {
-    logInitialization: true,
-  });
+  return s.registerRouter(cartContract, router, fastify, tsRestRouterOptions);
 }

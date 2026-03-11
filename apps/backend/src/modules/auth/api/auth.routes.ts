@@ -1,5 +1,6 @@
 import { authContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
+import { tsRestRouterOptions } from '../../../config/server.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { env } from '../../../lib/env.js';
 import { createModuleLogger } from '../../../lib/logger.js';
@@ -174,7 +175,7 @@ export function registerAuthRoutes(fastify: FastifyInstance) {
     done();
   });
 
-  s.registerRouter(authContract, router, fastify, { logInitialization: true });
+  s.registerRouter(authContract, router, fastify, tsRestRouterOptions);
 
   logger.info('Auth routes registered');
 }

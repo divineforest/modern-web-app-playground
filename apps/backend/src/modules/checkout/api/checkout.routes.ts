@@ -1,5 +1,6 @@
 import { checkoutContract } from '@mercado/api-contracts';
 import { initServer } from '@ts-rest/fastify';
+import { tsRestRouterOptions } from '../../../config/server.js';
 import type { FastifyInstance } from 'fastify';
 import { createModuleLogger } from '../../../lib/logger.js';
 import {
@@ -94,7 +95,5 @@ const router = s.router(checkoutContract, {
 });
 
 export function registerCheckoutRoutes(fastify: FastifyInstance) {
-  return s.registerRouter(checkoutContract, router, fastify, {
-    logInitialization: true,
-  });
+  return s.registerRouter(checkoutContract, router, fastify, tsRestRouterOptions);
 }
