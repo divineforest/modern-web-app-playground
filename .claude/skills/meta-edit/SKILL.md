@@ -15,7 +15,7 @@ Edit AI-facing files while preserving their mechanical value to LLMs.
 
 Use this skill when the user asks to edit any of:
 - `AGENTS.md`, `CLAUDE.md`, `AGENTS.md`-like files in other repos
-- `.claude/skills/*.md`, `.agents/skills/*/SKILL.md`
+- `.claude/skills/*/SKILL.md`, `.agents/skills/*/SKILL.md`
 - `docs/specification-guide.md`, `docs/ai-principles.md`
 - ADR templates or conventions docs
 

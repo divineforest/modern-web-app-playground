@@ -90,7 +90,7 @@ Numbered steps. Each step should be independently shippable and testable.
 
 ### Phase 3: Score AI-Friendliness
 
-After writing the ADR, score it using the rubric in [adr-writer-scoring-rubric.md](adr-writer-scoring-rubric.md). Read that file for the full criteria.
+After writing the ADR, score it using the rubric in [references/adr-writer-scoring-rubric.md](references/adr-writer-scoring-rubric.md). Read that file for the full criteria.
 
 **Quick reference — the 10 dimensions (1.0 each, total 10.0):**
 
