@@ -32,80 +32,120 @@ export function RootLayout() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Sticky frosted-glass header */}
       <Box
+        component="header"
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1100,
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
-        <Typography
-          variant="h3"
-          component={Link}
-          to="/"
-          sx={{
-            textDecoration: 'none',
-            color: 'inherit',
-            '&:hover': {
-              color: 'primary.main',
-            },
-          }}
-        >
-          Mercado
-        </Typography>
-
-        <Box
-          component="form"
-          onSubmit={handleSearchSubmit}
-          sx={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: 400, mx: 4 }}
-        >
-          <TextField
-            name="q"
-            placeholder="Search products..."
-            size="small"
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              height: 64,
+              gap: 3,
             }}
-          />
-        </Box>
+          >
+            {/* Logo */}
+            <Typography
+              variant="h5"
+              component={Link}
+              to="/"
+              sx={{
+                textDecoration: 'none',
+                fontWeight: 800,
+                letterSpacing: '-0.04em',
+                color: 'primary.main',
+                flexShrink: 0,
+                transition: 'opacity 0.15s ease',
+                '&:hover': {
+                  opacity: 0.8,
+                },
+              }}
+            >
+              Mercado
+            </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {user ? (
-            <>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccountCircle />
-                <Typography variant="body1">
-                  {user.firstName} {user.lastName}
-                </Typography>
-              </Box>
-              <Button variant="text" component={Link} to="/orders">
-                My Orders
-              </Button>
-              <Button variant="outlined" onClick={handleLogout}>
-                Logout
-              </Button>
-            </>
-          ) : (
-            <Button variant="outlined" component={Link} to="/login">
-              Login
-            </Button>
-          )}
+            {/* Search */}
+            <Box component="form" onSubmit={handleSearchSubmit} sx={{ flex: 1, maxWidth: 480 }}>
+              <TextField
+                name="q"
+                placeholder="Search products..."
+                size="small"
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: 'text.secondary', fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '50px',
+                  },
+                }}
+              />
+            </Box>
 
-          <IconButton component={Link} to="/cart" color="primary" size="large">
-            <Badge badgeContent={itemCount} color="error">
-              <ShoppingCart />
-            </Badge>
-          </IconButton>
-        </Box>
+            {/* Actions */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+              {user ? (
+                <>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 2,
+                      bgcolor: '#F8FAFC',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <AccountCircle sx={{ color: 'primary.main', fontSize: 20 }} />
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      {user.firstName} {user.lastName}
+                    </Typography>
+                  </Box>
+                  <Button variant="text" component={Link} to="/orders" size="small">
+                    My Orders
+                  </Button>
+                  <Button variant="outlined" onClick={handleLogout} size="small">
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button variant="contained" component={Link} to="/login" size="small">
+                  Sign in
+                </Button>
+              )}
+
+              <IconButton component={Link} to="/cart" color="primary" size="medium">
+                <Badge badgeContent={itemCount} color="error">
+                  <ShoppingCart />
+                </Badge>
+              </IconButton>
+            </Box>
+          </Box>
+        </Container>
       </Box>
-      <Outlet />
-    </Container>
+
+      {/* Page content */}
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Outlet />
+      </Container>
+    </Box>
   );
 }
